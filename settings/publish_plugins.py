@@ -73,6 +73,7 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
 
 
 class CollectInstancesPlugin(BaseSettingsModel):
+    """Name for flatten image created if no image instance present"""
     flatten_subset_template: str = Field(
         "",
         title="Subset template for flatten image",
@@ -83,16 +84,17 @@ class CollectInstancesPlugin(BaseSettingsModel):
 
 
 class CollectReviewPlugin(BaseSettingsModel):
+    """Should review subset be created"""
     active: bool = Field(True, title="Active")
 
 
 class CollectVersionPlugin(BaseSettingsModel):
-    """Synchronize version for image and review instances by workfile version."""  # noqa
+    """Synchronize version for image and review instances by workfile version"""  # noqa
     enabled: bool = Field(True, title="Enabled")
 
 
 class ValidateContainersPlugin(BaseSettingsModel):
-    """Synchronize version for image and review instances by workfile version."""  # noqa
+    """Check that workfile contains latest version of loaded items"""  # noqa
     _isGroup = True
     enabled: bool = True
     optional: bool = Field(False, title="Optional")
@@ -157,7 +159,7 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
     )
 
     CollectReview: CollectReviewPlugin = Field(
-        title="Create Review",
+        title="Collect Review",
         default_factory=CollectReviewPlugin,
     )
 
