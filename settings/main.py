@@ -8,7 +8,6 @@ from .workfile_builder import WorkfileBuilderPlugin
 
 class PhotoshopSettings(BaseSettingsModel):
     """Photoshop Project Settings."""
-    _layout = "expanded"
     create: PhotoshopCreatorPlugins = Field(
         default_factory=PhotoshopCreatorPlugins,
         title="Creator plugins"
