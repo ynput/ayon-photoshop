@@ -85,7 +85,7 @@ class CollectInstancesPlugin(BaseSettingsModel):
 
 class CollectReviewPlugin(BaseSettingsModel):
     """Should review subset be created"""
-    active: bool = Field(True, title="Active")
+    publish: bool = Field(True, title="Active")
 
 
 class CollectVersionPlugin(BaseSettingsModel):
