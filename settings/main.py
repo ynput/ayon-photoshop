@@ -1,5 +1,5 @@
 from pydantic import Field
-from openpype.settings.common import BaseSettingsModel
+from ayon_server.settings.common import BaseSettingsModel, ImageIOBaseModel
 
 from .creator_plugins import PhotoshopCreatorPlugins
 from .publish_plugins import PhotoshopPublishPlugins
@@ -8,6 +8,12 @@ from .workfile_builder import WorkfileBuilderPlugin
 
 class PhotoshopSettings(BaseSettingsModel):
     """Photoshop Project Settings."""
+
+    imageio: ImageIOBaseModel = Field(
+        default_factory=ImageIOBaseModel,
+        title="OCIO config"
+    )
+
     create: PhotoshopCreatorPlugins = Field(
         default_factory=PhotoshopCreatorPlugins,
         title="Creator plugins"
