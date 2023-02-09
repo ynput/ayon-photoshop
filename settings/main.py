@@ -1,5 +1,5 @@
 from pydantic import Field
-from ayon_server.settings.common import BaseSettingsModel, ImageIOBaseModel
+from ayon_server.settings import BaseSettingsModel, ImageIOBaseModel
 
 from .creator_plugins import PhotoshopCreatorPlugins
 from .publish_plugins import PhotoshopPublishPlugins
