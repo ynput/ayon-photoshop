@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from openpype.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel
 
 
 create_flatten_image_enum = [
@@ -187,5 +187,3 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         title="Extract Review",
         default_factory=ExtractReviewPlugin,
     )
-
-

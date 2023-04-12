@@ -1,7 +1,7 @@
 from pydantic import Field
 from pathlib import Path
 
-from openpype.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel
 
 
 class PathsTemplate(BaseSettingsModel):
@@ -39,6 +39,3 @@ class WorkfileBuilderPlugin(BaseSettingsModel):
     custom_templates: list[CustomBuilderTemplate] = Field(
         default_factory=CustomBuilderTemplate
     )
-
-
-
