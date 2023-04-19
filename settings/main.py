@@ -32,10 +32,21 @@ class PhotoshopSettings(BaseSettingsModel):
 
 DEFAULT_PHOTOSHOP_SETTING = {
     "create": {
-        "CreateImage": {
-            "defaults": [
+        "ImageCreator": {
+            "default_variants": [
                 "Main"
             ]
+        },
+        "AutoImageCreator": {
+            "enabled": False,
+            "flatten_subset_template": "",
+            "mark_for_review": False
+        },
+        "ReviewCreator": {
+            "enabled": True
+        },
+        "WorkfileCreator": {
+            "enabled": True
         }
     },
     "publish": {
