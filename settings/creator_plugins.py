@@ -9,12 +9,12 @@ class CreateImagePlugin(BaseSettingsModel):
 
 
 class CreateFlattenImagePlugin(BaseSettingsModel):
-    enabled: bool = Field(False, title="Enabled"),
+    enabled: bool = Field(False, title="Enabled")
     flatten_subset_template: str = Field(
         "",
         title="Subset template for flatten image"
-    ),
-    mark_for_review: bool = Field(False, title="Review"),
+    )
+    mark_for_review: bool = Field(False, title="Review")
 
 
 class CreateReviewPlugin(BaseSettingsModel):
@@ -22,7 +22,7 @@ class CreateReviewPlugin(BaseSettingsModel):
 
 
 class CreateWorkfilelugin(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled"),
+    enabled: bool = Field(True, title="Enabled")
 
 
 class PhotoshopCreatorPlugins(BaseSettingsModel):
