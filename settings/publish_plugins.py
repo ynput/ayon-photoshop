@@ -55,6 +55,8 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
     """Set color for publishable layers, set its resulting family and template
     for subset name. \n Can create flatten image from published instances.
     (Applicable only for remote publishing!)"""
+
+    enabled: bool = Field(True, title="Enabled")
     create_flatten_image: str = Field(
         "",
         title="Create flatten image",
@@ -72,20 +74,9 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
     )
 
 
-class CollectInstancesPlugin(BaseSettingsModel):
-    """Name for flatten image created if no image instance present"""
-    flatten_subset_template: str = Field(
-        "",
-        title="Subset template for flatten image",
-        description="Name for flatten image created if no image " 
-                    "instance present"
-
-    )
-
-
 class CollectReviewPlugin(BaseSettingsModel):
     """Should review subset be created"""
-    publish: bool = Field(True, title="Active")
+    enabled: bool = Field(True, title="Enabled")
 
 
 class CollectVersionPlugin(BaseSettingsModel):
@@ -152,12 +143,6 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         title="Collect Color Coded Instances",
         default_factory=CollectColorCodedInstancesPlugin,
     )
-
-    CollectInstances: CollectInstancesPlugin = Field(
-        title="Collect Instances",
-        default_factory=CollectInstancesPlugin,
-    )
-
     CollectReview: CollectReviewPlugin = Field(
         title="Collect Review",
         default_factory=CollectReviewPlugin,
@@ -187,3 +172,52 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         title="Extract Review",
         default_factory=ExtractReviewPlugin,
     )
+
+
+DEFAULT_PUBLISH_SETTINGS = {
+    "CollectColorCodedInstances": {
+        "create_flatten_image": "no",
+        "flatten_subset_template": "",
+        "color_code_mapping": []
+    },
+    "CollectInstances": {
+        "flatten_subset_template": ""
+    },
+    "CollectReview": {
+        "enabled": True
+    },
+    "CollectVersion": {
+        "enabled": False
+    },
+    "ValidateContainers": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateNaming": {
+        "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,;]",
+        "replace_char": "_"
+    },
+    "ExtractImage": {
+        "formats": [
+            "png",
+            "jpg"
+        ]
+    },
+    "ExtractReview": {
+        "make_image_sequence": False,
+        "max_downscale_size": 8192,
+        "jpg_options": {
+            "tags": [
+                "review",
+                "ftrackreview"
+            ]
+        },
+        "mov_options": {
+            "tags": [
+                "review",
+                "ftrackreview"
+            ]
+        }
+    }
+}
