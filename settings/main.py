@@ -1,8 +1,8 @@
 from pydantic import Field
 from ayon_server.settings import BaseSettingsModel, ImageIOBaseModel
 
-from .creator_plugins import PhotoshopCreatorPlugins
-from .publish_plugins import PhotoshopPublishPlugins
+from .creator_plugins import PhotoshopCreatorPlugins, DEFAULT_CREATE_SETTINGS
+from .publish_plugins import PhotoshopPublishPlugins, DEFAULT_PUBLISH_SETTINGS
 from .workfile_builder import WorkfileBuilderPlugin
 
 
@@ -31,71 +31,8 @@ class PhotoshopSettings(BaseSettingsModel):
 
 
 DEFAULT_PHOTOSHOP_SETTING = {
-    "create": {
-        "ImageCreator": {
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "AutoImageCreator": {
-            "enabled": False,
-            "flatten_subset_template": "",
-            "mark_for_review": False
-        },
-        "ReviewCreator": {
-            "enabled": True
-        },
-        "WorkfileCreator": {
-            "enabled": True
-        }
-    },
-    "publish": {
-        "CollectColorCodedInstances": {
-            "create_flatten_image": "no",
-            "flatten_subset_template": "",
-            "color_code_mapping": []
-        },
-        "CollectInstances": {
-            "flatten_subset_template": ""
-        },
-        "CollectReview": {
-            "publish": True
-        },
-        "CollectVersion": {
-            "enabled": False
-        },
-        "ValidateContainers": {
-            "enabled": True,
-            "optional": True,
-            "active": True
-        },
-        "ValidateNaming": {
-            "invalid_chars": "[ \\\\/+\\*\\?\\(\\)\\[\\]\\{\\}:,;]",
-            "replace_char": "_"
-        },
-        "ExtractImage": {
-            "formats": [
-                "png",
-                "jpg"
-            ]
-        },
-        "ExtractReview": {
-            "make_image_sequence": False,
-            "max_downscale_size": 8192,
-            "jpg_options": {
-                "tags": [
-                    "review",
-                    "ftrackreview"
-                ]
-            },
-            "mov_options": {
-                "tags": [
-                    "review",
-                    "ftrackreview"
-                ]
-            }
-        }
-    },
+    "create": DEFAULT_CREATE_SETTINGS,
+    "publish": DEFAULT_PUBLISH_SETTINGS,
     "workfile_builder": {
         "create_first_version": False,
         "custom_templates": []
