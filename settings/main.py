@@ -1,6 +1,7 @@
 from pydantic import Field
-from ayon_server.settings import BaseSettingsModel, ImageIOBaseModel
+from ayon_server.settings import BaseSettingsModel
 
+from .imageio import PhotoshopImageIOModel
 from .creator_plugins import PhotoshopCreatorPlugins, DEFAULT_CREATE_SETTINGS
 from .publish_plugins import PhotoshopPublishPlugins, DEFAULT_PUBLISH_SETTINGS
 from .workfile_builder import WorkfileBuilderPlugin
@@ -9,8 +10,8 @@ from .workfile_builder import WorkfileBuilderPlugin
 class PhotoshopSettings(BaseSettingsModel):
     """Photoshop Project Settings."""
 
-    imageio: ImageIOBaseModel = Field(
-        default_factory=ImageIOBaseModel,
+    imageio: PhotoshopImageIOModel = Field(
+        default_factory=PhotoshopImageIOModel,
         title="OCIO config"
     )
 
