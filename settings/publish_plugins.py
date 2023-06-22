@@ -33,14 +33,14 @@ class ColorCodeMappings(BaseSettingsModel):
         title="Layer name regex"
     )
 
-    family: str = Field(
+    product_type: str = Field(
         "",
-        title="Resulting family"
+        title="Resulting product type"
     )
 
-    subset_template_name: str = Field(
+    product_name_template: str = Field(
         "",
-        title="Subset template name"
+        title="Product name template"
     )
 
 
@@ -52,8 +52,9 @@ class ExtractedOptions(BaseSettingsModel):
 
 
 class CollectColorCodedInstancesPlugin(BaseSettingsModel):
-    """Set color for publishable layers, set its resulting family and template
-    for subset name. \n Can create flatten image from published instances.
+    """Set color for publishable layers, set its resulting product type
+    and template for product name. \n Can create flatten image from published
+    instances.
     (Applicable only for remote publishing!)"""
 
     enabled: bool = Field(True, title="Enabled")
@@ -63,7 +64,7 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
         enum_resolver=lambda: create_flatten_image_enum,
     )
 
-    flatten_subset_template: str = Field(
+    flatten_product_type_template: str = Field(
         "",
         title="Subset template for flatten image"
     )
@@ -75,7 +76,7 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
 
 
 class CollectReviewPlugin(BaseSettingsModel):
-    """Should review subset be created"""
+    """Should review product be created"""
     enabled: bool = Field(True, title="Enabled")
 
 
@@ -93,7 +94,7 @@ class ValidateContainersPlugin(BaseSettingsModel):
 
 
 class ValidateNamingPlugin(BaseSettingsModel):
-    """Validate naming of subsets and layers"""  # noqa
+    """Validate naming of products and layers"""  # noqa
     invalid_chars: str = Field(
         '',
         title="Regex pattern of invalid characters"
@@ -159,7 +160,7 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
     )
 
     ValidateNaming: ValidateNamingPlugin = Field(
-        title="Validate naming of subsets and layers",
+        title="Validate naming of products and layers",
         default_factory=ValidateNamingPlugin,
     )
 
@@ -177,11 +178,8 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
 DEFAULT_PUBLISH_SETTINGS = {
     "CollectColorCodedInstances": {
         "create_flatten_image": "no",
-        "flatten_subset_template": "",
+        "flatten_product_type_template": "",
         "color_code_mapping": []
-    },
-    "CollectInstances": {
-        "flatten_subset_template": ""
     },
     "CollectReview": {
         "enabled": True
