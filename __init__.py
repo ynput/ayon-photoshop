@@ -1,6 +1,6 @@
 from ayon_server.addons import BaseServerAddon
 
-from .settings.main import PhotoshopSettings, DEFAULT_PHOTOSHOP_SETTING
+from .settings import PhotoshopSettings, DEFAULT_PHOTOSHOP_SETTING
 from .version import __version__
 
 
