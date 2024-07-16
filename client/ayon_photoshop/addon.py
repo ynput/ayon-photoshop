@@ -31,6 +31,15 @@ class PhotoshopAddon(AYONAddon, IHostAddon):
             os.path.join(PHOTOSHOP_ADDON_ROOT, "hooks")
         ]
 
+    def publish_in_test(self, log, close_plugin_name=None):
+        """Runs publish in an opened host with a context.
+        Close Python process at the end.
+        """
+
+        from ayon_photoshop.api.lib import publish_in_test
+
+        publish_in_test(log, close_plugin_name)
+
 
 def get_launch_script_path():
     return os.path.join(
