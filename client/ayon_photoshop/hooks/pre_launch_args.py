@@ -27,7 +27,7 @@ def get_launch_kwargs(kwargs):
     if platform.system().lower() != "windows":
         return kwargs
 
-    if not is_using_ayon_console():
+    if is_using_ayon_console():
         kwargs.update({
             "creationflags": subprocess.CREATE_NEW_CONSOLE
         })
