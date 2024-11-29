@@ -190,13 +190,15 @@ DEFAULT_PUBLISH_SETTINGS = {
         "jpg_options": {
             "tags": [
                 "review",
-                "ftrackreview"
+                "ftrackreview",
+                "webreview"
             ]
         },
         "mov_options": {
             "tags": [
                 "review",
-                "ftrackreview"
+                "ftrackreview",
+                "webreview"
             ]
         }
     }
