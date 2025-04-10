@@ -21,7 +21,7 @@ class ExtractImage(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     families = ["image", "background"]
-    formats = ["png", "jpg"]
+    formats = ["png", "jpg", "tga"]
     settings_category = "photoshop"
 
     def process(self, context):

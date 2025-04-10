@@ -174,6 +174,10 @@ function saveAs(output_path, ext, as_copy){
       saveOptions.interlaced = true;
       saveOptions.transparency = true;
     }
+    if (ext == 'tga'){
+        saveOptions = new TargaSaveOptions();
+        saveOptions.alphaChannels = true;
+      }
     if (ext == 'psd'){
         saveOptions = null;
         return app.activeDocument.saveAs(new File(saveName));       
