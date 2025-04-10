@@ -177,7 +177,8 @@ function saveAs(output_path, ext, as_copy){
     if (ext == 'tga'){
         saveOptions = new TargaSaveOptions();
         saveOptions.alphaChannels = true;
-      }
+        saveOptions.rleCompression = true;
+    }
     if (ext == 'psd'){
         saveOptions = null;
         return app.activeDocument.saveAs(new File(saveName));       
