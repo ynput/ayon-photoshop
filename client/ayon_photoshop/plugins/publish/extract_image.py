@@ -121,5 +121,6 @@ class ExtractImage(pyblish.api.ContextPlugin):
             workfile_extension (str): workfile extension
         """
         src_file = full_filename.replace(extension, workfile_extension)
-        stub.saveAs(src_file, extension, True)
-        os.rename(src_file, full_filename)
+        stub.saveAs(full_filename, extension, True)
+        if os.path.exists(src_file):
+            os.rename(src_file, full_filename)
