@@ -9,6 +9,12 @@ from .workfile_builder import WorkfileBuilderPlugin
 class PhotoshopSettings(BaseSettingsModel):
     """Photoshop Project Settings."""
 
+    auto_install_extension: bool = SettingsField(
+        False,
+        title="Install AYON Extension",
+        description="Triggers pre-launch hook which installs extension."
+    )
+
     imageio: PhotoshopImageIOModel = SettingsField(
         default_factory=PhotoshopImageIOModel,
         title="OCIO config"
@@ -31,6 +37,7 @@ class PhotoshopSettings(BaseSettingsModel):
 
 
 DEFAULT_PHOTOSHOP_SETTING = {
+    "auto_install_extension": False,
     "create": DEFAULT_CREATE_SETTINGS,
     "publish": DEFAULT_PUBLISH_SETTINGS,
     "workfile_builder": {
