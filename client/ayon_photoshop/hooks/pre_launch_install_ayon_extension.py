@@ -39,8 +39,9 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
         self.log.info("Installing AYON Photoshop extension.")
 
         target_path = Path(
-            platformdirs.user_data_dir("Adobe", roaming=True),  # roaming is useful for windows
-            "CEP/extensions/io.ynput.PS.panel"
+            # roaming is applicable for windows
+            platformdirs.user_data_dir(roaming=True),
+            "Adobe/CEP/extensions/io.ynput.PS.panel"
         )
 
         extension_path = Path(
