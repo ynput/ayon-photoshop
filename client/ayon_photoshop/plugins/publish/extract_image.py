@@ -21,7 +21,7 @@ class ExtractImage(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     families = ["image", "background"]
-    formats = ["png", "jpg"]
+    formats = ["png", "jpg", "tga"]
     settings_category = "photoshop"
 
     def process(self, context):
@@ -61,17 +61,24 @@ class ExtractImage(pyblish.api.ContextPlugin):
                     for extracted_id in extract_ids:
                         stub.set_visible(extracted_id, True)
 
-                    file_basename = os.path.splitext(
+                    file_basename, workfile_extension = os.path.splitext(
                         stub.get_active_document_name()
-                    )[0]
+                    )
+                    workfile_extension = workfile_extension.strip(".")
+
                     for extension in self.formats:
                         _filename = "{}.{}".format(file_basename,
-                                                   extension)
+                                                    extension)
                         files[extension] = _filename
 
                         full_filename = os.path.join(staging_dir,
                                                      _filename)
-                        stub.saveAs(full_filename, extension, True)
+                        if extension == "tga":
+                            self._save_image_to_targa(
+                                stub, full_filename, extension, workfile_extension
+                            )
+                        else:
+                            stub.saveAs(full_filename, extension, True)
                         self.log.info(f"Extracted: {extension}")
 
                     representations = []
@@ -100,3 +107,20 @@ class ExtractImage(pyblish.api.ContextPlugin):
         from ayon_core.pipeline.publish import get_instance_staging_dir
 
         return get_instance_staging_dir(instance)
+
+
+    def _save_image_to_targa(self, stub, full_filename, extension, workfile_extension):
+        """Hacky way to save image in targa. Save the psd file
+        in quiet mode with targa options first and then convert it into targa
+        ***Caution to use it.
+
+        Args:
+            stub (RPC stub): stub to call method
+            full_filename (str): full published filename
+            extension (str): published extension
+            workfile_extension (str): workfile extension
+        """
+        src_file = full_filename.replace(extension, workfile_extension)
+        stub.saveAs(full_filename, extension, True)
+        if os.path.exists(src_file):
+            os.rename(src_file, full_filename)

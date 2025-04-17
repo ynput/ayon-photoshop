@@ -181,7 +181,7 @@ class ExtractReview(publish.Extractor):
             "-y",
             "-i", source_files_pattern,
             "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-            "-vframes", str(no_of_frames),
+            "-frames:v", str(no_of_frames),
             mov_path
         ]
         self.log.debug("mov args:: {}".format(args))
@@ -217,7 +217,7 @@ class ExtractReview(publish.Extractor):
             "-y",
             "-i", source_files_pattern,
             "-vf", "scale=300:-1",
-            "-vframes", "1",
+            "-frames:v", "1",
             thumbnail_path
         ]
         self.log.debug("thumbnail args:: {}".format(args))

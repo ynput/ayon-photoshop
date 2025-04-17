@@ -181,7 +181,8 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ExtractImage": {
         "formats": [
             "png",
-            "jpg"
+            "jpg",
+            "tga"
         ]
     },
     "ExtractReview": {
