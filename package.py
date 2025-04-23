@@ -1,6 +1,6 @@
 name = "photoshop"
 title = "Photoshop"
-version = "0.2.5"
+version = "0.2.5+dev"
 app_host_name = "photoshop"
 client_dir = "ayon_photoshop"
 
