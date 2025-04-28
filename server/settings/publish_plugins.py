@@ -129,6 +129,16 @@ class ExtractReviewPlugin(BaseSettingsModel):
     )
 
 
+class ExtractLayersPlugin(BaseSettingsModel):
+    """Export layers within the instance layerset to a PSD file."""
+    enabled: bool = SettingsField(True, title="Enabled")
+    merge_layersets: bool = SettingsField(
+        False,
+        title="Merge Layersets",
+        description="Merge all layersets within the instance set.",
+    )
+
+
 class PhotoshopPublishPlugins(BaseSettingsModel):
     CollectColorCodedInstances: CollectColorCodedInstancesPlugin = (
         SettingsField(
@@ -159,6 +169,11 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
     ExtractReview: ExtractReviewPlugin = SettingsField(
         title="Extract Review",
         default_factory=ExtractReviewPlugin,
+    )
+
+    ExtractLayers: ExtractLayersPlugin = SettingsField(
+        title="Extract Layers",
+        default_factory=ExtractLayersPlugin,
     )
 
 
@@ -202,5 +217,9 @@ DEFAULT_PUBLISH_SETTINGS = {
                 "webreview"
             ]
         }
+    },
+    "ExtractLayers": {
+        "enabled": True,
+        "merge_layersets": False
     }
 }

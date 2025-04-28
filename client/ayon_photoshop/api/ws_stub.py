@@ -2,7 +2,9 @@
     Stub handling connection from server to client.
     Used anywhere solution is calling client methods.
 """
+from contextlib import contextmanager
 import json
+from pathlib import Path
 import attr
 from wsrpc_aiohttp import WebSocketAsync
 
@@ -315,6 +317,35 @@ class PhotoshopServerStub:
             )
         )
 
+    def dissolve_layerset(self, layerset_id: str):
+        """Dissolve layer set (group).
+
+        Layers in group will be moved to parent layer set.
+
+        Args:
+            layerset_id (str): id of layer set to dissolve
+        """
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.dissolve_layerset',
+                layerset_id=layerset_id
+            )
+        )
+
+    def merge_all_layersets(self, parent_set=None):
+        """Merges layer sets into one layer.
+        
+        Args:
+            parent_set (str): id of layer set to merge layers sets it contains.
+                If None, all first level layer sets will be merged.
+        """
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.merge_all_layersets',
+                parent_set=parent_set,
+            )
+        )
+
     def get_active_document_full_name(self):
         """Returns full name with path of active document via ws call
 
@@ -369,6 +400,52 @@ class PhotoshopServerStub:
                 ext=ext,
                 as_copy=as_copy
             )
+        )
+
+    @contextmanager
+    def duplicate_document(self, path: str):
+        """Duplicate active document and save it to path.
+
+        Can be used as context manager:
+
+            with photoshop.duplicate_document(path):
+                # do photoshop things with duplicated document
+                pass
+
+        Args:
+            path (str): file path to save duplicated document
+        """
+        try:
+            path = Path(path)
+            document_id = self.websocketserver.call(
+                self.client.call(
+                    'Photoshop.duplicate_document',
+                    newName=path.name,
+                )
+            )
+            yield
+        finally:
+            # Save and close the duplicated document
+            self.saveAs(
+                image_path=str(path),
+                ext=path.suffix[1:],
+                as_copy=False
+            )
+            self.close_document(document_id)
+
+    def close_document(self, id: str):
+        """Close document with id."""
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.close_document',
+                id=id
+            )
+        )
+
+    def revert_to_previous(self):
+        """Reverts active document to last saved state"""
+        self.websocketserver.call(
+            self.client.call('Photoshop.revert_to_previous')
         )
 
     def set_visible(self, layer_id, visibility):
