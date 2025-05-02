@@ -131,7 +131,7 @@ class ExtractReviewPlugin(BaseSettingsModel):
 
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
-    enabled: bool = SettingsField(True, title="Enabled")
+    enabled: bool = SettingsField(False, title="Enabled")
     merge_layersets: bool = SettingsField(
         False,
         title="Merge Layersets",
