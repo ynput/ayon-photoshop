@@ -489,6 +489,21 @@ class PhotoshopServerStub:
             if layer.visible and layer.id not in extract_ids:
                 self.set_visible(layer.id, False)
 
+    def delete_all_layers(self, exclude_layers=None, exclude_recursive=False):
+        """Delete all layers except the ones in the exclude_layers list.
+
+        Args:
+            exclude_layers (list): list of layer ids to exclude from deletion
+            exclude_recursive (bool): layersets within exclude_layers will also be excluded
+        """
+        exclude_ids = {layer.id for layer in exclude_layers}
+        if exclude_recursive:
+            exclude_ids |= {ll.id for ll in self.get_layers_in_layers(exclude_layers)}
+        
+        for layer in self.get_layers():
+            if layer.id not in exclude_ids:
+                self.delete_layer(layer.id)
+
     def get_layers_metadata(self):
         """Reads layers metadata from Headline from active document in PS.
         (Headline accessible by File > File Info)
