@@ -180,7 +180,7 @@ function saveAs(output_path, ext, as_copy){
     }
     if (ext == 'psd'){
         saveOptions = null;
-        return app.activeDocument.saveAs(new File(saveName));       
+        return app.activeDocument.saveAs(new File(saveName), new PhotoshopSaveOptions(), true, Extension.LOWERCASE);       
     }
     if (ext == 'psb'){
         return savePSB(output_path);
@@ -188,6 +188,48 @@ function saveAs(output_path, ext, as_copy){
 
     return app.activeDocument.saveAs(new File(saveName), saveOptions, as_copy);   
     
+}
+
+/**
+ * Duplicate the active document
+ * @param {string} newName - The name for the duplicated document.
+ * @returns {string} - The ID of the duplicated document.
+ */
+function duplicateDocument(newName) {
+    var newDoc = app.activeDocument.duplicate(newName);
+    return newDoc.id;
+}
+
+/**
+ * Close document with given ID
+ * If no ID is provided, close the active document.
+ * @param {string} documentId - The ID of the document to close.
+ * @throws Will throw an error if the document with the given ID is not found.
+ */
+function closeDocument(documentId) {
+    if (typeof documentId == "undefined") {
+        var document = app.activeDocument;
+    } else {
+        for (var i = 0; i < app.documents.length; i++) {
+            if (app.documents[i].id == documentId) {
+                var document = app.documents[i];
+                break;
+            }
+        }
+        if (typeof document == "undefined") {
+            throw new Error("Document with ID " + documentId + " not found.");
+        }
+    }
+    
+    document.close(SaveOptions.DONOTSAVECHANGES);
+}
+
+/**
+ *  Revert to last saved state of document
+ */
+function revertToPrevious() {
+    var idRvrt = charIDToTypeID("Rvrt");
+    executeAction(idRvrt, undefined, DialogModes.NO);
 }
 
 function getActiveDocumentName(){
@@ -338,6 +380,66 @@ function groupSelectedLayers(doc, name) {
 
     return JSON.stringify(layer);        
 };
+
+/**
+ * Select PS object by id
+ * @param {string} id - id of object to select
+ * @returns ActionDescriptor used to select the object
+ */
+function selectObject(id) {
+    var ref = new ActionReference();
+    ref.putIdentifier(charIDToTypeID("Lyr "), id);
+    var desc = new ActionDescriptor();
+    desc.putReference(charIDToTypeID("null"), ref);
+    executeAction(charIDToTypeID("slct"), desc, DialogModes.NO);
+    return desc;
+}
+
+/**
+ * Delete a layer set and move its layers to the parent layer
+ * @param {string} layerSetId - id of the layer set to dissolve
+ */
+function dissolveLayerSet (layerSetId) {
+    var desc = selectObject(layerSetId);
+    var layerSet = app.activeDocument.activeLayer;
+
+    // Clone layers list
+    var layers = [];
+    for (var i = 0; i < layerSet.layers.length; i++) {
+        layers.push(layerSet.layers[i]);
+    }
+
+    // Move layers to the parent
+    for (var i = 0; i < layers.length; i++) {
+        layers[i].move(app.activeDocument, ElementPlacement.PLACEATEND);
+    }
+
+    // Remove the empty layer set
+    executeAction(stringIDToTypeID("delete"), desc, DialogModes.NO);
+}
+
+/**
+ * Merge all layer sets within an object
+ * @param {string} parentSetId - id of the parent layer set to merge
+ * If not provided, merges all layer sets in the document
+ */
+function mergeAllLayerSets(parentSetId) {
+    if (typeof parentSetId !== 'undefined') {
+        // Layersets within given layerset
+        selectObject(parentSetId);
+        var layerSets = app.activeDocument.activeLayer.layerSets;
+    } else {
+        // Use root layerSets
+        var layerSets = app.activeDocument.layerSets;
+    }
+
+    // Merge all layersets and keep visibility
+    for (var i = layerSets.length - 1; i >= 0; i--) {
+        var visibility = layerSets[i].visible;
+        newArtLayer = layerSets[i].merge();
+        newArtLayer.visible = visibility;
+    }
+}
 
 function importSmartObject(path, name, link){
     /**
