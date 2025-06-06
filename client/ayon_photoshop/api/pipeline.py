@@ -53,16 +53,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         register_event_callback("application.launched", on_application_launch)
 
-    def current_file(self):
-        try:
-            full_name = lib.stub().get_active_document_full_name()
-            if full_name and full_name != "null":
-                return os.path.normpath(full_name).replace("\\", "/")
-        except Exception:
-            pass
-
-        return None
-
     def work_root(self, session):
         return os.path.normpath(session["AYON_WORKDIR"]).replace("\\", "/")
 
@@ -76,10 +66,17 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         lib.stub().saveAs(filepath, ext[1:], True)
 
     def get_current_workfile(self):
-        return self.current_file()
+        try:
+            full_name = lib.stub().get_active_document_full_name()
+            if full_name and full_name != "null":
+                return os.path.normpath(full_name).replace("\\", "/")
+        except Exception:
+            pass
+
+        return None
 
     def workfile_has_unsaved_changes(self):
-        if self.current_file():
+        if self.get_current_workfile():
             return not lib.stub().is_saved()
 
         return False
