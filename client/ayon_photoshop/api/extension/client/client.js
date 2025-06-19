@@ -187,7 +187,29 @@
                       return result;
                   });
       });
-      
+
+      RPC.addRoute('Photoshop.merge_all_layersets', function (data) {
+            log.warn('Server called client route "merge_all_layersets":', 
+                    data);
+            
+            return runEvalScript("mergeAllLayerSets('" + data.parent_set + "')")
+                .then(function(result){
+                    log.warn("merge_all_layersets: " + result);
+                    return result;
+                });
+      });
+
+      RPC.addRoute('Photoshop.dissolve_layerset', function (data) { 
+            log.warn('Server called client route "dissolve_layerset":',
+                    data);
+
+            return runEvalScript("dissolveLayerSet('" + data.layerset_id + "')")
+                .then(function(result){
+                    log.warn("dissolve_layerset: " + result);
+                    return result;
+                });
+      });
+    
       RPC.addRoute('Photoshop.import_smart_object', function (data) {
               log.warn('Server called client "import_smart_object":', data);
               var escapedPath = EscapeStringForJSX(data.path);
@@ -261,6 +283,33 @@
                       log.warn("save: " + result);
                       return result;
                   });
+      });
+
+      RPC.addRoute('Photoshop.duplicate_document', function (data) {
+              log.warn('Server called client route "duplicate_document":', data);
+              return runEvalScript("duplicateDocument('" + data.newName + "')")
+                  .then(function(result){
+                      log.warn("duplicated: " + result);
+                      return result;
+                  });
+      });
+
+      RPC.addRoute('Photoshop.close_document', function (data) {
+                log.warn('Server called client route "close_document":', data);
+                return runEvalScript("closeDocument("+data.id+")")
+                    .then(function(result){
+                        log.warn("closed: " + result);
+                        return result;
+                    });
+      });
+
+      RPC.addRoute('Photoshop.revert_to_previous', function (data) {
+            log.warn('Server called client route "revertToPrevious":', data);
+            return runEvalScript("revertToPrevious()")
+                .then(function(result){
+                    log.warn("reverted: " + result);
+                    return result;
+                });
       });
       
       RPC.addRoute('Photoshop.imprint', function (data) {
