@@ -18,6 +18,12 @@ color_code_enum = [
     {"value": "gray", "label": "Gray"},
 ]
 
+extract_image_ext_enum = [
+    {"value": "png", "label": "png"},
+    {"value": "jpg", "label": "jpg"},
+    {"value": "tga", "label": "tga"},
+]
+
 
 class ColorCodeMappings(BaseSettingsModel):
     color_code: list[str] = SettingsField(
@@ -97,10 +103,12 @@ class ValidateNamingPlugin(BaseSettingsModel):
 
 
 class ExtractImagePlugin(BaseSettingsModel):
-    """Currently only jpg and png are supported"""
+    """Extracts image products and representations per published instance"""
+
     formats: list[str] = SettingsField(
         title="Extract Formats",
         default_factory=list,
+        enum_resolver=lambda: extract_image_ext_enum,
     )
 
 
@@ -197,7 +205,6 @@ DEFAULT_PUBLISH_SETTINGS = {
         "formats": [
             "png",
             "jpg",
-            "tga"
         ]
     },
     "ExtractReview": {
