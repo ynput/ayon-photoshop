@@ -219,7 +219,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         }
     },
     "ExtractLayers": {
-        "enabled": True,
+        "enabled": False,
         "merge_layersets": False
     }
 }
