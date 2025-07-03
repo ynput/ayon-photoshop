@@ -47,33 +47,17 @@ class ExtractSourcesReview(publish.Extractor):
         layers = self._get_layers_from_image_instances(instance)
         self.log.info("Layers image instance found: {}".format(layers))
 
-        repre_name = "jpg"
-        repre_skeleton = {
-            "name": repre_name,
-            "ext": "jpg",
-            "stagingDir": staging_dir,
-            "tags": self.jpg_options['tags'],
-        }
-
         if instance.data["productType"] != "review":
             self.log.debug(
                 "Existing extracted file from image product type used."
             )
-            # enable creation of review, without this jpg review would clash
-            # with jpg of the image product type
-            output_name = repre_name
-            repre_name = "{}_{}".format(repre_name, output_name)
-            repre_skeleton.update({"name": repre_name,
-                                   "outputName": output_name})
 
             img_file = self.output_seq_filename % 0
-            self._prepare_file_for_image_product_type(
+            thumbnail_source_path = self._prepare_file_for_image_product_type(
                 img_file, instance, staging_dir
             )
-            repre_skeleton.update({
-                "files": img_file,
-            })
-            processed_img_names = [img_file]
+
+            instance.data["thumbnailSource"] = thumbnail_source_path
         elif self.make_image_sequence and len(layers) > 1:
             self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
