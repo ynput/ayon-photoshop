@@ -63,13 +63,24 @@ class ExtractSourcesReview(publish.Extractor):
             self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
-            repre_skeleton.update({
-                "frameStart": 0,
-                "frameEnd": len(img_list),
-                "fps": fps,
-                "files": img_list,
-            })
-            processed_img_names = img_list
+            instance.data["representations"].append(
+                {
+                    "name": "jpg_intermediate",
+                    "ext": "jpg",
+                    "files": img_list,
+                    "stagingDir": staging_dir,
+                    "frameStart": 1,
+                    "frameEnd": len(img_list),
+                    "fps": fps,
+                    "tags": ["review"],
+                    "delete": True  # TODO
+                }
+            )
+
+            instance.data["thumbnailSource"] = os.path.join(
+                staging_dir,
+                img_list[0]
+            )
         else:
             self.log.debug("Extract layers to flatten image.")
             img_file = self._save_flatten_image(staging_dir, layers)
