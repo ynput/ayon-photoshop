@@ -10,7 +10,7 @@ from ayon_core.pipeline import publish
 from ayon_photoshop import api as photoshop
 
 
-class ExtractReview(publish.Extractor):
+class ExtractSourcesReview(publish.Extractor):
     """
         Produce a flattened or sequence image files from all 'image' instances.
 
@@ -26,7 +26,7 @@ class ExtractReview(publish.Extractor):
         or comp.)
     """
 
-    label = "Extract Review"
+    label = "Prepare Sources for Review"
     hosts = ["photoshop"]
     families = ["review"]
     settings_category = "photoshop"
