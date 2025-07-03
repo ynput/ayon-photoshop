@@ -32,8 +32,6 @@ class ExtractSourcesReview(publish.Extractor):
     settings_category = "photoshop"
 
     # Extract Options
-    jpg_options = None
-    mov_options = None
     make_image_sequence = None
     max_downscale_size = 8192
 
