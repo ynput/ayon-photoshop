@@ -17,7 +17,8 @@ class ExtractSourcesReview(publish.Extractor):
         If no 'image' instance is created, it produces flattened image from
         all visible layers.
 
-        It creates review, thumbnail and mov representations.
+        It can also create separate reviews per `image` instance if necessary.
+        (toggle on an instance in Publisher UI).
 
         'review' family could be used in other steps as a reference, as it
         contains flattened image by default. (Eg. artist could load this
