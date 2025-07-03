@@ -178,7 +178,13 @@ class ExtractSourcesReview(publish.Extractor):
         return source_files_pattern
 
     def _get_layers_from_image_instances(self, instance):
-        """Collect all layers from 'instance'.
+        """Collect all layers from image instance(s)
+
+        If `instance` is `image` it returns just layers out of it to create
+        separate review per instance.
+
+        If `instance` is (most likely) `review`, it collects all layers from
+        published instances to create one review from all of them.
 
         Returns:
             (list) of PSItem
@@ -192,6 +198,7 @@ class ExtractSourcesReview(publish.Extractor):
             layers.append(instance.data["layer"])
             return layers
 
+        # collect all layers from published image instances
         for image_instance in instance.context:
             if image_instance.data["productType"] != "image":
                 continue
@@ -222,7 +229,9 @@ class ExtractSourcesReview(publish.Extractor):
         return img_filename
 
     def _save_sequence_images(self, staging_dir, layers):
-        """Creates separate flat images from 'layers' into 'staging_dir'.
+        """Creates separate images from 'layers' into 'staging_dir'.
+
+        `layers` are actually groups matching instances.
 
         Used as source for multi frames .mov to review at once.
         Returns:
