@@ -102,100 +102,52 @@ class ExtractSourcesReview(publish.Extractor):
                 later)
             instance:
             staging_dir (str): temporary folder where extracted file is located
+
+        Returns:
+            (str): path to file for thumbnail in stagingDir
         """
-        repre_file = instance.data["representations"][0]
-        source_file_path = os.path.join(repre_file["stagingDir"],
-                                        repre_file["files"])
-        if not os.path.exists(source_file_path):
-            raise RuntimeError(f"{source_file_path} doesn't exist for "
-                               "review to create from")
-        _, ext = os.path.splitext(repre_file["files"])
-        if ext != ".jpg":
+        jpg_source_repre = None
+        thumbnail_source_path = os.path.join(staging_dir, img_file)
+        for repre in instance.data["representations"]:
+            if repre["name"] == "jpg":
+                jpg_source_repre = repre
+                break
+
+        if jpg_source_repre:
+            source_file_path = os.path.join(
+                jpg_source_repre["stagingDir"],
+                jpg_source_repre["files"]
+            )
+            if not os.path.exists(source_file_path):
+                raise RuntimeError(
+                    f"{source_file_path} doesn't exist for "
+                    "review to create from"
+                )
+            shutil.copy(
+                source_file_path,
+                thumbnail_source_path
+            )
+        else:
+            repre = instance.data["representations"][0]
+            source_file_path = os.path.join(
+                repre["stagingDir"],
+                repre["files"]
+            )
+            if not os.path.exists(source_file_path):
+                raise RuntimeError(
+                    f"{source_file_path} doesn't exist for "
+                    "review to create from"
+                )
             im = Image.open(source_file_path)
             if (im.mode in ('RGBA', 'LA') or (
                     im.mode == 'P' and 'transparency' in im.info)):
                 # without this it produces messy low quality jpg
                 rgb_im = Image.new("RGBA", (im.width, im.height), "#ffffff")
                 rgb_im.alpha_composite(im)
-                rgb_im.convert("RGB").save(os.path.join(staging_dir, img_file))
+                rgb_im.convert("RGB").save(thumbnail_source_path)
             else:
-                im.save(os.path.join(staging_dir, img_file))
-        else:
-            # handles already .jpg
-            shutil.copy(source_file_path,
-                        os.path.join(staging_dir, img_file))
-
-    def _generate_mov(self, ffmpeg_path, instance, fps, no_of_frames,
-                      source_files_pattern, staging_dir):
-        """Generates .mov to upload to Ftrack.
-
-        Args:
-            ffmpeg_path (str): path to ffmpeg
-            instance (Pyblish Instance)
-            fps (str)
-            no_of_frames (int):
-            source_files_pattern (str): name of source file
-            staging_dir (str): temporary location to store thumbnail
-        Updates:
-            instance - adds representation portion
-        """
-        # Generate mov.
-        mov_path = os.path.join(staging_dir, "review.mov")
-        self.log.info(f"Generate mov review: {mov_path}")
-        args = ffmpeg_path + [
-            "-y",
-            "-i", source_files_pattern,
-            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-            "-frames:v", str(no_of_frames),
-            mov_path
-        ]
-        self.log.debug("mov args:: {}".format(args))
-        _output = run_subprocess(args)
-        instance.data["representations"].append({
-            "name": "mov",
-            "ext": "mov",
-            "files": os.path.basename(mov_path),
-            "stagingDir": staging_dir,
-            "frameStart": 1,
-            "frameEnd": no_of_frames,
-            "fps": fps,
-            "tags": self.mov_options['tags']
-        })
-
-    def _generate_thumbnail(
-        self, ffmpeg_args, instance, source_files_pattern, staging_dir
-    ):
-        """Generates scaled down thumbnail and adds it as representation.
-
-        Args:
-            ffmpeg_path (str): path to ffmpeg
-            instance (Pyblish Instance)
-            source_files_pattern (str): name of source file
-            staging_dir (str): temporary location to store thumbnail
-        Updates:
-            instance - adds representation portion
-        """
-        # Generate thumbnail
-        thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
-        self.log.info(f"Generate thumbnail {thumbnail_path}")
-        args = ffmpeg_args + [
-            "-y",
-            "-i", source_files_pattern,
-            "-vf", "scale=300:-1",
-            "-frames:v", "1",
-            thumbnail_path
-        ]
-        self.log.debug("thumbnail args:: {}".format(args))
-        _output = run_subprocess(args)
-        instance.data["representations"].append({
-            "name": "thumbnail",
-            "ext": "jpg",
-            "outputName": "thumb",
-            "files": os.path.basename(thumbnail_path),
-            "stagingDir": staging_dir,
-            "tags": ["thumbnail", "delete"]
-        })
-        instance.data["thumbnailPath"] = thumbnail_path
+                im.save(thumbnail_source_path)
+        return thumbnail_source_path
 
     def _check_and_resize(self, processed_img_names, source_files_pattern,
                           staging_dir):
