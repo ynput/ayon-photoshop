@@ -84,38 +84,9 @@ class ExtractSourcesReview(publish.Extractor):
         else:
             self.log.debug("Extract layers to flatten image.")
             img_file = self._save_flatten_image(staging_dir, layers)
-
-            repre_skeleton.update({
-                "files": img_file,
-            })
-            processed_img_names = [img_file]
-
-        instance.data["representations"].append(repre_skeleton)
-
-        ffmpeg_args = get_ffmpeg_tool_args("ffmpeg")
+            instance.data["thumbnailSource"] = img_file
 
         instance.data["stagingDir"] = staging_dir
-
-        source_files_pattern = os.path.join(staging_dir,
-                                            self.output_seq_filename)
-        source_files_pattern = self._check_and_resize(processed_img_names,
-                                                      source_files_pattern,
-                                                      staging_dir)
-        self._generate_thumbnail(
-            list(ffmpeg_args),
-            instance,
-            source_files_pattern,
-            staging_dir)
-
-        no_of_frames = len(processed_img_names)
-        if no_of_frames > 1:
-            self._generate_mov(
-                list(ffmpeg_args),
-                instance,
-                fps,
-                no_of_frames,
-                source_files_pattern,
-                staging_dir)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
 
