@@ -226,7 +226,7 @@ class ExtractSourcesReview(publish.Extractor):
 
             stub.saveAs(output_image_path, 'jpg', True)
 
-        return img_filename
+        return output_image_path
 
     def _save_sequence_images(self, staging_dir, layers):
         """Creates separate images from 'layers' into 'staging_dir'.
