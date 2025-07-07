@@ -104,7 +104,7 @@ class ExtractImagePlugin(BaseSettingsModel):
     )
 
 
-class ExtractReviewPlugin(BaseSettingsModel):
+class ExtractSourceReviewPlugin(BaseSettingsModel):
     make_image_sequence: bool = SettingsField(
         False,
         title="Make an image sequence instead of flatten image"
@@ -116,16 +116,6 @@ class ExtractReviewPlugin(BaseSettingsModel):
         description="FFMpeg can only handle limited resolution for creation of review and/or thumbnail",  # noqa
         gt=300,  # greater than
         le=16384,  # less or equal
-    )
-
-    jpg_options: ExtractedOptions = SettingsField(
-        title="Extracted jpg Options",
-        default_factory=ExtractedOptions
-    )
-
-    mov_options: ExtractedOptions = SettingsField(
-        title="Extracted mov Options",
-        default_factory=ExtractedOptions
     )
 
 
@@ -166,9 +156,9 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         default_factory=ExtractImagePlugin,
     )
 
-    ExtractReview: ExtractReviewPlugin = SettingsField(
-        title="Extract Review",
-        default_factory=ExtractReviewPlugin,
+    ExtractSourcesReview: ExtractSourceReviewPlugin = SettingsField(
+        title="Extract Sources for Review",
+        default_factory=ExtractSourceReviewPlugin,
     )
 
     ExtractLayers: ExtractLayersPlugin = SettingsField(
@@ -200,23 +190,9 @@ DEFAULT_PUBLISH_SETTINGS = {
             "tga"
         ]
     },
-    "ExtractReview": {
+    "ExtractSourcesReview": {
         "make_image_sequence": False,
         "max_downscale_size": 8192,
-        "jpg_options": {
-            "tags": [
-                "review",
-                "ftrackreview",
-                "webreview"
-            ]
-        },
-        "mov_options": {
-            "tags": [
-                "review",
-                "ftrackreview",
-                "webreview"
-            ]
-        }
     },
     "ExtractLayers": {
         "enabled": False,
