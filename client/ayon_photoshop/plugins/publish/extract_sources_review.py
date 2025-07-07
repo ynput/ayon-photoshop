@@ -27,6 +27,7 @@ class ExtractSourcesReview(publish.Extractor):
     hosts = ["photoshop"]
     families = ["review"]
     settings_category = "photoshop"
+    order = publish.Extractor.order - 0.28
 
     # Extract Options
     make_image_sequence = None
