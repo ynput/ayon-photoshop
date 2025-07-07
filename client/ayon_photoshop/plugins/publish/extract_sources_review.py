@@ -2,10 +2,6 @@ import os
 import shutil
 from PIL import Image
 
-from ayon_core.lib import (
-    run_subprocess,
-    get_ffmpeg_tool_args,
-)
 from ayon_core.pipeline import publish
 from ayon_photoshop import api as photoshop
 
@@ -27,7 +23,7 @@ class ExtractSourcesReview(publish.Extractor):
         or comp.)
     """
 
-    label = "Prepare Sources for Review"
+    label = "Extract Sources for Review"
     hosts = ["photoshop"]
     families = ["review"]
     settings_category = "photoshop"
@@ -63,24 +59,23 @@ class ExtractSourcesReview(publish.Extractor):
             self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
+            instance.data["frameStart"] = 0
+            instance.data["frameEnd"] = len(img_list) - 1
+            instance.data["fps"] = fps
+
             instance.data["representations"].append(
                 {
-                    "name": "jpg_intermediate",
+                    "name": "jpg",
                     "ext": "jpg",
                     "files": img_list,
                     "stagingDir": staging_dir,
-                    "frameStart": 1,
-                    "frameEnd": len(img_list),
+                    "frameStart": instance.data["frameStart"],
+                    "frameEnd": instance.data["frameEnd"],
                     "fps": fps,
                     "tags": ["review"],
-                    "delete": True  # TODO
                 }
             )
 
-            instance.data["thumbnailSource"] = os.path.join(
-                staging_dir,
-                img_list[0]
-            )
         else:
             self.log.debug("Extract layers to flatten image.")
             img_file = self._save_flatten_image(staging_dir, layers)
