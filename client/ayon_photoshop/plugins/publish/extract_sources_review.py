@@ -36,7 +36,6 @@ class ExtractSourcesReview(publish.Extractor):
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
 
-        fps = instance.data.get("fps", 25)
         stub = photoshop.stub()
         self.output_seq_filename = os.path.splitext(
             stub.get_active_document_name())[0] + ".%04d.jpg"
@@ -44,133 +43,57 @@ class ExtractSourcesReview(publish.Extractor):
         layers = self._get_layers_from_image_instances(instance)
         self.log.info("Layers image instance found: {}".format(layers))
 
-        if instance.data["productType"] != "review":
-            self.log.debug(
-                "Existing extracted file from image product type used."
-            )
+        additional_repre = {
+            "name": "jpg",
+            "ext": "jpg",
+            "output_name": "jpg_jpg",
+            "frameStart": instance.data["frameStart"],
+            "frameEnd": instance.data["frameEnd"],
+            "fps": instance.data["fps"],
+            "stagingDir": staging_dir,
+            "tags": ["review"],
+        }
 
-            img_file = self.output_seq_filename % 0
-            thumbnail_source_path = self._prepare_file_for_image_product_type(
-                img_file, instance, staging_dir
-            )
-
-            instance.data["thumbnailSource"] = thumbnail_source_path
+        if instance.data["productType"] == "image":
+            self._attach_review_tag(instance)
         elif self.make_image_sequence and len(layers) > 1:
             self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
-            instance.data["frameStart"] = 0
-            instance.data["frameEnd"] = len(img_list) - 1
-            instance.data["fps"] = fps
+            instance.data["frameEnd"] = instance.data["frameStart"] + len(img_list) - 1
 
-            instance.data["representations"].append(
-                {
-                    "name": "jpg",
-                    "ext": "jpg",
-                    "files": img_list,
-                    "stagingDir": staging_dir,
-                    "frameStart": instance.data["frameStart"],
-                    "frameEnd": instance.data["frameEnd"],
-                    "fps": fps,
-                    "tags": ["review"],
-                }
-            )
+            additional_repre["files"] = img_list
+            instance.data["representations"].append(additional_repre)
 
         else:
             self.log.debug("Extract layers to flatten image.")
-            img_file = self._save_flatten_image(staging_dir, layers)
-            instance.data["thumbnailSource"] = img_file
+            review_source_path = self._save_flatten_image(
+                staging_dir,
+                layers
+            )
+            additional_repre["files"] = os.path.basename(review_source_path)
+            instance.data["representations"].append(additional_repre)
 
         instance.data["stagingDir"] = staging_dir
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
 
-    def _prepare_file_for_image_product_type(
-        self, img_file, instance, staging_dir
-    ):
-        """Converts existing file for image product type to .jpg
+    def _attach_review_tag(self, instance):
+        """Searches for repre for which jpg review should be created.
 
-        Image instance could have its own separate review (instance per layer
-        for example). This uses extracted file instead of extracting again.
-        Args:
-            img_file (str): name of output file (with 0000 value for ffmpeg
-                later)
-            instance:
-            staging_dir (str): temporary folder where extracted file is located
+        "jpg" representation is preferred.
 
-        Returns:
-            (str): path to file for thumbnail in stagingDir
         """
         jpg_source_repre = None
-        thumbnail_source_path = os.path.join(staging_dir, img_file)
         for repre in instance.data["representations"]:
             if repre["name"] == "jpg":
                 jpg_source_repre = repre
+                repre["tags"].append("review")
                 break
 
-        if jpg_source_repre:
-            source_file_path = os.path.join(
-                jpg_source_repre["stagingDir"],
-                jpg_source_repre["files"]
-            )
-            if not os.path.exists(source_file_path):
-                raise RuntimeError(
-                    f"{source_file_path} doesn't exist for "
-                    "review to create from"
-                )
-            shutil.copy(
-                source_file_path,
-                thumbnail_source_path
-            )
-        else:
+        if not jpg_source_repre:
             repre = instance.data["representations"][0]
-            source_file_path = os.path.join(
-                repre["stagingDir"],
-                repre["files"]
-            )
-            if not os.path.exists(source_file_path):
-                raise RuntimeError(
-                    f"{source_file_path} doesn't exist for "
-                    "review to create from"
-                )
-            im = Image.open(source_file_path)
-            if (im.mode in ('RGBA', 'LA') or (
-                    im.mode == 'P' and 'transparency' in im.info)):
-                # without this it produces messy low quality jpg
-                rgb_im = Image.new("RGBA", (im.width, im.height), "#ffffff")
-                rgb_im.alpha_composite(im)
-                rgb_im.convert("RGB").save(thumbnail_source_path)
-            else:
-                im.save(thumbnail_source_path)
-        return thumbnail_source_path
-
-    def _check_and_resize(self, processed_img_names, source_files_pattern,
-                          staging_dir):
-        """Check if saved image could be used in ffmpeg.
-
-        Ffmpeg has max size 16384x16384. Saved image(s) must be resized to be
-        used as a source for thumbnail or review mov.
-        """
-        Image.MAX_IMAGE_PIXELS = None
-        first_url = os.path.join(staging_dir, processed_img_names[0])
-        with Image.open(first_url) as im:
-            width, height = im.size
-
-        if width > self.max_downscale_size or height > self.max_downscale_size:
-            resized_dir = os.path.join(staging_dir, "resized")
-            os.mkdir(resized_dir)
-            source_files_pattern = os.path.join(resized_dir,
-                                                self.output_seq_filename)
-            for file_name in processed_img_names:
-                source_url = os.path.join(staging_dir, file_name)
-                with Image.open(source_url) as res_img:
-                    # 'thumbnail' automatically keeps aspect ratio
-                    res_img.thumbnail((self.max_downscale_size,
-                                       self.max_downscale_size),
-                                      Image.ANTIALIAS)
-                    res_img.save(os.path.join(resized_dir, file_name))
-
-        return source_files_pattern
+            repre["tags"].append("review")
 
     def _get_layers_from_image_instances(self, instance):
         """Collect all layers from image instance(s)
