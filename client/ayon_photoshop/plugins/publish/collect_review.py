@@ -24,3 +24,11 @@ class CollectReview(pyblish.api.ContextPlugin):
             if (creator_attributes.get("mark_for_review") and
                     "review" not in instance.data["families"]):
                 instance.data["families"].append("review")
+
+            if "tags" not in instance.data:
+                instance.data["tags"] = []
+
+            if "review" in instance.data["families"]:
+                instance.data["frameStart"] = context.data["frameStart"]
+                instance.data["frameEnd"] = context.data["frameEnd"]
+                instance.data["fps"] = context.data["fps"]
