@@ -110,14 +110,6 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
         title="Make an image sequence instead of flatten image"
     )
 
-    max_downscale_size: int = SettingsField(
-        8192,
-        title="Maximum size of sources for review",
-        description="FFMpeg can only handle limited resolution for creation of review and/or thumbnail",  # noqa
-        gt=300,  # greater than
-        le=16384,  # less or equal
-    )
-
 
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
@@ -192,7 +184,6 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractSourcesReview": {
         "make_image_sequence": False,
-        "max_downscale_size": 8192,
     },
     "ExtractLayers": {
         "enabled": False,

@@ -31,7 +31,6 @@ class ExtractSourcesReview(publish.Extractor):
 
     # Extract Options
     make_image_sequence = None
-    max_downscale_size = 8192
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
