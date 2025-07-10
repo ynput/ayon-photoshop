@@ -1,6 +1,4 @@
 import os
-import shutil
-from PIL import Image
 
 from ayon_core.pipeline import publish
 from ayon_photoshop import api as photoshop
