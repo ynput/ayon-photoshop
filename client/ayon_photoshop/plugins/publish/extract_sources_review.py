@@ -8,6 +8,10 @@ class ExtractSourcesReview(publish.Extractor):
     """
         Produce a flattened or sequence image files from all 'image' instances.
 
+        These files are then used by global `ExtractReview` and
+        `ExtractThumbnail` to create reviews with globally controllable
+        configuration.
+
         If no 'image' instance is created, it produces flattened image from
         all visible layers.
 
