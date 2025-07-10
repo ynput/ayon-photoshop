@@ -72,6 +72,8 @@ class ExtractSourcesReview(publish.Extractor):
                 layers
             )
             additional_repre["files"] = os.path.basename(review_source_path)
+            # just intermediate repre to create a review from
+            additional_repre["tags"].append("delete")
             instance.data["representations"].append(additional_repre)
 
         instance.data["stagingDir"] = staging_dir
