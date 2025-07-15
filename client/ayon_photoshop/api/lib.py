@@ -36,6 +36,13 @@ def main(*subprocess_args):
     launcher = ProcessLauncher(subprocess_args)
     launcher.start()
 
+    env_workfiles_on_launch = os.getenv(
+        "AYON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
+        # Backwards compatibility
+        os.getenv("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True)
+    )
+    workfiles_on_launch = env_value_to_bool(value=env_workfiles_on_launch)
+
     if is_in_tests():
         manager = AddonsManager()
         photoshop_addon = manager["photoshop"]
@@ -56,8 +63,7 @@ def main(*subprocess_args):
             "ClosePS",
             is_in_tests()
         )
-    elif env_value_to_bool("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
-                           default=True):
+    elif workfiles_on_launch:
 
         launcher.execute_in_main_thread(
             host_tools.show_workfiles,
