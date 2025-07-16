@@ -37,7 +37,7 @@ class PhotoshopSettings(BaseSettingsModel):
 
 
 DEFAULT_PHOTOSHOP_SETTING = {
-    "auto_install_extension": False,
+    "auto_install_extension": True,
     "create": DEFAULT_CREATE_SETTINGS,
     "publish": DEFAULT_PUBLISH_SETTINGS,
     "workfile_builder": {
