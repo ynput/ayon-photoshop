@@ -124,10 +124,9 @@ class ExtractSourcesReview(publish.Extractor):
         for image_instance in instance.context:
             if image_instance.data["productType"] != "image":
                 continue
-            if not image_instance.data.get("layer"):
-                # dummy instance for flatten image
-                continue
-            layers.append(image_instance.data.get("layer"))
+            layer =  image_instance.data.get("layer")
+            if layer:
+                layers.append(layer)
 
         return sorted(layers)
 
