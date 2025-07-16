@@ -40,7 +40,7 @@ class ExtractSourcesReview(publish.Extractor):
 
         stub = photoshop.stub()
         self.output_seq_filename = os.path.splitext(
-            stub.get_active_document_name())[0] + ".%04d.png"
+            stub.get_active_document_name())[0] + ".%04d.jpg"
 
         layers = self._get_layers_from_image_instances(instance)
         self.log.info("Layers image instance found: {}".format(layers))
