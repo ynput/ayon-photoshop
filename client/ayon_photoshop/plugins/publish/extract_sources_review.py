@@ -48,7 +48,6 @@ class ExtractSourcesReview(publish.Extractor):
         additional_repre = {
             "name": "jpg",
             "ext": "jpg",
-            "output_name": "jpg_jpg",
             "frameStart": instance.data["frameStart"],
             "frameEnd": instance.data["frameEnd"],
             "fps": instance.data["fps"],
@@ -63,7 +62,7 @@ class ExtractSourcesReview(publish.Extractor):
             img_list = self._save_sequence_images(staging_dir, layers)
 
             instance.data["frameEnd"] = instance.data["frameStart"] + len(img_list) - 1
-
+            additional_repre["output_name"] = "mov"
             additional_repre["files"] = img_list
             instance.data["representations"].append(additional_repre)
 
@@ -74,6 +73,7 @@ class ExtractSourcesReview(publish.Extractor):
                 layers
             )
             additional_repre["files"] = os.path.basename(review_source_path)
+            additional_repre["output_name"] = "jpg"
             # just intermediate repre to create a review from
             additional_repre["tags"].append("delete")
             instance.data["representations"].append(additional_repre)
