@@ -21,7 +21,9 @@ class CollectReview(pyblish.api.ContextPlugin):
     def process(self, context):
         for instance in context:
             creator_attributes = instance.data["creator_attributes"]
-            if not creator_attributes.get("mark_for_review"):
+
+            if (not creator_attributes.get("mark_for_review") and
+                    "review" not in instance.data["families"]):
                 continue
 
             if "review" not in instance.data["families"]:
