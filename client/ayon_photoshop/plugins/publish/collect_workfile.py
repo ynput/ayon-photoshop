@@ -1,4 +1,5 @@
 import os
+
 import pyblish.api
 
 
@@ -13,7 +14,7 @@ class CollectWorkfile(pyblish.api.InstancePlugin):
     default_variant = "Main"
 
     def process(self, instance):
-        file_path = context.data["currentFile"]
+        file_path = instance.context.data["currentFile"]
         _, ext = os.path.splitext(file_path)
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
