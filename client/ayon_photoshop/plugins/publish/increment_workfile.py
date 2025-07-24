@@ -23,6 +23,7 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
                 "Skipping incrementing current file because publishing failed."
             )
 
+        context = instance.context
         current_filepath: str = context.data["currentFile"]
         host: IWorkfileHost = registered_host()
         try:
