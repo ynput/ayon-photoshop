@@ -3,6 +3,7 @@ title = "Photoshop"
 version = "0.3.0+dev"
 app_host_name = "photoshop"
 client_dir = "ayon_photoshop"
+project_can_override_addon_version = True
 
 ayon_server_version = ">=1.1.2"
 ayon_required_addons = {
