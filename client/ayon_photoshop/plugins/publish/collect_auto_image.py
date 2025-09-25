@@ -81,12 +81,12 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
             variant = context.data.get("variant") or variants[0]
 
             product_name = get_product_name(
-                project_name,
-                task_name,
-                task_type,
-                host_name,
-                product_type,
-                variant,
+                project_name=project_name,
+                task_name=task_name,
+                task_type=task_type,
+                host_name=host_name,
+                product_type=product_type,
+                variant=variant,
             )
 
             instance = context.create_instance(product_name)
