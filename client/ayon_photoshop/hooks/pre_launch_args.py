@@ -58,10 +58,9 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
         # Pop executable
         executable_path = self.launch_context.launch_args.pop(0)
 
-        # Pop rest of launch arguments - There should not be other arguments!
-        remainders = []
+        args = []
         while self.launch_context.launch_args:
-            remainders.append(self.launch_context.launch_args.pop(0))
+            args.append(self.launch_context.launch_args.pop(0))
 
         script_path = get_launch_script_path()
 
@@ -76,8 +75,10 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
         # Append as whole list as these arguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
 
-        if remainders:
-            self.launch_context.launch_args.extend(remainders)
+        for arg in args:
+            if os.path.isfile(arg):
+                arg = os.path.realpath(arg)
+            self.launch_context.launch_args.append(arg)
 
         self.launch_context.kwargs = get_launch_kwargs(
             self.launch_context.kwargs
