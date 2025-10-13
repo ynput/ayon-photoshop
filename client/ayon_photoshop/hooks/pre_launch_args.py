@@ -46,8 +46,8 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
     Hook add python executable and script path to Photoshop implementation
     before Photoshop executable and add last workfile path to launch arguments.
 
-    Existence of last workfile is checked. If workfile does not exists tries
-    to copy templated workfile from predefined path.
+    Last workfile path would be added to self.launch_context.launch_args by
+    global `pre_add_last_workfile_arg`.
     """
     app_groups = {"photoshop"}
 
