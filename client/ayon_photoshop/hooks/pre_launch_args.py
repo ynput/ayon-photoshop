@@ -75,8 +75,9 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
             and workfile_path
             and os.path.exists(workfile_path)
         ):
-            new_launch_args.append(workfile_path)
             new_launch_args.append(os.path.realpath(workfile_path))
+            if workfile_path in remainders:
+                remainders.remove(workfile_path)
 
         workfile_startup = self.data.get("workfile_startup", False)
         self.launch_context.env["AYON_PHOTOSHOP_WORKFILES_ON_LAUNCH"] = (
