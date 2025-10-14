@@ -46,8 +46,8 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
     Hook add python executable and script path to Photoshop implementation
     before Photoshop executable and add last workfile path to launch arguments.
 
-    Existence of last workfile is checked. If workfile does not exists tries
-    to copy templated workfile from predefined path.
+    Last workfile path would be added to self.launch_context.launch_args by
+    global `pre_add_last_workfile_arg`.
     """
     app_groups = {"photoshop"}
 
@@ -58,24 +58,15 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
         # Pop executable
         executable_path = self.launch_context.launch_args.pop(0)
 
-        # Pop rest of launch arguments - There should not be other arguments!
-        remainders = []
+        args = []
         while self.launch_context.launch_args:
-            remainders.append(self.launch_context.launch_args.pop(0))
+            args.append(self.launch_context.launch_args.pop(0))
 
         script_path = get_launch_script_path()
 
         new_launch_args = get_ayon_launcher_args(
             "run", script_path, executable_path
         )
-        # Add workfile path if exists
-        workfile_path = self.data["last_workfile_path"]
-        if (
-            self.data.get("start_last_workfile")
-            and workfile_path
-            and os.path.exists(workfile_path)
-        ):
-            new_launch_args.append(workfile_path)
 
         workfile_startup = self.data.get("workfile_startup", False)
         self.launch_context.env["AYON_PHOTOSHOP_WORKFILES_ON_LAUNCH"] = (
@@ -84,8 +75,10 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
         # Append as whole list as these arguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
 
-        if remainders:
-            self.launch_context.launch_args.extend(remainders)
+        for arg in args:
+            if os.path.isfile(arg):
+                arg = os.path.realpath(arg)
+            self.launch_context.launch_args.append(arg)
 
         self.launch_context.kwargs = get_launch_kwargs(
             self.launch_context.kwargs
