@@ -63,7 +63,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def save_workfile(self, filepath=None):
         _, ext = os.path.splitext(filepath)
-        lib.stub().saveAs(filepath, ext, False)
+        lib.stub().saveAs(filepath, ext.lstrip("."), False)
 
     def get_current_workfile(self):
         try:
