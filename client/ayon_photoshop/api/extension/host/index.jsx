@@ -180,7 +180,12 @@ function saveAs(output_path, ext, as_copy){
     }
     if (ext == 'psd'){
         saveOptions = null;
-        return app.activeDocument.saveAs(new File(saveName), new PhotoshopSaveOptions(), true, Extension.LOWERCASE);       
+        return app.activeDocument.saveAs(
+            new File(saveName),
+            new PhotoshopSaveOptions(),
+            as_copy,
+            Extension.LOWERCASE
+        );
     }
     if (ext == 'psb'){
         return savePSB(output_path);
