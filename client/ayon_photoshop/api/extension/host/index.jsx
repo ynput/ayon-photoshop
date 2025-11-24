@@ -179,7 +179,6 @@ function saveAs(output_path, ext, as_copy){
         saveOptions.alphaChannels = true;
     }
     if (ext == 'psd'){
-        saveOptions = null;
         return app.activeDocument.saveAs(
             new File(saveName),
             new PhotoshopSaveOptions(),
