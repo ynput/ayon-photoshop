@@ -70,7 +70,7 @@ class ImageCreator(Creator):
         # wrap each top level layer into separate new group
         for layer in top_layers_to_wrap:
             stub.select_layers([layer])
-            group = stub.group_selected_layers(layer.name)
+            group = stub.group_selected_layers(product_name_from_ui)
             groups_to_create.append(group)
 
         layer_name = ''
