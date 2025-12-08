@@ -37,6 +37,10 @@ class ExtractImage(
             if not layer.visible:
                 hidden_layer_ids.add(layer.id)
         stub.hide_all_others_layers_ids([], layers=all_layers)
+        native_colorspace = stub.get_document_colorspace()
+        host_name = context.data["hostName"]
+        project_settings = context.data["project_settings"]
+        host_imageio_settings = project_settings["photoshop"]["imageio"]
 
         with photoshop.maintained_selection():
             with photoshop.maintained_visibility(layers=all_layers):
@@ -98,7 +102,6 @@ class ExtractImage(
                             native_colorspace,
                             host_name,
                             host_imageio_settings,
-
                         )
                         # inject colorspace data
                         self.set_representation_colorspace(
