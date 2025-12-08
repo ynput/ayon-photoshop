@@ -2,10 +2,14 @@ import os
 
 import pyblish.api
 from ayon_core.pipeline import publish
+from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
 
 
-class ExtractImage(pyblish.api.ContextPlugin):
+class ExtractImage(
+    pyblish.api.ContextPlugin,
+    publish.ColormanagedPyblishPluginMixin
+):
     """Extract all layers (groups) marked for publish.
 
     Usually publishable instance is created as a wrapper of layer(s). For each
@@ -83,15 +87,25 @@ class ExtractImage(pyblish.api.ContextPlugin):
 
                     representations = []
                     for extension, filename in files.items():
-                        representations.append(
-                            {
-                                "name": extension,
-                                "ext": extension,
-                                "files": filename,
-                                "stagingDir": staging_dir,
-                                "tags": [],
-                            }
+                        repre = {
+                            "name": extension,
+                            "ext": extension,
+                            "files": filename,
+                            "stagingDir": staging_dir,
+                            "tags": [],
+                        }
+                        ayon_colorspace = get_remapped_colorspace_from_native(
+                            native_colorspace,
+                            host_name,
+                            host_imageio_settings,
+
                         )
+                        # inject colorspace data
+                        self.set_representation_colorspace(
+                            repre, context,
+                            colorspace=ayon_colorspace
+                        )
+                        representations.append(repre)
                     instance.data["representations"] = representations
                     instance.data["stagingDir"] = staging_dir
 
