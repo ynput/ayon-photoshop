@@ -334,7 +334,7 @@ class PhotoshopServerStub:
 
     def merge_all_layersets(self, parent_set=None):
         """Merges layer sets into one layer.
-        
+
         Args:
             parent_set (str): id of layer set to merge layers sets it contains.
                 If None, all first level layer sets will be merged.
@@ -499,7 +499,7 @@ class PhotoshopServerStub:
         exclude_ids = {layer.id for layer in exclude_layers}
         if exclude_recursive:
             exclude_ids |= {ll.id for ll in self.get_layers_in_layers(exclude_layers)}
-        
+
         for layer in self.get_layers():
             if layer.id not in exclude_ids:
                 self.delete_layer(layer.id)
@@ -598,6 +598,19 @@ class PhotoshopServerStub:
                 name=name
             )
         )
+
+    def get_colorspace_settings(self):
+        """Returns colorspace settings of the document."""
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_colorspace_settings'))
+        layers_data = []
+        try:
+            if res:
+                colorspace_settings = json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("{} cannot be parsed, recreate meta".format(res))
+
+        return colorspace_settings
 
     def remove_instance(self, instance_id):
         cleaned_data = []
