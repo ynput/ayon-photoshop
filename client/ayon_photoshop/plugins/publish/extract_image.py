@@ -37,7 +37,7 @@ class ExtractImage(
             if not layer.visible:
                 hidden_layer_ids.add(layer.id)
         stub.hide_all_others_layers_ids([], layers=all_layers)
-        native_colorspace = stub.get_document_colorspace()
+        native_colorspace = stub.get_color_profile_name()
         host_name = context.data["hostName"]
         project_settings = context.data["project_settings"]
         host_imageio_settings = project_settings["photoshop"]["imageio"]

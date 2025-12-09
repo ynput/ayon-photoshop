@@ -115,11 +115,11 @@
                       return result;
                   });
       });
-      RPC.addRoute('Photoshop.get_colorspace_settings', function (data) {
-              log.warn('Server called client route "get_colorspace_settings":');
-              return runEvalScript("colorSettings()")
+      RPC.addRoute('Photoshop.get_color_profile_name', function (data) {
+              log.warn('Server called client route "get_color_profile_name":', data);
+              return runEvalScript("colorProfileName()")
                 .then(function (result) {
-                  log.warn("colorSettings: " + result);
+                  log.warn("get_color_profile_name: " + result);
                   return result;
                 });
       });
