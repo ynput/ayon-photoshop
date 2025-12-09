@@ -38,6 +38,7 @@ class ExtractImage(
                 hidden_layer_ids.add(layer.id)
         stub.hide_all_others_layers_ids([], layers=all_layers)
         native_colorspace = stub.get_color_profile_name()
+        self.log.info(f">>>>>>>>>>>>> Native colorspace: {native_colorspace}")
         host_name = context.data["hostName"]
         project_settings = context.data["project_settings"]
         host_imageio_settings = project_settings["photoshop"]["imageio"]
@@ -103,11 +104,13 @@ class ExtractImage(
                             host_name,
                             host_imageio_settings,
                         )
+                        self.log.info(f">>> ayon_colorspace: {ayon_colorspace}")
                         # inject colorspace data
                         self.set_representation_colorspace(
                             repre, context,
                             colorspace=ayon_colorspace
                         )
+                        self.log.info(f">>> representation: {repre}")
                         representations.append(repre)
                     instance.data["representations"] = representations
                     instance.data["stagingDir"] = staging_dir

@@ -1,7 +1,6 @@
 import re
 
 from ayon_core.pipeline import get_representation_path
-from ayon_core.pipeline.colorspace import get_remapped_colorspace_to_native
 from ayon_photoshop import api as photoshop
 from ayon_photoshop.api import get_unique_layer_name
 
