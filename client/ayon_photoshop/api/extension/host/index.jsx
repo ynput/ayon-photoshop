@@ -149,7 +149,7 @@ function save(){
 }
 
 function colorProfileName() {
-  return app.activeDocument.colorProfileName();
+  return app.activeDocument.colorProfileName;
 }
 
 function saveAs(output_path, ext, as_copy){
