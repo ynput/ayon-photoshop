@@ -599,18 +599,12 @@ class PhotoshopServerStub:
             )
         )
 
-    def get_colorspace_settings(self):
-        """Returns colorspace settings of the document."""
-        res = self.websocketserver.call(
-            self.client.call('Photoshop.get_colorspace_settings'))
-        layers_data = []
-        try:
-            if res:
-                colorspace_settings = json.loads(res)
-        except json.decoder.JSONDecodeError:
-            raise ValueError("{} cannot be parsed, recreate meta".format(res))
-
-        return colorspace_settings
+    def get_color_profile_name(self):
+        """Returns active document's color profile name."""
+        colorspace_profile = self.websocketserver.call(
+            self.client.call('Photoshop.get_color_profile_name')
+        )
+        return colorspace_profile
 
     def remove_instance(self, instance_id):
         cleaned_data = []
