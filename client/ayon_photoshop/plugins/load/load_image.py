@@ -84,32 +84,3 @@ class ImageLoader(photoshop.PhotoshopLoader):
 
     def import_layer(self, file_name, layer_name, stub):
         return stub.import_smart_object(file_name, layer_name)
-
-    def _get_colorspace(self, representation: dict) -> Optional[str]:
-        """Return Resolve native colorspace from OCIO colorspace data.
-
-        Returns:
-            Optional[str]: The Resolve native colorspace name, if any mapped.
-        """
-
-        data = representation.get("data", {}).get("colorspaceData", {})
-        if not data:
-            return
-
-        ocio_colorspace = data["colorspace"]
-        if not ocio_colorspace:
-            return
-
-        resolve_colorspace = get_remapped_colorspace_to_native(
-            ocio_colorspace_name=ocio_colorspace,
-            host_name="resolve",
-            imageio_host_settings=self._host_imageio_settings
-        )
-        if resolve_colorspace:
-            return resolve_colorspace
-        else:
-            self.log.warning(
-                f"No mapping from OCIO colorspace '{ocio_colorspace}' "
-                "found to a Resolve colorspace. "
-                "Ignoring colorspace."
-            )
