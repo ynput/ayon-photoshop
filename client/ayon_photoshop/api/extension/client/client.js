@@ -117,7 +117,7 @@
       });
       RPC.addRoute('Photoshop.get_color_profile_name', function (data) {
               log.warn('Server called client route "get_color_profile_name":', data);
-              return runEvalScript("colorProfileName()")
+              return runEvalScript("getColorProfileName()")
                 .then(function (result) {
                   log.warn("get_color_profile_name: " + result);
                   return result;

@@ -148,7 +148,7 @@ function save(){
     return app.activeDocument.save();
 }
 
-function colorProfileName() {
+function getColorProfileName() {
   return app.activeDocument.colorProfileName;
 }
 
