@@ -148,6 +148,10 @@ function save(){
     return app.activeDocument.save();
 }
 
+function getColorProfileName() {
+  return app.activeDocument.colorProfileName;
+}
+
 function saveAs(output_path, ext, as_copy){
     /** Exports scene to various formats
      * 

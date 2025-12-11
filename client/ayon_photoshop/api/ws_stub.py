@@ -599,6 +599,13 @@ class PhotoshopServerStub:
             )
         )
 
+    def get_color_profile_name(self):
+        """Returns active document's color profile name."""
+        colorspace_profile = self.websocketserver.call(
+            self.client.call('Photoshop.get_color_profile_name')
+        )
+        return colorspace_profile
+
     def remove_instance(self, instance_id):
         cleaned_data = []
 

@@ -1,10 +1,14 @@
 import os
 
 from ayon_core.pipeline import publish
+from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
 
 
-class ExtractSourcesReview(publish.Extractor):
+class ExtractSourcesReview(
+    publish.Extractor,
+    publish.ColormanagedPyblishPluginMixin
+):
     """
         Produce a flattened or sequence image files from all 'image' instances.
 
@@ -39,6 +43,17 @@ class ExtractSourcesReview(publish.Extractor):
         self.log.info("Outputting image to {}".format(staging_dir))
 
         stub = photoshop.stub()
+        native_colorspace = stub.get_color_profile_name()
+        self.log.info(f"Document colorspace profile: {native_colorspace}")
+        host_name = instance.context.data["hostName"]
+        project_settings = instance.context.data["project_settings"]
+        host_imageio_settings = project_settings["photoshop"]["imageio"]
+        ayon_colorspace = get_remapped_colorspace_from_native(
+            native_colorspace,
+            host_name,
+            host_imageio_settings,
+        )
+        self.log.debug(f"ayon_colorspace: {ayon_colorspace}")
         self.output_seq_filename = os.path.splitext(
             stub.get_active_document_name())[0] + ".%04d.jpg"
 
@@ -61,9 +76,16 @@ class ExtractSourcesReview(publish.Extractor):
             self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
-            instance.data["frameEnd"] = instance.data["frameStart"] + len(img_list) - 1
+            instance.data["frameEnd"] = (
+                instance.data["frameStart"] + len(img_list) - 1)
             additional_repre["output_name"] = "mov"
             additional_repre["files"] = img_list
+
+            # inject colorspace data
+            self.set_representation_colorspace(
+                additional_repre, instance.context,
+                colorspace=ayon_colorspace
+            )
             instance.data["representations"].append(additional_repre)
 
         else:
@@ -76,6 +98,11 @@ class ExtractSourcesReview(publish.Extractor):
             additional_repre["output_name"] = "jpg"
             # just intermediate repre to create a review from
             additional_repre["tags"].append("delete")
+            # inject colorspace data
+            self.set_representation_colorspace(
+                additional_repre, instance.context,
+                colorspace=ayon_colorspace
+            )
             instance.data["representations"].append(additional_repre)
 
         instance.data["stagingDir"] = staging_dir

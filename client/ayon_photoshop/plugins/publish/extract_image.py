@@ -2,10 +2,14 @@ import os
 
 import pyblish.api
 from ayon_core.pipeline import publish
+from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
 
 
-class ExtractImage(pyblish.api.ContextPlugin):
+class ExtractImage(
+    pyblish.api.ContextPlugin,
+    publish.ColormanagedPyblishPluginMixin
+):
     """Extract all layers (groups) marked for publish.
 
     Usually publishable instance is created as a wrapper of layer(s). For each
@@ -33,13 +37,18 @@ class ExtractImage(pyblish.api.ContextPlugin):
             if not layer.visible:
                 hidden_layer_ids.add(layer.id)
         stub.hide_all_others_layers_ids([], layers=all_layers)
+        native_colorspace = stub.get_color_profile_name()
+        self.log.info(f"Document colorspace profile: {native_colorspace}")
+        host_name = context.data["hostName"]
+        project_settings = context.data["project_settings"]
+        host_imageio_settings = project_settings["photoshop"]["imageio"]
 
         with photoshop.maintained_selection():
             with photoshop.maintained_visibility(layers=all_layers):
                 for instance in context:
                     if instance.data["productType"] not in self.families:
                         continue
-
+                    suffix = instance.data["name"]
                     staging_dir = self.staging_dir(instance)
                     self.log.info("Outputting image to {}".format(staging_dir))
 
@@ -67,15 +76,17 @@ class ExtractImage(pyblish.api.ContextPlugin):
                     workfile_extension = workfile_extension.strip(".")
 
                     for extension in self.formats:
-                        _filename = "{}.{}".format(file_basename,
-                                                    extension)
-                        files[extension] = _filename
+                        repre_filename = f"{file_basename}_{suffix}.{extension}"
+                        files[extension] = repre_filename
 
-                        full_filename = os.path.join(staging_dir,
-                                                     _filename)
+                        full_filename = os.path.join(
+                            staging_dir, repre_filename)
                         if extension == "tga":
                             self._save_image_to_targa(
-                                stub, full_filename, extension, workfile_extension
+                                stub,
+                                full_filename,
+                                extension,
+                                workfile_extension
                             )
                         else:
                             stub.saveAs(full_filename, extension, True)
@@ -83,15 +94,26 @@ class ExtractImage(pyblish.api.ContextPlugin):
 
                     representations = []
                     for extension, filename in files.items():
-                        representations.append(
-                            {
-                                "name": extension,
-                                "ext": extension,
-                                "files": filename,
-                                "stagingDir": staging_dir,
-                                "tags": [],
-                            }
+                        repre = {
+                            "name": extension,
+                            "ext": extension,
+                            "files": filename,
+                            "stagingDir": staging_dir,
+                            "tags": [],
+                        }
+                        ayon_colorspace = get_remapped_colorspace_from_native(
+                            native_colorspace,
+                            host_name,
+                            host_imageio_settings,
                         )
+                        self.log.debug(f"ayon_colorspace: {ayon_colorspace}")
+                        # inject colorspace data
+                        self.set_representation_colorspace(
+                            repre, context,
+                            colorspace=ayon_colorspace
+                        )
+                        self.log.debug(f"representation: {repre}")
+                        representations.append(repre)
                     instance.data["representations"] = representations
                     instance.data["stagingDir"] = staging_dir
 
