@@ -5,7 +5,7 @@ class ReviewCreator(PSAutoCreator):
     """Creates review instance which might be disabled from publishing."""
     identifier = "review"
     product_type = "review"
-
+    product_base_type = "review"
     default_variant = "Main"
 
     def get_detail_description(self):

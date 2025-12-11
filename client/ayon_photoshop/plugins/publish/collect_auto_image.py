@@ -77,21 +77,36 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
                 "CreateImage", {}).get(
                 "default_variants", [''])
             product_type = "image"
+            # TODO (antirotor): handle product_base_type properly if needed
+            product_base_type = product_type
 
             variant = context.data.get("variant") or variants[0]
 
+            get_product_name_kwargs = {}
+            if getattr(get_product_name, "use_entities", False):
+                get_product_name_kwargs.update({
+                    "folder_entity": folder_entity,
+                    "task_entity": task_entity,
+                    "product_base_type": product_base_type,
+                })
+            else:
+                get_product_name_kwargs.update({
+                    "task_name": task_name,
+                    "task_type": task_type,
+                })
+
             product_name = get_product_name(
                 project_name=project_name,
-                task_name=task_name,
-                task_type=task_type,
                 host_name=host_name,
                 product_type=product_type,
                 variant=variant,
+                **get_product_name_kwargs
             )
 
             instance = context.create_instance(product_name)
             instance.data["folderPath"] = folder_entity["path"]
             instance.data["productType"] = product_type
+            instance.data["productBaseType"] = product_base_type
             instance.data["productName"] = product_name
             instance.data["ids"] = publishable_ids
             instance.data["publish"] = True

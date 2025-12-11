@@ -4,7 +4,7 @@ from ayon_photoshop.lib import PSAutoCreator
 class WorkfileCreator(PSAutoCreator):
     identifier = "workfile"
     product_type = "workfile"
-
+    product_base_type = "workfile"
     default_variant = "Main"
 
     def get_detail_description(self):

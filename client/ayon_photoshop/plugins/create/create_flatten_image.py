@@ -14,6 +14,7 @@ class AutoImageCreator(PSAutoCreator):
     """
     identifier = "auto_image"
     product_type = "image"
+    product_base_type = "image"
 
     # Settings
     default_variant = ""
@@ -145,14 +146,26 @@ class AutoImageCreator(PSAutoCreator):
 
         dynamic_data = prepare_template_data({"layer": "{layer}"})
 
+        get_product_name_kwargs = {}
+        if getattr(get_product_name, "use_entities", False):
+            get_product_name_kwargs.update({
+                "folder_entity": folder_entity,
+                "task_entity": task_entity,
+                "product_base_type": self.product_base_type,
+            })
+        else:
+            get_product_name_kwargs.update({
+                "task_name": task_name,
+                "task_type": task_type,
+            })
+
         product_name = get_product_name(
             project_name=project_name,
-            task_name=task_name,
-            task_type=task_type,
             host_name=host_name,
             product_type=self.product_type,
             variant=variant,
             dynamic_data=dynamic_data,
             project_entity=project_entity,
+            **get_product_name_kwargs
         )
         return clean_product_name(product_name)

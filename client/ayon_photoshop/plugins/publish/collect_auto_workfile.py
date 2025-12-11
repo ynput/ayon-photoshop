@@ -75,14 +75,27 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             task_name = task_entity["name"]
             task_type = task_entity["taskType"]
 
+        get_product_name_kwargs = {}
+        if getattr(get_product_name, "use_entities", False):
+            get_product_name_kwargs.update({
+                "folder_entity": folder_entity,
+                "task_entity": task_entity,
+                # TODO (antirotor): handle product_base_type properly
+                "product_base_type": product_type,
+            })
+        else:
+            get_product_name_kwargs.update({
+                "task_name": task_name,
+                "task_type": task_type,
+            })
+
         product_name = get_product_name(
             project_name=project_name,
-            task_name=task_name,
-            task_type=task_type,
             host_name=host_name,
             product_type=product_type,
             variant=variant,
-            project_settings=proj_settings
+            project_settings=proj_settings,
+            **get_product_name_kwargs
         )
 
         # Create instance
@@ -92,6 +105,8 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             "name": base_name,
             "productName": product_name,
             "productType": product_type,
+            # TODO (antirotor): handle product_base_type properly
+            "productBaseType": product_type,
             "family": product_type,
             "families": [product_type],
             "representations": [],
