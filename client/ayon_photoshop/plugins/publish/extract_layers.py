@@ -1,13 +1,17 @@
 from pathlib import Path
 
 from ayon_core.pipeline import publish
+from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_core.pipeline.publish import get_instance_staging_dir
 from ayon_photoshop import api as photoshop
 
 
-class ExtractLayers(publish.Extractor):
+class ExtractLayers(
+    publish.Extractor,
+    publish.ColormanagedPyblishPluginMixin
+):
     """Export layers within the instance layerset to a PSD file.
-    
+
     Layersets can be merged to reduce the number of layers in the output file.
     """
 
@@ -19,7 +23,17 @@ class ExtractLayers(publish.Extractor):
 
     def process(self, instance):
         ps_stub = photoshop.stub()
-
+        native_colorspace = ps_stub.get_color_profile_name()
+        self.log.info(f"Document colorspace profile: {native_colorspace}")
+        host_name = instance.context.data["hostName"]
+        project_settings = instance.context.data["project_settings"]
+        host_imageio_settings = project_settings["photoshop"]["imageio"]
+        ayon_colorspace = get_remapped_colorspace_from_native(
+            native_colorspace,
+            host_name,
+            host_imageio_settings,
+        )
+        self.log.debug(f"ayon_colorspace: {ayon_colorspace}")
         # Duplicate the document to the staging directory
         filepath = Path(
             get_instance_staging_dir(instance),
@@ -49,11 +63,16 @@ class ExtractLayers(publish.Extractor):
 
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
-        representations.append(
-            {
-                "name": "psd",
-                "ext": "psd",
-                "files": filepath.name,
-                "stagingDir": filepath.parent,
-            }
+        representation = {
+            "name": "psd",
+            "ext": "psd",
+            "files": filepath.name,
+            "stagingDir": filepath.parent,
+        }
+        # inject colorspace data
+        self.set_representation_colorspace(
+            representation, instance.context,
+            colorspace=ayon_colorspace
         )
+        self.log.debug(f"Rrepresentation: {representation}")
+        representations.append(representation)

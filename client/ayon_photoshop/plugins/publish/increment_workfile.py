@@ -4,11 +4,11 @@ import pyblish.api
 
 from ayon_core.lib import version_up
 from ayon_core.host import IWorkfileHost
-from ayon_core.pipeline import registered_host
+from ayon_core.pipeline import registered_host, OptionalPyblishPluginMixin
 from ayon_core.pipeline.publish import get_errored_plugins_from_context
 
 
-class IncrementWorkfile(pyblish.api.InstancePlugin):
+class IncrementWorkfile(pyblish.api.ContextPlugin, OptionalPyblishPluginMixin):
     """Increment the current workfile.
 
     Saves the current scene with an increased version number.
@@ -17,17 +17,18 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
     label = "Increment Workfile"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["photoshop"]
-    families = ["workfile"]
     optional = True
 
-    def process(self, instance):
-        errored_plugins = get_errored_plugins_from_context(instance.context)
+    def process(self, context: pyblish.api.Context):
+        if not self.is_active(context.data):
+            return
+
+        errored_plugins = get_errored_plugins_from_context(context)
         if errored_plugins:
             raise RuntimeError(
                 "Skipping incrementing current file because publishing failed."
             )
 
-        context = instance.context
         current_filepath: str = context.data["currentFile"]
         host: IWorkfileHost = registered_host()
         try:
