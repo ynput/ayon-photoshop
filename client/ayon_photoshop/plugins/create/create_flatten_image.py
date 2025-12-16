@@ -2,8 +2,8 @@ import ayon_api
 
 from ayon_photoshop import api
 from ayon_photoshop.lib import PSAutoCreator, clean_product_name
-from ayon_core.lib import BoolDef, prepare_template_data
-from ayon_core.pipeline.create import get_product_name, CreatedInstance
+from ayon_core.lib import BoolDef
+from ayon_core.pipeline.create import CreatedInstance
 
 
 class AutoImageCreator(PSAutoCreator):
