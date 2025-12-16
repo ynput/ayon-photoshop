@@ -2,8 +2,8 @@ import ayon_api
 
 from ayon_photoshop import api
 from ayon_photoshop.lib import PSAutoCreator, clean_product_name
-from ayon_core.lib import BoolDef, prepare_template_data
-from ayon_core.pipeline.create import get_product_name, CreatedInstance
+from ayon_core.lib import BoolDef
+from ayon_core.pipeline.create import CreatedInstance
 
 
 class AutoImageCreator(PSAutoCreator):
@@ -14,6 +14,7 @@ class AutoImageCreator(PSAutoCreator):
     """
     identifier = "auto_image"
     product_type = "image"
+    product_base_type = "image"
 
     # Settings
     default_variant = ""
@@ -125,6 +126,19 @@ class AutoImageCreator(PSAutoCreator):
         review for it though.
         """
 
+    def get_dynamic_data(
+        self,
+        project_name,
+        folder_entity,
+        task_entity,
+        variant,
+        host_name,
+        instance
+    ):
+        return {
+            "layer": "{layer}",
+        }
+
     def get_product_name(
         self,
         project_name,
@@ -138,21 +152,12 @@ class AutoImageCreator(PSAutoCreator):
         if host_name is None:
             host_name = self.create_context.host_name
 
-        task_name = task_type = None
-        if task_entity:
-            task_name = task_entity["name"]
-            task_type = task_entity["taskType"]
-
-        dynamic_data = prepare_template_data({"layer": "{layer}"})
-
-        product_name = get_product_name(
+        product_name = super().get_product_name(
             project_name=project_name,
-            task_name=task_name,
-            task_type=task_type,
             host_name=host_name,
-            product_type=self.product_type,
+            folder_entity=folder_entity,
+            task_entity=task_entity,
             variant=variant,
-            dynamic_data=dynamic_data,
             project_entity=project_entity,
         )
         return clean_product_name(product_name)
