@@ -135,11 +135,9 @@ class AutoImageCreator(PSAutoCreator):
         host_name,
         instance
     ):
-        dynamic_data = super().get_dynamic_data(
-            project_name, folder_entity, task_entity, variant, host_name, instance
-        )
-        dynamic_data["layer"] = "{layer}"
-        return dynamic_data
+        return {
+            "layer": "{layer}",
+        }
 
     def get_product_name(
         self,
