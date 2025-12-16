@@ -126,6 +126,21 @@ class AutoImageCreator(PSAutoCreator):
         review for it though.
         """
 
+    def get_dynamic_data(
+        self,
+        project_name,
+        folder_entity,
+        task_entity,
+        variant,
+        host_name,
+        instance
+    ):
+        dynamic_data = super().get_dynamic_data(
+            project_name, folder_entity, task_entity, variant, host_name, instance
+        )
+        dynamic_data["layer"] = "{layer}"
+        return dynamic_data
+
     def get_product_name(
         self,
         project_name,
@@ -139,33 +154,12 @@ class AutoImageCreator(PSAutoCreator):
         if host_name is None:
             host_name = self.create_context.host_name
 
-        task_name = task_type = None
-        if task_entity:
-            task_name = task_entity["name"]
-            task_type = task_entity["taskType"]
-
-        dynamic_data = prepare_template_data({"layer": "{layer}"})
-
-        get_product_name_kwargs = {}
-        if getattr(get_product_name, "use_entities", False):
-            get_product_name_kwargs.update({
-                "folder_entity": folder_entity,
-                "task_entity": task_entity,
-                "product_base_type": self.product_base_type,
-            })
-        else:
-            get_product_name_kwargs.update({
-                "task_name": task_name,
-                "task_type": task_type,
-            })
-
-        product_name = get_product_name(
+        product_name = super().get_product_name(
             project_name=project_name,
             host_name=host_name,
-            product_type=self.product_type,
+            folder_entity=folder_entity,
+            task_entity=task_entity,
             variant=variant,
-            dynamic_data=dynamic_data,
             project_entity=project_entity,
-            **get_product_name_kwargs
         )
         return clean_product_name(product_name)
