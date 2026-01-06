@@ -103,6 +103,68 @@ def maintained_visibility(layers=None):
             pass
 
 
+def _get_layers_by_parent(all_layers):
+    """Group layers by their immediate parent ID."""
+    by_parent = {None: []}
+    for layer in all_layers:
+        parent_id = layer.parents[-1] if layer.parents else None
+        if parent_id not in by_parent:
+            by_parent[parent_id] = []
+        by_parent[parent_id].append(layer)
+    return by_parent
+
+
+@contextlib.contextmanager
+def isolated_instance_visibility(stub, instance_id, all_layers=None):
+    """Show only the instance and its ancestor path, hiding all siblings.
+    
+    Args:
+        stub: PhotoshopServerStub
+        instance_id: Layer ID of the instance LayerSet
+        all_layers: Optional list of PSItem layers (fetched if not provided)
+    
+    Tracks original visibility and restores it on exit.
+    """
+    if all_layers is None:
+        all_layers = stub.get_layers()
+    
+    layers_by_id = {l.id: l for l in all_layers}
+    layers_by_parent = _get_layers_by_parent(all_layers)
+    
+    # Find instance layer
+    instance_layer = layers_by_id.get(instance_id)
+    if not instance_layer:
+        yield  # No-op if instance not found
+        return
+
+    # Build ancestor path from instance to top-level
+    path_ids = set()
+    current = instance_layer
+    while current:
+        path_ids.add(current.id)
+        current = layers_by_id.get(current.parents[-1]) if current.parents else None
+
+    # Record original visibility and build change map
+    original_visibility = {}
+    visibility_changes = {}
+    
+    for layer_id in path_ids:
+        layer = layers_by_id[layer_id]
+        parent_id = layer.parents[-1] if layer.parents else None
+        for sibling in layers_by_parent.get(parent_id, []):
+            # Record original state before any changes
+            original_visibility[sibling.id] = sibling.visible
+            # Path layers visible, siblings hidden
+            visibility_changes[sibling.id] = sibling.id in path_ids
+
+    try:
+        stub.set_layers_visibility(visibility_changes)
+        yield
+    finally:
+        # Restore original visibility state
+        stub.set_layers_visibility(original_visibility)
+
+
 def find_close_plugin(close_plugin_name, log):
     if close_plugin_name:
         plugins = pyblish.api.discover()
