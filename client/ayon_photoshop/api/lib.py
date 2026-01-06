@@ -128,7 +128,7 @@ def isolated_instance_visibility(stub, instance_id, all_layers=None):
     if all_layers is None:
         all_layers = stub.get_layers()
     
-    layers_by_id = {l.id: l for l in all_layers}
+    layers_by_id = {layer.id: layer for layer in all_layers}
     layers_by_parent = _get_layers_by_parent(all_layers)
     
     # Find instance layer
