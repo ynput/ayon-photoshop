@@ -19,7 +19,8 @@ from .plugin import (
 
 from .lib import (
     maintained_selection,
-    maintained_visibility
+    maintained_visibility,
+    isolated_instance_visibility,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     # lib
     "maintained_selection",
     "maintained_visibility",
+    "isolated_instance_visibility",
 ]

@@ -464,6 +464,19 @@ class PhotoshopServerStub:
             )
         )
 
+    def set_layers_visibility(self, visibility_map: dict[int, bool]):
+        """Set visibility for multiple layers in one call.
+
+        Args:
+            visibility_map (dict[int, bool]): {layer_id: bool, ...}
+        """
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_layers_visibility',
+                visibility_map=json.dumps(visibility_map)
+            )
+        )
+
     def hide_all_others_layers(self, layers):
         """hides all layers that are not part of the list or that are not
         children of this list
