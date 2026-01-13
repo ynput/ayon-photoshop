@@ -464,30 +464,18 @@ class PhotoshopServerStub:
             )
         )
 
-    def hide_all_others_layers(self, layers):
-        """hides all layers that are not part of the list or that are not
-        children of this list
+    def set_layers_visibility(self, visibility_map: dict[int, bool]):
+        """Set visibility for multiple layers in one call.
 
         Args:
-            layers (list): list of PSItem - highest hierarchy
+            visibility_map (dict[int, bool]): {layer_id: bool, ...}
         """
-        extract_ids = set([ll.id for ll in self.get_layers_in_layers(layers)])
-
-        self.hide_all_others_layers_ids(extract_ids)
-
-    def hide_all_others_layers_ids(self, extract_ids, layers=None):
-        """hides all layers that are not part of the list or that are not
-        children of this list
-
-        Args:
-            extract_ids (list): list of integer that should be visible
-            layers (list) of PSItem (used for caching)
-        """
-        if not layers:
-            layers = self.get_layers()
-        for layer in layers:
-            if layer.visible and layer.id not in extract_ids:
-                self.set_visible(layer.id, False)
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_layers_visibility',
+                visibility_map=json.dumps(visibility_map)
+            )
+        )
 
     def delete_all_layers(self, exclude_layers=None, exclude_recursive=False):
         """Delete all layers except the ones in the exclude_layers list.
