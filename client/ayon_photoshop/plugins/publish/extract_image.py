@@ -53,7 +53,7 @@ class ExtractImage(
 
                 # Context manager handles all visibility: show instance path,
                 # hide siblings, restore original state on exit
-                with photoshop.isolated_instance_visibility(stub, instance_id, all_layers):
+                with photoshop.isolated_layers_visibility(stub, instance_id, all_layers):
                     # Perform extraction
                     files = {}
                     ids = set()
