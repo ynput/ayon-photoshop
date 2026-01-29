@@ -123,6 +123,14 @@
                   return result;
                 });
       });
+      RPC.addRoute('Photoshop.get_document_info', function (data) {
+              log.warn('Server called client route "get_document_info":', data);
+              return runEvalScript("getDocumentInfo()")
+                .then(function (result) {
+                  log.warn("get_document_info: " + result);
+                  return result;
+                });
+      });
       RPC.addRoute('Photoshop.set_visible', function (data) {
               log.warn('Server called client route "set_visible":', data);
               return runEvalScript("setVisible(" + data.layer_id + ", " +

@@ -129,6 +129,16 @@ class ExtractLayersPlugin(BaseSettingsModel):
     )
 
 
+class ValidateDocumentSettingsPlugin(BaseSettingsModel):
+    """Validate document resolution, color mode and bit depth."""
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
+    expected_dpi: int = SettingsField(72, title="Expected DPI")
+    expected_mode: str = SettingsField("RGB", title="Expected Color Mode")
+    expected_bits: int = SettingsField(16, title="Expected Bit Depth")
+
+
 class PhotoshopPublishPlugins(BaseSettingsModel):
     CollectColorCodedInstances: CollectColorCodedInstancesPlugin = (
         SettingsField(
@@ -166,6 +176,11 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         default_factory=ExtractLayersPlugin,
     )
 
+    ValidateDocumentSettings: ValidateDocumentSettingsPlugin = SettingsField(
+        title="Validate Document Settings",
+        default_factory=ValidateDocumentSettingsPlugin,
+    )
+
 
 DEFAULT_PUBLISH_SETTINGS = {
     "CollectColorCodedInstances": {
@@ -195,5 +210,13 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ExtractLayers": {
         "enabled": False,
         "merge_layersets": False
+    },
+    "ValidateDocumentSettings": {
+        "enabled": True,
+        "optional": True,
+        "active": True,
+        "expected_dpi": 72,
+        "expected_mode": "RGB",
+        "expected_bits": 16
     }
 }

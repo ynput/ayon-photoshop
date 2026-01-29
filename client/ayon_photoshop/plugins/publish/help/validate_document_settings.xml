@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Document settings mismatch</title>
+<description>
+### Required settings
+- 72 dpi
+- RGB
+- 16 bits
+
+Details:
+{details}
+
+### How to repair?
+Adjust the document settings in Photoshop and re-run publish.
+</description>
+</error>
+</root>
