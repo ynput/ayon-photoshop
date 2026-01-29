@@ -84,12 +84,8 @@ function getLayers() {
       layer.parents = parents.slice();
       layer.type = getLayerTypeWithName(layer.name);
       layer.visible = desc.getBoolean(stringIDToTypeID("visible"));
-      try{
-        var blendMode = desc.getEnumerationValue(stringIDToTypeID("blendMode"));
-        layer.blend_mode = typeIDToStringID(blendMode);
-      }catch(e){
-        layer.blend_mode = "normal";
-      }
+      var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+      layer.blend_mode = typeIDToStringID(blendMode);
       //log(" name: " + layer.name + " groupId " + layer.groupId + 
       //" group " + layer.group);
       if (layerSection == 'layerSectionStart') { // Group start and end
@@ -110,11 +106,7 @@ function getLayers() {
         layer.parents = [];
         layer.type = 'background';
         layer.visible = bck.visible;
-        try{
-            layer.blend_mode = typeIDToStringID(bck.blendMode);
-        }catch(e){
-            layer.blend_mode = "normal";
-        }
+        layer.blend_mode = typeIDToStringID(bck.mode);
         layers.push(JSON.stringify(layer));
     }catch(e){
         // do nothing, no background layer
@@ -170,15 +162,11 @@ function getLayerBlendMode(layer_id) {
     if (documents.length == 0){
         return '';
     }
-    try{
-        var ref = new ActionReference();
-        ref.putIdentifier(stringIDToTypeID("layer"), layer_id);
-        var desc = executeActionGet(ref);
-        var blendMode = desc.getEnumerationValue(stringIDToTypeID("blendMode"));
-        return typeIDToStringID(blendMode);
-    }catch(e){
-        return "normal";
-    }
+    var ref = new ActionReference();
+    ref.putIdentifier(stringIDToTypeID("layer"), layer_id);
+    var desc = executeActionGet(ref);
+    var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+    return typeIDToStringID(blendMode);
 }
 
 function saveAs(output_path, ext, as_copy){
