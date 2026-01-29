@@ -24,6 +24,23 @@ extract_image_ext_enum = [
     {"value": "tga", "label": "tga"},
 ]
 
+color_mode_enum = [
+    {"value": "RGB", "label": "RGB"},
+    {"value": "CMYK", "label": "CMYK"},
+    {"value": "GRAYSCALE", "label": "Grayscale"},
+    {"value": "LAB", "label": "Lab"},
+    {"value": "BITMAP", "label": "Bitmap"},
+    {"value": "DUOTONE", "label": "Duotone"},
+    {"value": "INDEXEDCOLOR", "label": "Indexed Color"},
+    {"value": "MULTICHANNEL", "label": "Multichannel"},
+]
+
+bit_depth_enum = [
+    {"value": "8", "label": "8 bits"},
+    {"value": "16", "label": "16 bits"},
+    {"value": "32", "label": "32 bits"},
+]
+
 
 class ColorCodeMappings(BaseSettingsModel):
     color_code: list[str] = SettingsField(
@@ -135,8 +152,16 @@ class ValidateDocumentSettingsPlugin(BaseSettingsModel):
     optional: bool = SettingsField(True, title="Optional")
     active: bool = SettingsField(True, title="Active")
     expected_dpi: int = SettingsField(72, title="Expected DPI")
-    expected_mode: str = SettingsField("RGB", title="Expected Color Mode")
-    expected_bits: int = SettingsField(16, title="Expected Bit Depth")
+    expected_mode: str = SettingsField(
+        "RGB",
+        title="Expected Color Mode",
+        enum_resolver=lambda: color_mode_enum,
+    )
+    expected_bits: str = SettingsField(
+        "16",
+        title="Expected Bit Depth",
+        enum_resolver=lambda: bit_depth_enum,
+    )
 
 
 class PhotoshopPublishPlugins(BaseSettingsModel):
@@ -217,6 +242,6 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True,
         "expected_dpi": 72,
         "expected_mode": "RGB",
-        "expected_bits": 16
+        "expected_bits": "16"
     }
 }

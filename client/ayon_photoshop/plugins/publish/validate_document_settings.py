@@ -56,7 +56,12 @@ class ValidateDocumentSettings(
             raise PublishXmlValidationError(
                 self,
                 "Unable to read document settings from Photoshop.",
-                formatting_data={"details": "Unable to read document settings."},
+                formatting_data={
+                    "details": "Unable to read document settings.",
+                    "expected_dpi": self.expected_dpi,
+                    "expected_mode": self.expected_mode,
+                    "expected_bits": self.expected_bits,
+                },
             )
 
         issues = []
@@ -93,5 +98,10 @@ class ValidateDocumentSettings(
             raise PublishXmlValidationError(
                 self,
                 "Document settings are not compliant.",
-                formatting_data={"details": "\n".join(issues)}
+                formatting_data={
+                    "details": "\n".join(issues),
+                    "expected_dpi": self.expected_dpi,
+                    "expected_mode": self.expected_mode,
+                    "expected_bits": self.expected_bits,
+                }
             )

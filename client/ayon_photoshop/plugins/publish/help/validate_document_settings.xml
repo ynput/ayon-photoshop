@@ -4,9 +4,9 @@
 <title>Document settings mismatch</title>
 <description>
 ### Required settings
-- 72 dpi
-- RGB
-- 16 bits
+- {expected_dpi} dpi
+- {expected_mode}
+- {expected_bits} bits
 
 Details:
 {details}
