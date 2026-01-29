@@ -30,6 +30,39 @@ def _normalize_bits(bits_value):
         return None
 
 
+class ValidateDocumentSettingsRepair(pyblish.api.Action):
+    """Repair document settings to match expected values.
+
+    Warning: Some conversions may be lossy (e.g., CMYK to RGB,
+    higher to lower bit depth).
+    """
+
+    label = "Repair"
+    icon = "wrench"
+    on = "failed"
+
+    def process(self, context, plugin):
+        stub = photoshop.stub()
+
+        result = stub.set_document_settings(
+            resolution=plugin.expected_dpi,
+            mode=plugin.expected_mode,
+            bits=str(plugin.expected_bits)
+        )
+
+        if not result.get("success"):
+            errors = result.get("errors") or [result.get("error", "Unknown")]
+            self.log.error(
+                "Failed to repair document settings: {}".format(
+                    ", ".join(errors)
+                )
+            )
+            return False
+
+        self.log.info("Document settings repaired successfully")
+        return True
+
+
 class ValidateDocumentSettings(
     pyblish.api.ContextPlugin, OptionalPyblishPluginMixin
 ):
@@ -39,6 +72,7 @@ class ValidateDocumentSettings(
     hosts = ["photoshop"]
     order = ValidateContentsOrder
     settings_category = "photoshop"
+    actions = [ValidateDocumentSettingsRepair]
 
     optional = True
     active = True

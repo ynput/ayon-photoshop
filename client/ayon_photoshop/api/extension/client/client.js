@@ -131,6 +131,18 @@
                   return result;
                 });
       });
+      RPC.addRoute('Photoshop.set_document_settings', function (data) {
+              log.warn('Server called client route "set_document_settings":', data);
+              var resolution = data.resolution !== undefined ? data.resolution : null;
+              var mode = data.mode !== undefined ? "'" + data.mode + "'" : null;
+              var bits = data.bits !== undefined ? "'" + data.bits + "'" : null;
+              return runEvalScript("setDocumentSettings(" + resolution + ", " +
+                                   mode + ", " + bits + ")")
+                .then(function (result) {
+                  log.warn("set_document_settings: " + result);
+                  return result;
+                });
+      });
       RPC.addRoute('Photoshop.set_visible', function (data) {
               log.warn('Server called client route "set_visible":', data);
               return runEvalScript("setVisible(" + data.layer_id + ", " +
