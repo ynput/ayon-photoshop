@@ -106,7 +106,7 @@ function getLayers() {
         layer.parents = [];
         layer.type = 'background';
         layer.visible = bck.visible;
-        layer.blend_mode = typeIDToStringID(bck.mode);
+        layer.blend_mode = typeIDToStringID(bck.blendMode);
         layers.push(JSON.stringify(layer));
     }catch(e){
         // do nothing, no background layer
