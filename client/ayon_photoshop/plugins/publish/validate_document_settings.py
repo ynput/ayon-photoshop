@@ -85,7 +85,7 @@ class ValidateDocumentSettings(
         if not self.is_active(context.data):
             return
 
-        info = photoshop.stub().get_document_info()
+        info = photoshop.stub().get_document_settings()
         if not info:
             raise PublishXmlValidationError(
                 self,

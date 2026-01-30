@@ -152,7 +152,7 @@ function getColorProfileName() {
   return app.activeDocument.colorProfileName;
 }
 
-function getDocumentInfo() {
+function getDocumentSettings() {
     /**
      * Returns JSON with document settings:
      * resolution (dpi), color mode, bits per channel

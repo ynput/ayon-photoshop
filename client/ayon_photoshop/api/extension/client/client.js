@@ -123,11 +123,11 @@
                   return result;
                 });
       });
-      RPC.addRoute('Photoshop.get_document_info', function (data) {
-              log.warn('Server called client route "get_document_info":', data);
-              return runEvalScript("getDocumentInfo()")
+      RPC.addRoute('Photoshop.get_document_settings', function (data) {
+              log.warn('Server called client route "get_document_settings":', data);
+              return runEvalScript("getDocumentSettings()")
                 .then(function (result) {
-                  log.warn("get_document_info: " + result);
+                  log.warn("get_document_settings: " + result);
                   return result;
                 });
       });

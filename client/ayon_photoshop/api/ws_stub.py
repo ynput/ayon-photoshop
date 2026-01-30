@@ -626,10 +626,10 @@ class PhotoshopServerStub:
             self.client.call('Photoshop.get_extension_version')
         )
 
-    def get_document_info(self):
+    def get_document_settings(self):
         """Returns dict with document resolution, mode and bits per channel."""
         res = self.websocketserver.call(
-            self.client.call('Photoshop.get_document_info')
+            self.client.call('Photoshop.get_document_settings')
         )
         if not res:
             return {}
