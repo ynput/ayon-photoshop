@@ -35,6 +35,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
         for instance in context:
             product_base_type = instance.data.get("productBaseType")
             if not product_base_type:
+                # Backwards compatibility
                 product_base_type = instance.data["productType"]
             if product_base_type == "workfile":
                 workfile_product_name = instance.data["productName"]
