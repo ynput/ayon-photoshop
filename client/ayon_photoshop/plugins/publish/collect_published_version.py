@@ -60,16 +60,14 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
                 project_name=project_name,
                 host_name="photoshop",
                 product_base_type="workfile",
-                product_type="workfile",
                 task_name=context.data["task"],
                 task_type=context.data["taskType"],
-                project_settings=context.data["project_settings"]
-
+                project_settings=context.data["project_settings"],
             )
             if not is_func_signature_supported(
                 get_versioning_start, **kwargs
             ):
-                kwargs.pop("poduct_base_type")
+                kwargs["product_type"] = kwargs.pop("poduct_base_type")
             version_int = get_versioning_start(**kwargs)
 
         self.log.debug(f"Setting {version_int} to context.")
