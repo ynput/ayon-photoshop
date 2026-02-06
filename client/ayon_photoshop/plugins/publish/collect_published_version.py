@@ -18,6 +18,7 @@ Provides:
 import pyblish.api
 import ayon_api
 
+from ayon_core.lib import is_func_signature_supported
 from ayon_core.pipeline.version_start import get_versioning_start
 
 
@@ -32,7 +33,11 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
     def process(self, context):
         workfile_product_name = None
         for instance in context:
-            if instance.data["productType"] == "workfile":
+            product_base_type = instance.data.get("productBaseType")
+            if not product_base_type:
+                # Backwards compatibility
+                product_base_type = instance.data["productType"]
+            if product_base_type == "workfile":
                 workfile_product_name = instance.data["productName"]
                 break
 
@@ -51,13 +56,19 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
         if version_entity:
             version_int = int(version_entity["version"]) + 1
         else:
-            version_int = get_versioning_start(
-                project_name,
-                "photoshop",
+            kwargs = dict(
+                project_name=project_name,
+                host_name="photoshop",
+                product_base_type="workfile",
                 task_name=context.data["task"],
                 task_type=context.data["taskType"],
-                project_settings=context.data["project_settings"]
+                project_settings=context.data["project_settings"],
             )
+            if not is_func_signature_supported(
+                get_versioning_start, **kwargs
+            ):
+                kwargs["product_type"] = kwargs.pop("poduct_base_type")
+            version_int = get_versioning_start(**kwargs)
 
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int

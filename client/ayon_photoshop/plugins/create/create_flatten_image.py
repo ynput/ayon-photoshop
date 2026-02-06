@@ -45,11 +45,11 @@ class AutoImageCreator(PSAutoCreator):
 
         if existing_instance is None:
             product_name = self.get_product_name(
-                project_name,
-                folder_entity,
-                task_entity,
-                self.default_variant,
-                host_name,
+                project_name=project_name,
+                folder_entity=folder_entity,
+                task_entity=task_entity,
+                variant=self.default_variant,
+                host_name=host_name,
             )
 
             data = {
@@ -75,11 +75,11 @@ class AutoImageCreator(PSAutoCreator):
             or existing_instance["task"] != task_name
         ):
             product_name = self.get_product_name(
-                project_name,
-                folder_entity,
-                task_entity,
-                self.default_variant,
-                host_name,
+                project_name=project_name,
+                folder_entity=folder_entity,
+                task_entity=task_entity,
+                variant=self.default_variant,
+                host_name=host_name,
             )
             existing_instance["folderPath"] = folder_path
             existing_instance["task"] = task_name
@@ -126,38 +126,11 @@ class AutoImageCreator(PSAutoCreator):
         review for it though.
         """
 
-    def get_dynamic_data(
-        self,
-        project_name,
-        folder_entity,
-        task_entity,
-        variant,
-        host_name,
-        instance
-    ):
+    def get_dynamic_data(self, *args, **kwargs):
         return {
             "layer": "{layer}",
         }
 
-    def get_product_name(
-        self,
-        project_name,
-        folder_entity,
-        task_entity,
-        variant,
-        host_name=None,
-        instance=None,
-        project_entity=None,
-    ):
-        if host_name is None:
-            host_name = self.create_context.host_name
-
-        product_name = super().get_product_name(
-            project_name=project_name,
-            host_name=host_name,
-            folder_entity=folder_entity,
-            task_entity=task_entity,
-            variant=variant,
-            project_entity=project_entity,
-        )
+    def get_product_name(self, *args, **kwargs):
+        product_name = super().get_product_name(*args, **kwargs)
         return clean_product_name(product_name)
