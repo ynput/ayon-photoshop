@@ -1,6 +1,6 @@
 name = "photoshop"
 title = "Photoshop"
-version = "0.3.5+dev"
+version = "0.3.6"
 app_host_name = "photoshop"
 client_dir = "ayon_photoshop"
 project_can_override_addon_version = True
