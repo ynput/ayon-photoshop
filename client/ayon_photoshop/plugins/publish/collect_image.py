@@ -8,7 +8,7 @@ class CollectImage(pyblish.api.InstancePlugin):
 
     Used later in validation
     """
-    order = pyblish.api.CollectorOrder + 0.200
+    order = pyblish.api.CollectorOrder - 0.4
     label = "Collect Image"
 
     hosts = ["photoshop"]
