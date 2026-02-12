@@ -15,15 +15,14 @@ class CollectWorkfile(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         file_path = instance.context.data["currentFile"]
-        _, ext = os.path.splitext(file_path)
+        ext = os.path.splitext(file_path)[1].lstrip(".")
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
 
         # creating representation
-        _, ext = os.path.splitext(file_path)
         instance.data["representations"].append({
-            "name": ext[1:],
-            "ext": ext[1:],
+            "name": ext,
+            "ext": ext,
             "files": base_name,
             "stagingDir": staging_dir,
         })
