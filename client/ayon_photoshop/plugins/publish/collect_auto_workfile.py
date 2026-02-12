@@ -102,7 +102,8 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             "family": product_type,
             "families": [product_type],
             "representations": [workfile_representation],
-            "folderPath": folder_entity["path"]
+            "folderPath": folder_entity["path"],
+            "task": task_name
         })
 
         # creating representation
