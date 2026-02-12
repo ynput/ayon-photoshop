@@ -24,6 +24,7 @@ class ImageCreator(Creator):
     product_base_type = "image"
     product_type = product_base_type
     description = "Image creator"
+    settings_category = "photoshop"
 
     # Settings
     default_variants = ""
@@ -182,16 +183,6 @@ class ImageCreator(Creator):
                 label="Review"
             )
         ]
-
-    def apply_settings(self, project_settings):
-        plugin_settings = (
-            project_settings["photoshop"]["create"]["ImageCreator"]
-        )
-
-        self.active_on_create = plugin_settings["active_on_create"]
-        self.default_variants = plugin_settings["default_variants"]
-        self.mark_for_review = plugin_settings["mark_for_review"]
-        self.enabled = plugin_settings["enabled"]
 
     def get_detail_description(self):
         return """Creator for Image instances
