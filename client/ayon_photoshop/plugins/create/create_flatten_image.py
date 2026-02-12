@@ -109,16 +109,6 @@ class AutoImageCreator(PSAutoCreator):
             )
         ]
 
-    def apply_settings(self, project_settings):
-        plugin_settings = (
-            project_settings["photoshop"]["create"]["AutoImageCreator"]
-        )
-
-        self.active_on_create = plugin_settings["active_on_create"]
-        self.default_variant = plugin_settings["default_variant"]
-        self.mark_for_review = plugin_settings["mark_for_review"]
-        self.enabled = plugin_settings["enabled"]
-
     def get_detail_description(self):
         return """Creator for flatten image.
 
