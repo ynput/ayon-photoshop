@@ -106,7 +106,6 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         })
 
         # creating representation
-        instance.data["representations"].append(workfile_representation)
         self.log.debug(f"auto workfile review created:{instance.data}")
 
     def _find_workfile_instance(self, context):
