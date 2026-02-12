@@ -69,52 +69,56 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
             if layer_meta_data.get("active", True) and layer_item.visible:
                 instance_names.append(layer_meta_data["productName"])
 
-        if len(instance_names) == 0:
-            variants = proj_settings.get(
-                "photoshop", {}).get(
-                "create", {}).get(
-                "CreateImage", {}).get(
-                "default_variants", [''])
-            product_type = "image"
-            # TODO (antirotor): handle product_base_type properly if needed
-            product_base_type = product_type
+        # NOTE: This return can be moved where is the product name
+        #   added to 'instance_names'
+        if len(instance_names) != 0:
+            return
 
-            variant = context.data.get("variant") or variants[0]
+        variants = proj_settings.get(
+            "photoshop", {}).get(
+            "create", {}).get(
+            "CreateImage", {}).get(
+            "default_variants", [''])
+        product_type = "image"
+        # TODO (antirotor): handle product_base_type properly if needed
+        product_base_type = product_type
 
-            get_product_name_kwargs = {}
-            if getattr(get_product_name, "use_entities", False):
-                get_product_name_kwargs.update({
-                    "folder_entity": folder_entity,
-                    "task_entity": task_entity,
-                    "product_base_type": product_base_type,
-                })
-            else:
-                get_product_name_kwargs.update({
-                    "task_name": task_name,
-                    "task_type": task_type,
-                })
+        variant = context.data.get("variant") or variants[0]
 
-            product_name = get_product_name(
-                project_name=project_name,
-                host_name=host_name,
-                product_type=product_type,
-                variant=variant,
-                **get_product_name_kwargs
-            )
+        get_product_name_kwargs = {}
+        if getattr(get_product_name, "use_entities", False):
+            get_product_name_kwargs.update({
+                "folder_entity": folder_entity,
+                "task_entity": task_entity,
+                "product_base_type": product_base_type,
+            })
+        else:
+            get_product_name_kwargs.update({
+                "task_name": task_name,
+                "task_type": task_type,
+            })
 
-            instance = context.create_instance(product_name)
-            instance.data["folderPath"] = folder_entity["path"]
-            instance.data["productType"] = product_type
-            instance.data["productBaseType"] = product_base_type
-            instance.data["productName"] = product_name
-            instance.data["ids"] = publishable_ids
-            instance.data["publish"] = True
-            instance.data["creator_identifier"] = "auto_image"
-            instance.data["family"] = product_type
-            instance.data["families"] = [product_type]
+        product_name = get_product_name(
+            project_name=project_name,
+            host_name=host_name,
+            product_type=product_type,
+            variant=variant,
+            **get_product_name_kwargs
+        )
 
-            if auto_creator["mark_for_review"]:
-                instance.data["creator_attributes"] = {"mark_for_review": True}
-                instance.data["families"].append("review")
+        instance = context.create_instance(product_name)
+        instance.data["folderPath"] = folder_entity["path"]
+        instance.data["productType"] = product_type
+        instance.data["productBaseType"] = product_base_type
+        instance.data["productName"] = product_name
+        instance.data["ids"] = publishable_ids
+        instance.data["publish"] = True
+        instance.data["creator_identifier"] = "auto_image"
+        instance.data["family"] = product_type
+        instance.data["families"] = [product_type]
 
-            self.log.info("auto image instance: {} ".format(instance.data))
+        if auto_creator["mark_for_review"]:
+            instance.data["creator_attributes"] = {"mark_for_review": True}
+            instance.data["families"].append("review")
+
+        self.log.info("auto image instance: {} ".format(instance.data))
