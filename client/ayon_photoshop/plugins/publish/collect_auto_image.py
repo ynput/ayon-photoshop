@@ -15,6 +15,14 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
     targets = ["automated"]
 
     def process(self, context):
+        proj_settings = context.data["project_settings"]
+        create_settings = proj_settings["photoshop"]["create"]
+        auto_creator = create_settings["AutoImageCreator"]
+
+        if not auto_creator["enabled"]:
+            self.log.debug("Auto image creator disabled, won't create new")
+            return
+
         for instance in context:
             creator_identifier = instance.data.get("creator_identifier")
             if creator_identifier and creator_identifier == "auto_image":
@@ -30,15 +38,6 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
         if task_entity:
             task_name = task_entity["name"]
             task_type = task_entity["taskType"]
-
-        auto_creator = proj_settings.get(
-            "photoshop", {}).get(
-            "create", {}).get(
-            "AutoImageCreator", {})
-
-        if not auto_creator or not auto_creator["enabled"]:
-            self.log.debug("Auto image creator disabled, won't create new")
-            return
 
         stub = photoshop.stub()
         stored_items = stub.get_layers_metadata()
