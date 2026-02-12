@@ -70,6 +70,10 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
 
         variant = context.data.get("variant") or variants[0]
 
+        product_type = "image"
+        # TODO (antirotor): handle product_base_type properly if needed
+        product_base_type = product_type
+
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
         folder_entity = context.data["folderEntity"]
