@@ -29,15 +29,11 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
         has_review = False
         for instance in context:
             if instance.data["productType"] == product_type:
-                self.log.debug("Review instance found, won't create new")
                 has_review = True
-
-            creator_attributes = instance.data.get("creator_attributes", {})
-            if (creator_attributes.get("mark_for_review") and
-                    "review" not in instance.data["families"]):
-                instance.data["families"].append("review")
+                break
 
         if has_review:
+            self.log.debug("Review instance found, won't create new")
             return
 
         proj_settings = context.data["project_settings"]
