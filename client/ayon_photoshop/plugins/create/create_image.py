@@ -257,7 +257,9 @@ class ImageCreator(Creator):
         task_entity,
         variant,
         host_name,
-        instance
+        instance=None,
+        project_entity=None,
+        product_type=None,
     ):
         if instance is not None:
             layer_name = instance.get("layer_name")
