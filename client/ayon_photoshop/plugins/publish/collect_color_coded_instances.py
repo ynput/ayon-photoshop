@@ -4,7 +4,6 @@ import re
 import pyblish.api
 
 from ayon_core.lib import prepare_template_data, is_in_tests
-from ayon_core.settings import get_project_settings
 from ayon_photoshop import api as photoshop
 
 
