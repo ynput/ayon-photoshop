@@ -13,6 +13,9 @@ from ayon_photoshop.api.pipeline import cache_and_get_instances
 
 class PSAutoCreator(AutoCreator):
     """Generic autocreator to extend."""
+    skip_discovery = True
+    settings_category = "photoshop"
+
     def get_instance_attr_defs(self):
         return []
 
