@@ -13,8 +13,8 @@ class AutoImageCreator(PSAutoCreator):
     Must be enabled in Setting and template for product name provided
     """
     identifier = "auto_image"
-    product_type = "image"
     product_base_type = "image"
+    product_type = product_base_type
 
     # Settings
     default_variant = ""
