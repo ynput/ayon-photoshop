@@ -6,10 +6,11 @@ import pyblish.api
 class CollectWorkfile(pyblish.api.InstancePlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder - 0.4
     label = "Collect Workfile"
     hosts = ["photoshop"]
     families = ["workfile"]
+    targets = ["local"]
 
     default_variant = "Main"
 

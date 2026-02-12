@@ -9,7 +9,7 @@ class CollectAutoImageRefresh(pyblish.api.ContextPlugin):
 
     label = "Collect Auto Image Refresh"
     hosts = ["photoshop"]
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder - 0.4
 
     def process(self, context):
         for instance in context:
