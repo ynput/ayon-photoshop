@@ -1,12 +1,7 @@
 """
-Requires:
-    - (ayon-core) CollectContextEntities
-    context -> frameStart
-    context -> frameEnd
-    context -> fps
 
 Provides:
-    instance     -> family ("review")
+    instance     -> families ("review")
 """
 
 import pyblish.api
@@ -18,7 +13,7 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     label = "Collect Review"
     hosts = ["photoshop"]
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder - 0.45
     settings_category = "photoshop"
 
     def process(self, context):
@@ -30,10 +25,3 @@ class CollectReview(pyblish.api.ContextPlugin):
                 and "review" not in instance.data["families"]
             ):
                 instance.data["families"].append("review")
-
-            if "review" not in instance.data["families"]:
-                continue
-
-            instance.data["frameStart"] = context.data["frameStart"]
-            instance.data["frameEnd"] = context.data["frameEnd"]
-            instance.data["fps"] = context.data["fps"]
