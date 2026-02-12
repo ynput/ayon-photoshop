@@ -38,8 +38,10 @@ class ValidateInstanceFolderRepair(pyblish.api.Action):
                 stub.imprint(instance[0], data)
 
 
-class ValidateInstanceAsset(OptionalPyblishPluginMixin,
-                            pyblish.api.InstancePlugin):
+class ValidateInstanceContext(
+    OptionalPyblishPluginMixin,
+    pyblish.api.InstancePlugin
+):
     """Validate the instance folder is the current selected context folder.
 
     As it might happen that multiple worfiles are opened, switching
@@ -60,17 +62,21 @@ class ValidateInstanceAsset(OptionalPyblishPluginMixin,
         instance_folder_path = instance.data["folderPath"]
         current_folder_path = get_current_folder_path()
 
-        if instance_folder_path != current_folder_path:
-            msg = (
-                f"Instance folder {instance_folder_path} is not the same"
-                f" as current context {current_folder_path}."
+        if instance_folder_path == current_folder_path:
+            return
 
-            )
-            repair_msg = (
-                "Repair with 'Repair' button"
-                f" to use '{current_folder_path}'.\n"
-            )
-            formatting_data = {"msg": msg,
-                               "repair_msg": repair_msg}
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+        msg = (
+            f"Instance folder {instance_folder_path} is not the same"
+            f" as current context {current_folder_path}."
+        )
+        repair_msg = (
+            "Repair with 'Repair' button"
+            f" to use '{current_folder_path}'.\n"
+        )
+        formatting_data = {
+            "msg": msg,
+            "repair_msg": repair_msg
+        }
+        raise PublishXmlValidationError(
+            self, msg, formatting_data=formatting_data
+        )
