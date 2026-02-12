@@ -17,7 +17,6 @@ class ValidateInstanceFolderRepair(pyblish.api.Action):
     on = "failed"
 
     def process(self, context, plugin):
-
         # Get the errored instances
         failed = []
         for result in context.data["results"]:
@@ -34,8 +33,9 @@ class ValidateInstanceFolderRepair(pyblish.api.Action):
         current_folder_path = get_current_folder_path()
         for instance in instances:
             data = stub.read(instance[0])
-            data["folderPath"] = current_folder_path
-            stub.imprint(instance[0], data)
+            if data.get("folderPath") != current_folder_path:
+                data["folderPath"] = current_folder_path
+                stub.imprint(instance[0], data)
 
 
 class ValidateInstanceAsset(OptionalPyblishPluginMixin,
