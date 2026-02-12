@@ -29,6 +29,18 @@ class ExtractImage(
     settings_category = "photoshop"
 
     def process(self, context):
+        # Filter instances
+        filtered_instances = []
+        for instance in context:
+            product_base_type = instance.data.get("productBaseType")
+            if not product_base_type:
+                product_base_type = instance.data["productType"]
+            if product_base_type in self.families:
+                filtered_instances.append(instance)
+
+        if not filtered_instances:
+            return
+
         stub = photoshop.stub()
         hidden_layer_ids = set()
 
@@ -45,12 +57,10 @@ class ExtractImage(
 
         with photoshop.maintained_selection():
             with photoshop.maintained_visibility(layers=all_layers):
-                for instance in context:
-                    if instance.data["productType"] not in self.families:
-                        continue
+                for instance in filtered_instances:
                     suffix = instance.data["name"]
                     staging_dir = self.staging_dir(instance)
-                    self.log.info("Outputting image to {}".format(staging_dir))
+                    self.log.info(f"Outputting image to {staging_dir}")
 
                     # Perform extraction
                     files = {}
