@@ -242,13 +242,16 @@ class ImageCreator(Creator):
             instance_data["task"] = self.create_context.get_current_task_name()
 
         if not instance_data.get("variant"):
-            instance_data["variant"] = ''
+            instance_data["variant"] = ""
 
         return instance_data
 
     def _clean_highlights(self, stub, item):
-        return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
-                                                           '')
+        return (
+            item
+            .replace(stub.PUBLISH_ICON, "")
+            .replace(stub.LOADED_ICON, "")
+        )
 
     def get_dynamic_data(
         self,
