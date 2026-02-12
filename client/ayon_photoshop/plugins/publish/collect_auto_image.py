@@ -108,8 +108,8 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
         instance.data["ids"] = publishable_ids
         instance.data["publish"] = True
         instance.data["creator_identifier"] = "auto_image"
-        instance.data["family"] = product_type
-        instance.data["families"] = [product_type]
+        instance.data["family"] = product_base_type
+        instance.data["families"] = [product_base_type]
 
         if auto_creator["mark_for_review"]:
             instance.data["creator_attributes"] = {"mark_for_review": True}
