@@ -71,7 +71,7 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
 
         # NOTE: This return can be moved where is the product name
         #   added to 'instance_names'
-        if len(instance_names) != 0:
+        if instance_names:
             return
 
         variants = proj_settings.get(
