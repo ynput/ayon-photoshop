@@ -40,6 +40,12 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
         if has_review:
             return
 
+        proj_settings = context.data["project_settings"]
+        auto_creator = proj_settings["photoshop"]["create"]["ReviewCreator"]
+        if not auto_creator or not auto_creator["enabled"]:
+            self.log.debug("Review creator disabled, won't create new")
+            return
+
         stub = photoshop.stub()
         stored_items = stub.get_layers_metadata()
         for item in stored_items:
@@ -47,15 +53,6 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
                 if not item.get("active"):
                     self.log.debug("Review instance disabled")
                     return
-
-        auto_creator = context.data["project_settings"].get(
-            "photoshop", {}).get(
-            "create", {}).get(
-            "ReviewCreator", {})
-
-        if not auto_creator or not auto_creator["enabled"]:
-            self.log.debug("Review creator disabled, won't create new")
-            return
 
         variant = (context.data.get("variant") or
                    auto_creator["default_variant"])
