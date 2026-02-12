@@ -1,6 +1,9 @@
 """
 Requires:
-    None
+    - (ayon-core) CollectContextEntities
+    context -> frameStart
+    context -> frameEnd
+    context -> fps
 
 Provides:
     instance     -> family ("review")
@@ -20,14 +23,16 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     def process(self, context):
         for instance in context:
-            creator_attributes = instance.data["creator_attributes"]
-
-            if (not creator_attributes.get("mark_for_review") and
-                    "review" not in instance.data["families"]):
-                continue
+            creator_attributes = instance.data.get("creator_attributes", {})
+            # Add 'review' family if is instance marked for review
+            if (
+                creator_attributes.get("mark_for_review")
+                and "review" not in instance.data["families"]
+            ):
+                instance.data["families"].append("review")
 
             if "review" not in instance.data["families"]:
-                instance.data["families"].append("review")
+                continue
 
             instance.data["frameStart"] = context.data["frameStart"]
             instance.data["frameEnd"] = context.data["frameEnd"]
