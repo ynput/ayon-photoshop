@@ -59,7 +59,6 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             or auto_creator["default_variant"]
         )
 
-        task_name = context.data["task"]
         host_name = context.data["hostName"]
         folder_entity = context.data["folderEntity"]
         task_entity = context.data["taskEntity"]
