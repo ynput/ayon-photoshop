@@ -2,7 +2,9 @@ import os
 import re
 import pyblish.api
 
-from ayon_photoshop import api as photoshop
+from ayon_photoshop import api, PHOTOSHOP_ADDON_ROOT
+
+from ayon_core.pipeline import PublishError
 
 
 class CollectExtensionVersion(pyblish.api.ContextPlugin):
@@ -27,31 +29,34 @@ class CollectExtensionVersion(pyblish.api.ContextPlugin):
     active = True
 
     def process(self, context):
-        installed_version = photoshop.stub().get_extension_version()
+        installed_version = api.stub().get_extension_version()
 
         if not installed_version:
-            raise ValueError("Unknown version, probably old extension")
+            raise PublishError("Unknown version, probably old extension")
 
-        manifest_url = os.path.join(os.path.dirname(photoshop.__file__),
-                                    "extension", "CSXS", "manifest.xml")
-
+        manifest_url = os.path.join(
+            PHOTOSHOP_ADDON_ROOT, "api", "extensions", "CSXS", "manifest.xml"
+        )
         if not os.path.exists(manifest_url):
             self.log.debug("Unable to locate extension manifest, not checking")
             return
 
-        expected_version = None
         with open(manifest_url) as fp:
             content = fp.read()
 
-            found = re.findall(r'(ExtensionBundleVersion=")([0-9\.]+)(")',
-                               content)
-            if found:
-                expected_version = found[0][1]
+        found = re.findall(
+            r'(ExtensionBundleVersion=")([0-9\.]+)(")',
+            content
+        )
+        expected_version = None
+        if found:
+            expected_version = found[0][1]
 
         if expected_version != installed_version:
-            msg = "Expected version '{}' found '{}'\n".format(
-                expected_version, installed_version)
-            msg += "Please update your installed extension, it might not work "
-            msg += "properly."
-
-            raise ValueError(msg)
+            msg = (
+                f"Expected version '{expected_version}'"
+                f" found '{installed_version}'\n"
+                "Please update your installed extension, it might not work "
+                "properly."
+            )
+            raise PublishError(msg)
