@@ -64,7 +64,11 @@ class AutoImageCreator(PSAutoCreator):
             data.update({"creator_attributes": creator_attributes})
 
             new_instance = CreatedInstance(
-                self.product_type, product_name, data, self
+                product_base_type=self.product_base_type,
+                product_type=self.product_base_type,
+                product_name=product_name,
+                data=data,
+                creator=self,
             )
             self._add_instance_to_context(new_instance)
             api.stub().imprint(new_instance.get("instance_id"),

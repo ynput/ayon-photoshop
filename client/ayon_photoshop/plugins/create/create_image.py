@@ -80,6 +80,11 @@ class ImageCreator(Creator):
         # to differentiate them
         use_layer_name = (pre_create_data.get("use_layer_name") or
                           len(groups_to_create) > 1)
+
+        product_type = data.get("productType")
+        if not product_type:
+            product_type = self.product_base_type
+
         for group in groups_to_create:
             product_name = product_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
@@ -120,7 +125,11 @@ class ImageCreator(Creator):
                 data["active"] = False
 
             new_instance = CreatedInstance(
-                self.product_type, product_name, data, self
+                product_base_type=self.product_base_type,
+                product_type=product_type,
+                product_name=product_name,
+                data=data,
+                creator=self,
             )
 
             stub.imprint(new_instance.get("instance_id"),
