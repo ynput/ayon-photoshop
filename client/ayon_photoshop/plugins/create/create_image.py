@@ -196,7 +196,7 @@ class ImageCreator(Creator):
     def get_detail_description(self):
         return """Creator for Image instances
 
-        Main publishable item in Photoshop will be of `image` product type.
+        Main publishable item in Photoshop will be of `image` product.
         Result of this item (instance) is picture that could be loaded and
         used in another DCCs (for example as single layer in composition in
         AfterEffects, reference in Maya etc).
