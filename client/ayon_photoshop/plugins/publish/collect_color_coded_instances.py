@@ -29,6 +29,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Color-coded Instances"
+
+    # TODO lower order when 'CollectContextEntities' lowers order
+    # order = pyblish.api.CollectorOrder - 0.4
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     targets = ["automated"]
