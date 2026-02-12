@@ -1,7 +1,7 @@
 from typing import Any
 
 
-def _convert_color_coded_mapping_0_6_0(overrides):
+def _convert_color_coded_mapping_0_4_0(overrides):
     color_coded_mapping_overrides = (
         overrides.get("publish", {})
         .get("CollectColorCodedInstances", {})
@@ -19,5 +19,5 @@ def convert_settings_overrides(
     source_version: str,
     overrides: dict[str, Any],
 ) -> dict[str, Any]:
-    _convert_color_coded_mapping_0_6_0(overrides)
+    _convert_color_coded_mapping_0_4_0(overrides)
     return overrides
