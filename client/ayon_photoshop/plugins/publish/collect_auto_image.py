@@ -29,16 +29,6 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
                 self.log.debug("Auto image instance found, won't create new")
                 return
 
-        project_name = context.data["projectName"]
-        proj_settings = context.data["project_settings"]
-        host_name = context.data["hostName"]
-        folder_entity = context.data["folderEntity"]
-        task_entity = context.data["taskEntity"]
-        task_name = task_type = None
-        if task_entity:
-            task_name = task_entity["name"]
-            task_type = task_entity["taskType"]
-
         stub = photoshop.stub()
         stored_items = stub.get_layers_metadata()
         for item in stored_items:
@@ -74,16 +64,20 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
         if instance_names:
             return
 
-        variants = proj_settings.get(
-            "photoshop", {}).get(
-            "create", {}).get(
-            "CreateImage", {}).get(
-            "default_variants", [''])
-        product_type = "image"
-        # TODO (antirotor): handle product_base_type properly if needed
-        product_base_type = product_type
+        variants = create_settings["ImageCreator"]["default_variants"]
+        if not variants:
+            variants = [""]
 
         variant = context.data.get("variant") or variants[0]
+
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        folder_entity = context.data["folderEntity"]
+        task_entity = context.data["taskEntity"]
+        task_name = task_type = None
+        if task_entity:
+            task_name = task_entity["name"]
+            task_type = task_entity["taskType"]
 
         get_product_name_kwargs = {}
         if getattr(get_product_name, "use_entities", False):
