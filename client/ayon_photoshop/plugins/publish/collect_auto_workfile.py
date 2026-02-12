@@ -20,6 +20,7 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         ext = os.path.splitext(file_path)[1].lstrip(".")
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
+
         workfile_representation = {
             "name": ext,
             "ext": ext,
@@ -36,14 +37,6 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             })
             return
 
-        stub = photoshop.stub()
-        stored_items = stub.get_layers_metadata()
-        for item in stored_items:
-            if item.get("creator_identifier") == "workfile":
-                if not item.get("active"):
-                    self.log.debug("Workfile instance disabled")
-                    return
-
         project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
         auto_creator = proj_settings["photoshop"]["create"]["WorkfileCreator"]
@@ -51,6 +44,14 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         if not auto_creator["enabled"]:
             self.log.debug("Workfile creator disabled, won't create new")
             return
+
+        stub = photoshop.stub()
+        stored_items = stub.get_layers_metadata()
+        for item in stored_items:
+            if item.get("creator_identifier") == "workfile":
+                if not item.get("active"):
+                    self.log.debug("Workfile instance disabled")
+                    return
 
         # context.data["variant"] might come only from collect_batch_data
         variant = (
