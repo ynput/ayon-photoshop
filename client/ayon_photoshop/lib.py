@@ -16,6 +16,9 @@ class PSAutoCreator(AutoCreator):
     skip_discovery = True
     settings_category = "photoshop"
 
+    # Settings based attribute
+    active_on_create = True
+
     def get_instance_attr_defs(self):
         return []
 
