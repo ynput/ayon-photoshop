@@ -21,8 +21,8 @@ class ImageCreator(Creator):
     """
     identifier = "image"
     label = "Image"
-    product_type = "image"
     product_base_type = "image"
+    product_type = product_base_type
     description = "Image creator"
 
     # Settings

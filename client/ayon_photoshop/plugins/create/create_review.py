@@ -4,8 +4,8 @@ from ayon_photoshop.lib import PSAutoCreator
 class ReviewCreator(PSAutoCreator):
     """Creates review instance which might be disabled from publishing."""
     identifier = "review"
-    product_type = "review"
     product_base_type = "review"
+    product_type = product_base_type
     default_variant = "Main"
 
     def get_detail_description(self):
