@@ -38,7 +38,7 @@ class ValidateInstanceFolderRepair(pyblish.api.Action):
             stub.imprint(instance[0], data)
 
 
-class ValidateInstanceAsset(OptionalPyblishPluginMixin,
+class ValidateInstanceContext(OptionalPyblishPluginMixin,
                             pyblish.api.InstancePlugin):
     """Validate the instance folder is the current selected context folder.
 

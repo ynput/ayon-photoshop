@@ -1,3 +1,4 @@
+from .conversion import convert_settings_overrides
 from .main import (
     PhotoshopSettings,
     DEFAULT_PHOTOSHOP_SETTING,
@@ -5,6 +6,8 @@ from .main import (
 
 
 __all__ = (
+    "convert_settings_overrides",
+
     "PhotoshopSettings",
     "DEFAULT_PHOTOSHOP_SETTING",
 )
