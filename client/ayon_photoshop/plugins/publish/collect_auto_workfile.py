@@ -30,7 +30,7 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir,
         }
         workfile_instance = self._find_workfile_instance(context)
-        if workfile_instance:
+        if workfile_instance is not None:
             self.log.debug("Workfile instance found, won't create new")
             workfile_instance.data.update({
                 "label": base_name,
