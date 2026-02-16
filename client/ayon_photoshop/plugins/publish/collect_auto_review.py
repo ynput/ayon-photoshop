@@ -19,7 +19,10 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
 
     label = "Collect Auto Review"
     hosts = ["photoshop"]
-    order = pyblish.api.CollectorOrder + 0.2
+
+    # TODO lower order when 'CollectContextEntities' lowers order
+    # order = pyblish.api.CollectorOrder - 0.4
+    order = pyblish.api.CollectorOrder - 0.09
     targets = ["automated"]
 
     publish = True
@@ -29,15 +32,17 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
         has_review = False
         for instance in context:
             if instance.data["productType"] == product_type:
-                self.log.debug("Review instance found, won't create new")
                 has_review = True
-
-            creator_attributes = instance.data.get("creator_attributes", {})
-            if (creator_attributes.get("mark_for_review") and
-                    "review" not in instance.data["families"]):
-                instance.data["families"].append("review")
+                break
 
         if has_review:
+            self.log.debug("Review instance found, won't create new")
+            return
+
+        proj_settings = context.data["project_settings"]
+        auto_creator = proj_settings["photoshop"]["create"]["ReviewCreator"]
+        if not auto_creator or not auto_creator["enabled"]:
+            self.log.debug("Review creator disabled, won't create new")
             return
 
         stub = photoshop.stub()
@@ -47,15 +52,6 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
                 if not item.get("active"):
                     self.log.debug("Review instance disabled")
                     return
-
-        auto_creator = context.data["project_settings"].get(
-            "photoshop", {}).get(
-            "create", {}).get(
-            "ReviewCreator", {})
-
-        if not auto_creator or not auto_creator["enabled"]:
-            self.log.debug("Review creator disabled, won't create new")
-            return
 
         variant = (context.data.get("variant") or
                    auto_creator["default_variant"])
