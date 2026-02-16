@@ -24,9 +24,8 @@ from ayon_core.pipeline.version_start import get_versioning_start
 class CollectPublishedVersion(pyblish.api.ContextPlugin):
     """Collects published version of workfile and increments it."""
 
-    # TODO lower order when 'CollectContextEntities' lowers order
-    # order = pyblish.api.CollectorOrder - 0.4
-    order = pyblish.api.CollectorOrder - 0.08
+    order = pyblish.api.CollectorOrder - 0.4
+
     label = "Collect published version"
     hosts = ["photoshop"]
     targets = ["automated"]

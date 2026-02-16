@@ -10,9 +10,8 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
 
     label = "Collect Auto Image"
     hosts = ["photoshop"]
-    # TODO lower order when 'CollectContextEntities' lowers order
-    # order = pyblish.api.CollectorOrder - 0.4
-    order = pyblish.api.CollectorOrder - 0.09
+
+    order = pyblish.api.CollectorOrder - 0.4
 
     targets = ["automated"]
 
