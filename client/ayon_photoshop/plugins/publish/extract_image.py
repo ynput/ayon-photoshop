@@ -60,7 +60,7 @@ class ExtractImage(
                 for instance in filtered_instances:
                     suffix = instance.data["name"]
                     staging_dir = self.staging_dir(instance)
-                    self.log.info("Outputting image to {}".format(staging_dir))
+                    self.log.info(f"Outputting image to {staging_dir}")
 
                     # Perform extraction
                     files = {}
@@ -68,14 +68,18 @@ class ExtractImage(
                     # real layers and groups
                     members = instance.data("members")
                     if members:
-                        ids.update(set([int(member) for member in members]))
+                        ids.update(int(member) for member in members)
                     # virtual groups collected by color coding or auto_image
                     add_ids = instance.data.pop("ids", None)
                     if add_ids:
                         ids.update(set(add_ids))
-                    extract_ids = set([ll.id for ll in stub.
-                                      get_layers_in_layers_ids(ids, all_layers)
-                                       if ll.id not in hidden_layer_ids])
+                    extract_ids = {
+                        ll.id
+                        for ll in stub.get_layers_in_layers_ids(
+                            ids, all_layers
+                        )
+                        if ll.id not in hidden_layer_ids
+                    }
 
                     for extracted_id in extract_ids:
                         stub.set_visible(extracted_id, True)

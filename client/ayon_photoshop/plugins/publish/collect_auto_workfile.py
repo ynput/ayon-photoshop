@@ -8,7 +8,9 @@ from ayon_core.pipeline.create import get_product_name
 class CollectAutoWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder + 0.2
+    # TODO lower order when 'CollectContextEntities' lowers order
+    # order = pyblish.api.CollectorOrder - 0.4
+    order = pyblish.api.CollectorOrder - 0.09
     label = "Collect Workfile"
     hosts = ["photoshop"]
 
@@ -16,23 +18,32 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         file_path = context.data["currentFile"]
-        _, ext = os.path.splitext(file_path)
+        ext = os.path.splitext(file_path)[1].lstrip(".")
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
+
         workfile_representation = {
-            "name": ext[1:],
-            "ext": ext[1:],
+            "name": ext,
+            "ext": ext,
             "files": base_name,
             "stagingDir": staging_dir,
         }
         workfile_instance = self._find_workfile_instance(context)
-        if workfile_instance:
+        if workfile_instance is not None:
             self.log.debug("Workfile instance found, won't create new")
             workfile_instance.data.update({
                 "label": base_name,
                 "name": base_name,
                 "representations": [workfile_representation],
             })
+            return
+
+        project_name = context.data["projectName"]
+        proj_settings = context.data["project_settings"]
+        auto_creator = proj_settings["photoshop"]["create"]["WorkfileCreator"]
+
+        if not auto_creator["enabled"]:
+            self.log.debug("Workfile creator disabled, won't create new")
             return
 
         stub = photoshop.stub()
@@ -43,15 +54,8 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
                     self.log.debug("Workfile instance disabled")
                     return
 
-        project_name = context.data["projectName"]
-        proj_settings = context.data["project_settings"]
-        auto_creator = proj_settings["photoshop"]["create"]["WorkfileCreator"]
-
-        if not auto_creator["enabled"]:
-            self.log.debug("Workfile creator disabled, won't create new")
-            return
-
         product_base_type = "workfile"
+
         # context.data["variant"] might come only from collect_batch_data
         variant = (
             context.data.get("variant")
@@ -61,6 +65,9 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         host_name = context.data["hostName"]
         folder_entity = context.data["folderEntity"]
         task_entity = context.data["taskEntity"]
+        task_name = None
+        if task_entity:
+            task_name = task_entity["name"]
 
         product_name = get_product_name(
             project_name=project_name,
@@ -84,9 +91,11 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             "family": product_base_type,
             "families": [product_base_type],
             "representations": [workfile_representation],
-            "folderPath": folder_entity["path"]
+            "folderPath": folder_entity["path"],
+            "task": task_name,
         })
 
+        # creating representation
         self.log.debug(f"auto workfile review created:{instance.data}")
 
     def _find_workfile_instance(self, context):

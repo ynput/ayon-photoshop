@@ -19,7 +19,10 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
 
     label = "Collect Auto Review"
     hosts = ["photoshop"]
-    order = pyblish.api.CollectorOrder + 0.2
+
+    # TODO lower order when 'CollectContextEntities' lowers order
+    # order = pyblish.api.CollectorOrder - 0.4
+    order = pyblish.api.CollectorOrder - 0.09
     targets = ["automated"]
 
     publish = True
@@ -43,7 +46,6 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
 
         proj_settings = context.data["project_settings"]
         auto_creator = proj_settings["photoshop"]["create"]["ReviewCreator"]
-
         if not auto_creator["enabled"]:
             self.log.debug("Review creator disabled, won't create new")
             return

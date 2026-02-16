@@ -4,7 +4,6 @@ import re
 import pyblish.api
 
 from ayon_core.lib import prepare_template_data, is_in_tests
-from ayon_core.settings import get_project_settings
 from ayon_photoshop import api as photoshop
 
 
@@ -30,6 +29,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Color-coded Instances"
+
+    # TODO lower order when 'CollectContextEntities' lowers order
+    # order = pyblish.api.CollectorOrder - 0.4
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     targets = ["automated"]
@@ -42,10 +44,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info("CollectColorCodedInstances")
-        batch_dir = (
-            os.environ.get("AYON_PUBLISH_DATA")
-            or os.environ.get("OPENPYPE_PUBLISH_DATA")
-        )
+        batch_dir = os.environ.get("AYON_PUBLISH_DATA")
         if (
             is_in_tests()
             and (
@@ -61,12 +60,13 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         folder_path = context.data["folderPath"]
         task_name = context.data["task"]
         variant = context.data["variant"]
-        project_name = context.data["projectEntity"]["name"]
-
-        naming_conventions = get_project_settings(project_name).get(
-            "photoshop", {}).get(
-            "publish", {}).get(
-            "ValidateNaming", {})
+        project_settings = context.data["project_settings"]
+        naming_conventions = (
+            project_settings
+            ["photoshop"]
+            ["publish"]
+            ["ValidateNaming"]
+        )
 
         stub = photoshop.stub()
         layers = stub.get_layers()
@@ -75,7 +75,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         created_instances = []
         product_base_type_from_settings = None
         for layer in layers:
-            self.log.debug("Layer:: {}".format(layer))
+            self.log.debug(f"Layer:: {layer}")
             if layer.parents:
                 self.log.debug("!!! Not a top layer, skip")
                 continue
@@ -84,11 +84,15 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                 self.log.debug("Not visible, skip")
                 continue
 
-            resolved_product_base_type, resolved_product_template = (
-                self._resolve_mapping(layer)
-            )
+            (
+                resolved_product_base_type,
+                resolved_product_template
+            ) = self._resolve_mapping(layer)
 
-            if not resolved_product_template or not resolved_product_base_type:
+            if (
+                not resolved_product_template
+                or not resolved_product_base_type
+            ):
                 self.log.debug("!!! Not found product type or template, skip")
                 continue
 
@@ -114,9 +118,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             )
 
             if product_name in existing_product_names:
-                self.log.info((
-                    "Product {} already created, skipping."
-                ).format(product_name))
+                self.log.info(
+                    f"Product {product_name} already created, skipping."
+                )
                 continue
 
             if self.create_flatten_image != "flatten_only":
@@ -162,7 +166,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.info("instance: {} ".format(instance.data))
+            self.log.debug(f"instance: {instance.data} ")
 
     def _get_existing_product_names(self, context):
         """Collect manually created instances from workfile.
@@ -173,7 +177,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         existing_product_names = []
         for instance in context:
             if instance.data.get("publish") is not False:
-                existing_product_names.append(instance.data.get("productName"))
+                existing_product_names.append(
+                    instance.data.get("productName")
+                )
 
         return existing_product_names
 
