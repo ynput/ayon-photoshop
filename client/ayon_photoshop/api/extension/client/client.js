@@ -133,6 +133,15 @@
                   });
       });
 
+      RPC.addRoute('Photoshop.set_layers_visibility', function (data) {
+              log.warn('Server called client route "set_layers_visibility":', data);
+              return runEvalScript("setLayersVisibility('" + data.visibility_map + "')")
+                  .then(function(result){
+                      log.warn("setLayersVisibility: " + result);
+                      return result;
+                  });
+      });
+
       RPC.addRoute('Photoshop.get_active_document_name', function (data) {
               log.warn('Server called client route "get_active_document_name":',
                         data);
