@@ -75,17 +75,6 @@ class ExtractImage(
                     if add_ids:
                         ids.update(set(add_ids))
 
-                    extract_ids = {
-                        ll.id
-                        for ll in stub.get_layers_in_layers_ids(
-                            ids, all_layers
-                        )
-                        if ll.id not in hidden_layer_ids
-                    }
-
-                    for extracted_id in extract_ids:
-                        stub.set_visible(extracted_id, True)
-
                     file_basename, workfile_extension = os.path.splitext(
                         stub.get_active_document_name()
                     )
