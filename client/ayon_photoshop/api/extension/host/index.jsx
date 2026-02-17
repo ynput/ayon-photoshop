@@ -126,6 +126,19 @@ function setVisible(layer_id, visibility){
     
 }
 
+function setLayersVisibility(visibilityMap) {
+    /**
+     * Sets visibility for multiple layers in one call.
+     * visibilityMap: JSON string of {layer_id: boolean, ...}
+     */
+    var map = JSON.parse(visibilityMap);
+    for (var layerId in map) {
+        if (map.hasOwnProperty(layerId)) {
+            setVisible(parseInt(layerId), map[layerId]);
+        }
+    }
+}
+
 function getHeadline(){
     /**
      *  Returns headline of current document with metadata 

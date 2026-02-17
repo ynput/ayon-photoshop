@@ -83,24 +83,79 @@ def maintained_selection():
         stub().select_layers(selection)
 
 
-@contextlib.contextmanager
-def maintained_visibility(layers=None):
-    """Maintain visibility during context.
+def _get_layers_by_parent(all_layers):
+    """Group layers by their immediate parent ID."""
+    by_parent = {None: []}
+    for layer in all_layers:
+        parent_id = layer.parents[-1] if layer.parents else None
+        if parent_id not in by_parent:
+            by_parent[parent_id] = []
+        by_parent[parent_id].append(layer)
+    return by_parent
 
+
+@contextlib.contextmanager
+def isolated_layers_visibility(stub, layer_ids, all_layers=None):
+    """Show only the specified layers and their ancestor paths, hiding all siblings.
+    
+    Similar to isolated_instance_visibility but supports multiple layer IDs.
+    All specified layers and their ancestors will be visible simultaneously.
+    
     Args:
-        layers (list) of PSItem (used for caching)
+        stub: PhotoshopServerStub
+        layer_ids: List of layer IDs to show (can be single layer or multiple)
+        all_layers: Optional list of PSItem layers (fetched if not provided)
+    
+    Tracks original visibility and restores it on exit.
     """
-    visibility = {}
-    if not layers:
-        layers = stub().get_layers()
-    for layer in layers:
-        visibility[layer.id] = layer.visible
+    if all_layers is None:
+        all_layers = stub.get_layers()
+    
+    # Normalize to list if single ID provided
+    if not isinstance(layer_ids, (list, tuple, set)):
+        layer_ids = [layer_ids]
+    
+    layers_by_id = {layer.id: layer for layer in all_layers}
+    layers_by_parent = _get_layers_by_parent(all_layers)
+    
+    # Build paths from all target layers to top-level
+    path_ids = set()
+    for layer_id in layer_ids:
+        current = layers_by_id.get(layer_id)
+        if not current:
+            continue  # Skip if layer not found
+        while current:
+            path_ids.add(current.id)
+            current = layers_by_id.get(current.parents[-1]) if current.parents else None
+
+    if not path_ids:
+        yield  # No-op if no valid layers found
+        return
+
+    # Record original visibility and build change map
+    original_visibility = {}
+    visibility_changes = {}
+    
+    for layer_id in path_ids:
+        layer = layers_by_id.get(layer_id)
+        if not layer:
+            continue
+        parent_id = layer.parents[-1] if layer.parents else None
+        for sibling in layers_by_parent.get(parent_id, []):
+            # Record original state before any changes
+            if sibling.id not in original_visibility:
+                original_visibility[sibling.id] = sibling.visible
+            # Path layers visible, siblings hidden
+            visibility_changes[sibling.id] = sibling.id in path_ids
+
     try:
+        if visibility_changes:
+            stub.set_layers_visibility(visibility_changes)
         yield
     finally:
-        for layer in layers:
-            stub().set_visible(layer.id, visibility[layer.id])
-            pass
+        # Restore original visibility state
+        if original_visibility:
+            stub.set_layers_visibility(original_visibility)
 
 
 def find_close_plugin(close_plugin_name, log):
