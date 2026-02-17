@@ -18,16 +18,14 @@ Provides:
 import pyblish.api
 import ayon_api
 
-from ayon_core.lib import is_func_signature_supported
 from ayon_core.pipeline.version_start import get_versioning_start
 
 
 class CollectPublishedVersion(pyblish.api.ContextPlugin):
     """Collects published version of workfile and increments it."""
 
-    # TODO lower order when 'CollectContextEntities' lowers order
-    # order = pyblish.api.CollectorOrder - 0.4
-    order = pyblish.api.CollectorOrder - 0.08
+    order = pyblish.api.CollectorOrder - 0.4
+
     label = "Collect published version"
     hosts = ["photoshop"]
     targets = ["automated"]
@@ -58,7 +56,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
         if version_entity:
             version_int = int(version_entity["version"]) + 1
         else:
-            kwargs = dict(
+            version_int = get_versioning_start(
                 project_name=project_name,
                 host_name="photoshop",
                 product_base_type="workfile",
@@ -66,11 +64,6 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
                 task_type=context.data["taskType"],
                 project_settings=context.data["project_settings"],
             )
-            if not is_func_signature_supported(
-                get_versioning_start, **kwargs
-            ):
-                kwargs["product_type"] = kwargs.pop("poduct_base_type")
-            version_int = get_versioning_start(**kwargs)
 
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int

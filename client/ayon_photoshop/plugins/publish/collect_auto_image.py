@@ -10,9 +10,8 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
 
     label = "Collect Auto Image"
     hosts = ["photoshop"]
-    # TODO lower order when 'CollectContextEntities' lowers order
-    # order = pyblish.api.CollectorOrder - 0.4
-    order = pyblish.api.CollectorOrder - 0.09
+
+    order = pyblish.api.CollectorOrder - 0.4
 
     targets = ["automated"]
 
@@ -80,30 +79,15 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
         host_name = context.data["hostName"]
         folder_entity = context.data["folderEntity"]
         task_entity = context.data["taskEntity"]
-        task_name = task_type = None
-        if task_entity:
-            task_name = task_entity["name"]
-            task_type = task_entity["taskType"]
-
-        get_product_name_kwargs = {}
-        if getattr(get_product_name, "use_entities", False):
-            get_product_name_kwargs.update({
-                "folder_entity": folder_entity,
-                "task_entity": task_entity,
-                "product_base_type": product_base_type,
-            })
-        else:
-            get_product_name_kwargs.update({
-                "task_name": task_name,
-                "task_type": task_type,
-            })
 
         product_name = get_product_name(
             project_name=project_name,
             host_name=host_name,
             product_type=product_type,
             variant=variant,
-            **get_product_name_kwargs
+            folder_entity=folder_entity,
+            task_entity=task_entity,
+            product_base_type=product_base_type,
         )
 
         instance = context.create_instance(product_name)

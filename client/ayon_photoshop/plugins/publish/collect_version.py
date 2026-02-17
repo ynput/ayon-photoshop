@@ -25,10 +25,9 @@ class CollectVersion(pyblish.api.InstancePlugin):
     because of Webpublisher.
     (This plugin must run after CollectPublishedVersion!)
     """
-    # TODO lower order when 'CollectPublishedVersion' lowers order
-    # - Or move the logic to the very same plugin?
-    # order = pyblish.api.CollectorOrder - 0.35
-    order = pyblish.api.CollectorOrder - 0.07
+    # QUESTION can we move the logic to the 'CollectPublishedVersion'?
+    order = pyblish.api.CollectorOrder - 0.35
+
     label = "Collect Version"
 
     hosts = ["photoshop"]

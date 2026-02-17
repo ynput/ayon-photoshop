@@ -13,8 +13,8 @@ class AutoImageCreator(PSAutoCreator):
     Must be enabled in Setting and template for product name provided
     """
     identifier = "auto_image"
-    product_type = "image"
     product_base_type = "image"
+    product_type = product_base_type
 
     # Settings
     default_variant = ""
@@ -64,7 +64,11 @@ class AutoImageCreator(PSAutoCreator):
             data.update({"creator_attributes": creator_attributes})
 
             new_instance = CreatedInstance(
-                self.product_type, product_name, data, self
+                product_base_type=self.product_base_type,
+                product_type=self.product_base_type,
+                product_name=product_name,
+                data=data,
+                creator=self,
             )
             self._add_instance_to_context(new_instance)
             api.stub().imprint(new_instance.get("instance_id"),
@@ -104,16 +108,6 @@ class AutoImageCreator(PSAutoCreator):
                 label="Review"
             )
         ]
-
-    def apply_settings(self, project_settings):
-        plugin_settings = (
-            project_settings["photoshop"]["create"]["AutoImageCreator"]
-        )
-
-        self.active_on_create = plugin_settings["active_on_create"]
-        self.default_variant = plugin_settings["default_variant"]
-        self.mark_for_review = plugin_settings["mark_for_review"]
-        self.enabled = plugin_settings["enabled"]
 
     def get_detail_description(self):
         return """Creator for flatten image.
