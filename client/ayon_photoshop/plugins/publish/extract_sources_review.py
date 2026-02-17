@@ -176,11 +176,15 @@ class ExtractSourcesReview(
         output_image_path = os.path.join(staging_dir, img_filename)
         stub = photoshop.stub()
 
-        with photoshop.maintained_visibility():
-            self.log.info("Extracting {}".format(layers))
-            if layers:
-                stub.hide_all_others_layers(layers)
-
+        self.log.info("Extracting {}".format(layers))
+        if layers:
+            all_layers = stub.get_layers()
+            layer_ids = [layer.id for layer in layers]
+            # Show all specified layers and their ancestors, hide all others
+            with photoshop.isolated_layers_visibility(stub, layer_ids, all_layers):
+                stub.saveAs(output_image_path, 'jpg', True)
+        else:
+            # No layers specified - save full flattened document as-is
             stub.saveAs(output_image_path, 'jpg', True)
 
         return output_image_path
@@ -195,18 +199,18 @@ class ExtractSourcesReview(
             (list): paths to new images
         """
         stub = photoshop.stub()
+        all_layers = stub.get_layers()
 
         list_img_filename = []
-        with photoshop.maintained_visibility():
-            for i, layer in enumerate(layers):
-                self.log.info("Extracting {}".format(layer))
+        for i, layer in enumerate(layers):
+            self.log.info("Extracting {}".format(layer))
 
-                img_filename = self.output_seq_filename % i
-                output_image_path = os.path.join(staging_dir, img_filename)
-                list_img_filename.append(img_filename)
+            img_filename = self.output_seq_filename % i
+            output_image_path = os.path.join(staging_dir, img_filename)
+            list_img_filename.append(img_filename)
 
-                with photoshop.maintained_visibility():
-                    stub.hide_all_others_layers([layer])
-                    stub.saveAs(output_image_path, 'jpg', True)
+            # Show only the layer and its ancestors, hide all others
+            with photoshop.isolated_layers_visibility(stub, layer.id, all_layers):
+                stub.saveAs(output_image_path, 'jpg', True)
 
         return list_img_filename
