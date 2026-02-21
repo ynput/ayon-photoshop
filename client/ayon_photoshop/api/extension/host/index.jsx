@@ -198,10 +198,9 @@ function saveAs(output_path, ext, as_copy){
             saveOptions.quality = 12;
             saveOptions.embedColorProfile = true;
             saveOptions.formatOptions = FormatOptions.PROGRESSIVE;
-            if (saveOptions.formatOptions == FormatOptions.PROGRESSIVE) {
+            if (saveOptions.formatOptions === FormatOptions.PROGRESSIVE) {
                 saveOptions.scans = 5
             }
-            ;
             saveOptions.matte = MatteType.NONE;
         }
         if (ext === 'png') {
