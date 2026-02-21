@@ -75,6 +75,17 @@
               });
             });
     </script>
+
+    <script type=text/javascript>
+            $(function() {
+              $("a#scripteditor-button").bind("click", function() {
+                RPC.call('Photoshop.scripteditor_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
 </head>
 <body>
   <script type="text/javascript" src="./client/wsrpc.js"></script>
@@ -91,5 +102,6 @@
     <a href=# id=publish-button><button>Publish...</button></a>
     <a href=# id=sceneinventory-button><button>Manage...</button></a>
     <a href=# id=experimental-button><button>Experimental Tools...</button></a>
+    <a href=# id=scripteditor-button><button>Script Editor...</button></a>
 </body>
 </html>

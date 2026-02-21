@@ -30,6 +30,9 @@ from .ws_stub import PhotoshopServerStub
 log = Logger.get_logger(__name__)
 
 
+console_window = None
+
+
 class ConnectionNotEstablishedYet(Exception):
     pass
 
@@ -296,6 +299,25 @@ class ProcessLauncher(QtCore.QObject):
             self.exit()
 
 
+def show_script_editor():
+    from ayon_core.tools.console_interpreter import InterpreterController
+    from ayon_core.tools.console_interpreter.ui import ConsoleInterpreterWindow
+
+    # Global so it doesn't get garbage collected instantly
+    global console_window
+    if console_window is None:
+        controller = InterpreterController(name="photoshop")
+        console_window = ConsoleInterpreterWindow(controller)
+        console_window.setWindowTitle("Python Script Editor - PS")
+        console_window.setWindowFlags(
+            console_window.windowFlags() |
+            QtCore.Qt.Dialog |
+            QtCore.Qt.WindowMinimizeButtonHint)
+    console_window.show()
+    console_window.raise_()
+    console_window.activateWindow()
+
+
 class PhotoshopRoute(WebSocketRoute):
     """
         One route, mimicking external application (like Harmony, etc).
@@ -366,6 +388,9 @@ class PhotoshopRoute(WebSocketRoute):
 
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")
+
+    async def scripteditor_route(self):
+        ProcessLauncher.execute_in_main_thread(show_script_editor)
 
     def _tool_route(self, _tool_name):
         """The address accessed when clicking on the buttons."""

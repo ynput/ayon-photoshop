@@ -622,6 +622,25 @@ class PhotoshopServerStub:
         # TODO change client.call to method with checks for client
         self.websocketserver.call(self.client.call('Photoshop.close'))
 
+    def eval(self, code: str):
+        """Execute Javascript code.
+
+        Args:
+            code (str): Javascript code to execute.
+
+        Returns:
+            Any: Result of javascript execution.
+
+        """
+        # TODO: Can we provide more info to the user on execution failure
+        #  on the javascript side, like raising an informative error?
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.eval_code',
+                code=code,
+            )
+        )
+
     def _to_records(self, res):
         """Converts string json representation into list of PSItem for
         dot notation access to work.
