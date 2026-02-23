@@ -295,6 +295,15 @@ function getActiveDocumentFullName(){
     if (documents.length == 0){
         return null;
     }
+    try {
+        app.activeDocument.fullName;
+    }
+    catch (e) {
+        // Unsaved saved document has no full name
+        return null;
+    }
+    // convert URI path to system path, as PS returns URI format (eg. /c/..
+    // instead of c:/)
     var f = new File(app.activeDocument.fullName);
     var path = f.fsName;
     f.close();
