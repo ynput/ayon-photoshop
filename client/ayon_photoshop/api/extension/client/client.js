@@ -350,7 +350,9 @@
 
       RPC.addRoute('Photoshop.eval_code', function (data) {
         log.warn('Server called client route "eval_code":', data);
-        return runEvalScript(data.code);
+        return runEvalScript(data.code).then(function(result){
+                      return result;
+                  });
       });
 
       RPC.call('Photoshop.ping').then(function (data) {

@@ -634,7 +634,7 @@ class PhotoshopServerStub:
         """
         # TODO: Can we provide more info to the user on execution failure
         #  on the javascript side, like raising an informative error?
-        self.websocketserver.call(
+        return self.websocketserver.call(
             self.client.call(
                 'Photoshop.eval_code',
                 code=code,
