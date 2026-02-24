@@ -1,0 +1,741 @@
+<!doctype html><html lang=en class=no-js> <head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><link rel=prev href=../addon.html><link rel=next href=launch_logic.html><link rel=icon href=../../../../img/favicon.ico><meta name=generator content="mkdocs-1.6.1, mkdocs-material-9.7.3"><title>api - ayon-photoshop</title><link rel=stylesheet href=../../../../assets/stylesheets/main.484c7ddc.min.css><link rel=stylesheet href=../../../../assets/stylesheets/palette.ab4e12ef.min.css><script src=https://unpkg.com/iframe-worker/shim></script><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback"><style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style><link rel=stylesheet href=../../../../assets/_mkdocstrings.css><link rel=stylesheet href=../../../../css/custom.css><script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script></head> <body dir=ltr data-md-color-scheme=slate data-md-color-primary=indigo data-md-color-accent=indigo> <input class=md-toggle data-md-toggle=drawer type=checkbox id=__drawer autocomplete=off> <input class=md-toggle data-md-toggle=search type=checkbox id=__search autocomplete=off> <label class=md-overlay for=__drawer></label> <div data-md-component=skip> <a href=#client.ayon_photoshop.api class=md-skip> Skip to content </a> </div> <div data-md-component=announce> </div> <div data-md-color-scheme=default data-md-component=outdated hidden> </div> <header class="md-header md-header--shadow" data-md-component=header> <nav class="md-header__inner md-grid" aria-label=Header> <a href=../../../../index.html title=ayon-photoshop class="md-header__button md-logo" aria-label=ayon-photoshop data-md-component=logo> <img src=../../../../img/ay-symbol-blackw-full.png alt=logo> </a> <label class="md-header__button md-icon" for=__drawer> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg> </label> <div class=md-header__title data-md-component=header-title> <div class=md-header__ellipsis> <div class=md-header__topic> <span class=md-ellipsis> ayon-photoshop </span> </div> <div class=md-header__topic data-md-component=header-topic> <span class=md-ellipsis> api </span> </div> </div> </div> <form class=md-header__option data-md-component=palette> <input class=md-option data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme=slate data-md-color-primary=indigo data-md-color-accent=indigo aria-label="Switch to light mode" type=radio name=__palette id=__palette_0> <label class="md-header__button md-icon" title="Switch to light mode" for=__palette_1 hidden> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg> </label> <input class=md-option data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme=default data-md-color-primary=indigo data-md-color-accent=indigo aria-label="Switch to dark mode" type=radio name=__palette id=__palette_1> <label class="md-header__button md-icon" title="Switch to dark mode" for=__palette_0 hidden> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg> </label> </form> <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script> <label class="md-header__button md-icon" for=__search> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg> </label> <div class=md-search data-md-component=search role=dialog> <label class=md-search__overlay for=__search></label> <div class=md-search__inner role=search> <form class=md-search__form name=search> <input type=text class=md-search__input name=query aria-label=Search placeholder=Search autocapitalize=off autocorrect=off autocomplete=off spellcheck=false data-md-component=search-query required> <label class="md-search__icon md-icon" for=__search> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg> </label> <nav class=md-search__options aria-label=Search> <button type=reset class="md-search__icon md-icon" title=Clear aria-label=Clear tabindex=-1> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> </button> </nav> </form> <div class=md-search__output> <div class=md-search__scrollwrap tabindex=0 data-md-scrollfix> <div class=md-search-result data-md-component=search-result> <div class=md-search-result__meta> Initializing search </div> <ol class=md-search-result__list role=presentation></ol> </div> </div> </div> </div> </div> <div class=md-header__source> <a href=https://github.com/ynput/ayon-photoshop title="Go to repository" class=md-source data-md-component=source> <div class="md-source__icon md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><!-- Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg> </div> <div class=md-source__repository> GitHub </div> </a> </div> </nav> </header> <div class=md-container data-md-component=container> <main class=md-main data-md-component=main> <div class="md-main__inner md-grid"> <div class="md-sidebar md-sidebar--primary" data-md-component=sidebar data-md-type=navigation> <div class=md-sidebar__scrollwrap> <div class=md-sidebar__inner> <nav class="md-nav md-nav--primary" aria-label=Navigation data-md-level=0> <label class=md-nav__title for=__drawer> <a href=../../../../index.html title=ayon-photoshop class="md-nav__button md-logo" aria-label=ayon-photoshop data-md-component=logo> <img src=../../../../img/ay-symbol-blackw-full.png alt=logo> </a> ayon-photoshop </label> <div class=md-nav__source> <a href=https://github.com/ynput/ayon-photoshop title="Go to repository" class=md-source data-md-component=source> <div class="md-source__icon md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><!-- Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg> </div> <div class=md-source__repository> GitHub </div> </a> </div> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../index.html class=md-nav__link> <span class=md-ellipsis> Home </span> </a> </li> <li class=md-nav__item> <a href=../../../../license.html class=md-nav__link> <span class=md-ellipsis> License </span> </a> </li> <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_3 checked> <label class=md-nav__link for=__nav_3 id=__nav_3_label tabindex> <span class=md-ellipsis> Reference </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=1 aria-labelledby=__nav_3_label aria-expanded=true> <label class=md-nav__title for=__nav_3> <span class="md-nav__icon md-icon"></span> Reference </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_3_1 checked> <label class=md-nav__link for=__nav_3_1 id=__nav_3_1_label tabindex=0> <span class=md-ellipsis> client </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_3_1_label aria-expanded=true> <label class=md-nav__title for=__nav_3_1> <span class="md-nav__icon md-icon"></span> client </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_3_1_1 checked> <label class=md-nav__link for=__nav_3_1_1 id=__nav_3_1_1_label tabindex=0> <span class=md-ellipsis> ayon_photoshop </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_3_1_1_label aria-expanded=true> <label class=md-nav__title for=__nav_3_1_1> <span class="md-nav__icon md-icon"></span> ayon_photoshop </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../addon.html class=md-nav__link> <span class=md-ellipsis> addon </span> </a> </li> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_3_1_1_2 checked> <label class=md-nav__link for=__nav_3_1_1_2 id=__nav_3_1_1_2_label tabindex=0> <span class=md-ellipsis> api </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_3_1_1_2_label aria-expanded=true> <label class=md-nav__title for=__nav_3_1_1_2> <span class="md-nav__icon md-icon"></span> api </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=launch_logic.html class=md-nav__link> <span class=md-ellipsis> launch_logic </span> </a> </li> <li class=md-nav__item> <a href=launch_script.html class=md-nav__link> <span class=md-ellipsis> launch_script </span> </a> </li> <li class=md-nav__item> <a href=lib.html class=md-nav__link> <span class=md-ellipsis> lib </span> </a> </li> <li class=md-nav__item> <a href=pipeline.html class=md-nav__link> <span class=md-ellipsis> pipeline </span> </a> </li> <li class=md-nav__item> <a href=plugin.html class=md-nav__link> <span class=md-ellipsis> plugin </span> </a> </li> <li class=md-nav__item> <a href=webserver.html class=md-nav__link> <span class=md-ellipsis> webserver </span> </a> </li> <li class=md-nav__item> <a href=ws_stub.html class=md-nav__link> <span class=md-ellipsis> ws_stub </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--pruned md-nav__item--nested"> <a href=../hooks/pre_launch_args.html class=md-nav__link> <span class=md-ellipsis> hooks </span> <span class="md-nav__icon md-icon"></span> </a> </li> <li class=md-nav__item> <a href=../lib.html class=md-nav__link> <span class=md-ellipsis> lib </span> </a> </li> <li class="md-nav__item md-nav__item--pruned md-nav__item--nested"> <a href=../plugins/create/create_flatten_image.html class=md-nav__link> <span class=md-ellipsis> plugins </span> <span class="md-nav__icon md-icon"></span> </a> </li> <li class=md-nav__item> <a href=../version.html class=md-nav__link> <span class=md-ellipsis> version </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--pruned md-nav__item--nested"> <a href=../../../server/settings/conversion.html class=md-nav__link> <span class=md-ellipsis> server </span> <span class="md-nav__icon md-icon"></span> </a> </li> </ul> </nav> </li> </ul> </nav> </div> </div> </div> <div class="md-sidebar md-sidebar--secondary" data-md-component=sidebar data-md-type=toc> <div class=md-sidebar__scrollwrap> <div class=md-sidebar__inner> <nav class="md-nav md-nav--secondary" aria-label="Table of contents"> <label class=md-nav__title for=__toc> <span class="md-nav__icon md-icon"></span> Table of contents </label> <ul class=md-nav__list data-md-component=toc data-md-scrollfix> <li class=md-nav__item> <a href=#client.ayon_photoshop.api class=md-nav__link> <span class=md-ellipsis> api </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.PhotoshopHost class=md-nav__link> <span class=md-ellipsis> PhotoshopHost </span> </a> <nav class=md-nav aria-label=PhotoshopHost> <ul class=md-nav__list> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.PhotoshopHost.get_context_data class=md-nav__link> <span class=md-ellipsis> get_context_data </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.PhotoshopHost.install class=md-nav__link> <span class=md-ellipsis> install </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.PhotoshopHost.list_instances class=md-nav__link> <span class=md-ellipsis> list_instances </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.PhotoshopHost.remove_instance class=md-nav__link> <span class=md-ellipsis> remove_instance </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.PhotoshopHost.update_context_data class=md-nav__link> <span class=md-ellipsis> update_context_data </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.containerise class=md-nav__link> <span class=md-ellipsis> containerise </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.get_unique_layer_name class=md-nav__link> <span class=md-ellipsis> get_unique_layer_name </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.isolated_layers_visibility class=md-nav__link> <span class=md-ellipsis> isolated_layers_visibility </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.ls class=md-nav__link> <span class=md-ellipsis> ls </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.maintained_selection class=md-nav__link> <span class=md-ellipsis> maintained_selection </span> </a> </li> <li class=md-nav__item> <a href=#client.ayon_photoshop.api.stub class=md-nav__link> <span class=md-ellipsis> stub </span> </a> </li> </ul> </nav> </div> </div> </div> <div class=md-content data-md-component=content> <nav class=md-path aria-label=Navigation> <ol class=md-path__list> <li class=md-path__item> <a href=../../../../index.html class=md-path__link> <span class=md-ellipsis> Home </span> </a> </li> <li class=md-path__item> <a href=../addon.html class=md-path__link> <span class=md-ellipsis> Reference </span> </a> </li> <li class=md-path__item> <a href=../addon.html class=md-path__link> <span class=md-ellipsis> client </span> </a> </li> <li class=md-path__item> <a href=../addon.html class=md-path__link> <span class=md-ellipsis> ayon_photoshop </span> </a> </li> </ol> </nav> <article class="md-content__inner md-typeset"> <h1>api</h1> <div class="doc doc-object doc-module"> <a id=client.ayon_photoshop.api></a> <div class="doc doc-contents first"> <p>Public API</p> <p>Anything that isn't defined here is INTERNAL and unreliable for external use.</p> <div class="doc doc-children"> <div class="doc doc-object doc-class"> <h2 id=client.ayon_photoshop.api.PhotoshopHost class="doc doc-heading"> <code>PhotoshopHost</code> </h2> <div class="doc doc-contents "> <p class="doc doc-class-bases"> Bases: <code><span title=ayon_core.host.HostBase>HostBase</span></code>, <code><span title=ayon_core.host.IWorkfileHost>IWorkfileHost</span></code>, <code><span title=ayon_core.host.ILoadHost>ILoadHost</span></code>, <code><span title=ayon_core.host.IPublishHost>IPublishHost</span></code></p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal> 38</span>
+<span class=normal> 39</span>
+<span class=normal> 40</span>
+<span class=normal> 41</span>
+<span class=normal> 42</span>
+<span class=normal> 43</span>
+<span class=normal> 44</span>
+<span class=normal> 45</span>
+<span class=normal> 46</span>
+<span class=normal> 47</span>
+<span class=normal> 48</span>
+<span class=normal> 49</span>
+<span class=normal> 50</span>
+<span class=normal> 51</span>
+<span class=normal> 52</span>
+<span class=normal> 53</span>
+<span class=normal> 54</span>
+<span class=normal> 55</span>
+<span class=normal> 56</span>
+<span class=normal> 57</span>
+<span class=normal> 58</span>
+<span class=normal> 59</span>
+<span class=normal> 60</span>
+<span class=normal> 61</span>
+<span class=normal> 62</span>
+<span class=normal> 63</span>
+<span class=normal> 64</span>
+<span class=normal> 65</span>
+<span class=normal> 66</span>
+<span class=normal> 67</span>
+<span class=normal> 68</span>
+<span class=normal> 69</span>
+<span class=normal> 70</span>
+<span class=normal> 71</span>
+<span class=normal> 72</span>
+<span class=normal> 73</span>
+<span class=normal> 74</span>
+<span class=normal> 75</span>
+<span class=normal> 76</span>
+<span class=normal> 77</span>
+<span class=normal> 78</span>
+<span class=normal> 79</span>
+<span class=normal> 80</span>
+<span class=normal> 81</span>
+<span class=normal> 82</span>
+<span class=normal> 83</span>
+<span class=normal> 84</span>
+<span class=normal> 85</span>
+<span class=normal> 86</span>
+<span class=normal> 87</span>
+<span class=normal> 88</span>
+<span class=normal> 89</span>
+<span class=normal> 90</span>
+<span class=normal> 91</span>
+<span class=normal> 92</span>
+<span class=normal> 93</span>
+<span class=normal> 94</span>
+<span class=normal> 95</span>
+<span class=normal> 96</span>
+<span class=normal> 97</span>
+<span class=normal> 98</span>
+<span class=normal> 99</span>
+<span class=normal>100</span>
+<span class=normal>101</span>
+<span class=normal>102</span>
+<span class=normal>103</span>
+<span class=normal>104</span>
+<span class=normal>105</span>
+<span class=normal>106</span>
+<span class=normal>107</span>
+<span class=normal>108</span>
+<span class=normal>109</span>
+<span class=normal>110</span>
+<span class=normal>111</span>
+<span class=normal>112</span>
+<span class=normal>113</span>
+<span class=normal>114</span>
+<span class=normal>115</span>
+<span class=normal>116</span>
+<span class=normal>117</span>
+<span class=normal>118</span>
+<span class=normal>119</span>
+<span class=normal>120</span>
+<span class=normal>121</span>
+<span class=normal>122</span>
+<span class=normal>123</span>
+<span class=normal>124</span>
+<span class=normal>125</span>
+<span class=normal>126</span>
+<span class=normal>127</span>
+<span class=normal>128</span>
+<span class=normal>129</span>
+<span class=normal>130</span>
+<span class=normal>131</span>
+<span class=normal>132</span>
+<span class=normal>133</span>
+<span class=normal>134</span>
+<span class=normal>135</span>
+<span class=normal>136</span>
+<span class=normal>137</span>
+<span class=normal>138</span>
+<span class=normal>139</span>
+<span class=normal>140</span>
+<span class=normal>141</span>
+<span class=normal>142</span>
+<span class=normal>143</span>
+<span class=normal>144</span>
+<span class=normal>145</span>
+<span class=normal>146</span>
+<span class=normal>147</span>
+<span class=normal>148</span>
+<span class=normal>149</span>
+<span class=normal>150</span>
+<span class=normal>151</span>
+<span class=normal>152</span>
+<span class=normal>153</span>
+<span class=normal>154</span>
+<span class=normal>155</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>class</span><span class=w> </span><span class=nc>PhotoshopHost</span><span class=p>(</span><span class=n>HostBase</span><span class=p>,</span> <span class=n>IWorkfileHost</span><span class=p>,</span> <span class=n>ILoadHost</span><span class=p>,</span> <span class=n>IPublishHost</span><span class=p>):</span>
+    <span class=n>name</span> <span class=o>=</span> <span class=s2>&quot;photoshop&quot;</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>install</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=w>        </span><span class=sd>&quot;&quot;&quot;Install Photoshop-specific functionality needed for integration.</span>
+
+<span class=sd>        This function is called automatically on calling</span>
+<span class=sd>        `api.install(photoshop)`.</span>
+<span class=sd>        &quot;&quot;&quot;</span>
+        <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=s2>&quot;Installing OpenPype Photoshop...&quot;</span><span class=p>)</span>
+        <span class=n>pyblish</span><span class=o>.</span><span class=n>api</span><span class=o>.</span><span class=n>register_host</span><span class=p>(</span><span class=s2>&quot;photoshop&quot;</span><span class=p>)</span>
+
+        <span class=n>pyblish</span><span class=o>.</span><span class=n>api</span><span class=o>.</span><span class=n>register_plugin_path</span><span class=p>(</span><span class=n>PUBLISH_PATH</span><span class=p>)</span>
+        <span class=n>register_loader_plugin_path</span><span class=p>(</span><span class=n>LOAD_PATH</span><span class=p>)</span>
+        <span class=n>register_creator_plugin_path</span><span class=p>(</span><span class=n>CREATE_PATH</span><span class=p>)</span>
+
+        <span class=n>register_event_callback</span><span class=p>(</span><span class=s2>&quot;application.launched&quot;</span><span class=p>,</span> <span class=n>on_application_launch</span><span class=p>)</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>work_root</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>session</span><span class=p>):</span>
+        <span class=k>return</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>normpath</span><span class=p>(</span><span class=n>session</span><span class=p>[</span><span class=s2>&quot;AYON_WORKDIR&quot;</span><span class=p>])</span><span class=o>.</span><span class=n>replace</span><span class=p>(</span><span class=s2>&quot;</span><span class=se>\\</span><span class=s2>&quot;</span><span class=p>,</span> <span class=s2>&quot;/&quot;</span><span class=p>)</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>open_workfile</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>filepath</span><span class=p>):</span>
+        <span class=n>lib</span><span class=o>.</span><span class=n>stub</span><span class=p>()</span><span class=o>.</span><span class=n>open</span><span class=p>(</span><span class=n>filepath</span><span class=p>)</span>
+
+        <span class=k>return</span> <span class=kc>True</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>save_workfile</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>filepath</span><span class=o>=</span><span class=kc>None</span><span class=p>):</span>
+        <span class=n>_</span><span class=p>,</span> <span class=n>ext</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>splitext</span><span class=p>(</span><span class=n>filepath</span><span class=p>)</span>
+        <span class=n>lib</span><span class=o>.</span><span class=n>stub</span><span class=p>()</span><span class=o>.</span><span class=n>saveAs</span><span class=p>(</span><span class=n>filepath</span><span class=p>,</span> <span class=n>ext</span><span class=o>.</span><span class=n>lstrip</span><span class=p>(</span><span class=s2>&quot;.&quot;</span><span class=p>),</span> <span class=kc>False</span><span class=p>)</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>get_current_workfile</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+        <span class=k>try</span><span class=p>:</span>
+            <span class=n>full_name</span> <span class=o>=</span> <span class=n>lib</span><span class=o>.</span><span class=n>stub</span><span class=p>()</span><span class=o>.</span><span class=n>get_active_document_full_name</span><span class=p>()</span>
+            <span class=k>if</span> <span class=n>full_name</span> <span class=ow>and</span> <span class=n>full_name</span> <span class=o>!=</span> <span class=s2>&quot;null&quot;</span><span class=p>:</span>
+                <span class=k>return</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>normpath</span><span class=p>(</span><span class=n>full_name</span><span class=p>)</span><span class=o>.</span><span class=n>replace</span><span class=p>(</span><span class=s2>&quot;</span><span class=se>\\</span><span class=s2>&quot;</span><span class=p>,</span> <span class=s2>&quot;/&quot;</span><span class=p>)</span>
+        <span class=k>except</span> <span class=ne>Exception</span><span class=p>:</span>
+            <span class=k>pass</span>
+
+        <span class=k>return</span> <span class=kc>None</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>workfile_has_unsaved_changes</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+        <span class=k>if</span> <span class=bp>self</span><span class=o>.</span><span class=n>get_current_workfile</span><span class=p>():</span>
+            <span class=k>return</span> <span class=ow>not</span> <span class=n>lib</span><span class=o>.</span><span class=n>stub</span><span class=p>()</span><span class=o>.</span><span class=n>is_saved</span><span class=p>()</span>
+
+        <span class=k>return</span> <span class=kc>False</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>get_workfile_extensions</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+        <span class=k>return</span> <span class=p>[</span><span class=s2>&quot;.psd&quot;</span><span class=p>,</span> <span class=s2>&quot;.psb&quot;</span><span class=p>]</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>get_containers</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+        <span class=k>return</span> <span class=n>ls</span><span class=p>()</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>get_context_data</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=w>        </span><span class=sd>&quot;&quot;&quot;Get stored values for context (validation enable/disable etc)&quot;&quot;&quot;</span>
+        <span class=n>meta</span> <span class=o>=</span> <span class=n>_get_stub</span><span class=p>()</span><span class=o>.</span><span class=n>get_layers_metadata</span><span class=p>()</span>
+        <span class=k>for</span> <span class=n>item</span> <span class=ow>in</span> <span class=n>meta</span><span class=p>:</span>
+            <span class=k>if</span> <span class=n>item</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;id&quot;</span><span class=p>)</span> <span class=o>==</span> <span class=s2>&quot;publish_context&quot;</span><span class=p>:</span>
+                <span class=n>item</span><span class=o>.</span><span class=n>pop</span><span class=p>(</span><span class=s2>&quot;id&quot;</span><span class=p>)</span>
+                <span class=k>return</span> <span class=n>item</span>
+
+        <span class=k>return</span> <span class=p>{}</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>update_context_data</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>data</span><span class=p>,</span> <span class=n>changes</span><span class=p>):</span>
+<span class=w>        </span><span class=sd>&quot;&quot;&quot;Store value needed for context&quot;&quot;&quot;</span>
+        <span class=n>item</span> <span class=o>=</span> <span class=n>data</span>
+        <span class=n>item</span><span class=p>[</span><span class=s2>&quot;id&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=s2>&quot;publish_context&quot;</span>
+        <span class=n>_get_stub</span><span class=p>()</span><span class=o>.</span><span class=n>imprint</span><span class=p>(</span><span class=n>item</span><span class=p>[</span><span class=s2>&quot;id&quot;</span><span class=p>],</span> <span class=n>item</span><span class=p>)</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>list_instances</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=w>        </span><span class=sd>&quot;&quot;&quot;List all created instances to publish from current workfile.</span>
+
+<span class=sd>        Pulls from File &gt; File Info</span>
+
+<span class=sd>        Returns:</span>
+<span class=sd>            (list) of dictionaries matching instances format</span>
+<span class=sd>        &quot;&quot;&quot;</span>
+        <span class=n>stub</span> <span class=o>=</span> <span class=n>_get_stub</span><span class=p>()</span>
+
+        <span class=k>if</span> <span class=ow>not</span> <span class=n>stub</span><span class=p>:</span>
+            <span class=k>return</span> <span class=p>[]</span>
+
+        <span class=n>instances</span> <span class=o>=</span> <span class=p>[]</span>
+        <span class=n>layers_meta</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layers_metadata</span><span class=p>()</span>
+        <span class=k>if</span> <span class=n>layers_meta</span><span class=p>:</span>
+            <span class=k>for</span> <span class=n>instance</span> <span class=ow>in</span> <span class=n>layers_meta</span><span class=p>:</span>
+                <span class=k>if</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;id&quot;</span><span class=p>)</span> <span class=ow>in</span> <span class=p>{</span>
+                    <span class=n>AYON_INSTANCE_ID</span><span class=p>,</span> <span class=n>AVALON_INSTANCE_ID</span>
+                <span class=p>}:</span>
+                    <span class=n>instances</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>instance</span><span class=p>)</span>
+
+        <span class=k>return</span> <span class=n>instances</span>
+
+    <span class=k>def</span><span class=w> </span><span class=nf>remove_instance</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>instance</span><span class=p>):</span>
+<span class=w>        </span><span class=sd>&quot;&quot;&quot;Remove instance from current workfile metadata.</span>
+
+<span class=sd>        Updates metadata of current file in File &gt; File Info and removes</span>
+<span class=sd>        icon highlight on group layer.</span>
+
+<span class=sd>        Args:</span>
+<span class=sd>            instance (dict): instance representation from subsetmanager model</span>
+<span class=sd>        &quot;&quot;&quot;</span>
+        <span class=n>stub</span> <span class=o>=</span> <span class=n>_get_stub</span><span class=p>()</span>
+
+        <span class=k>if</span> <span class=ow>not</span> <span class=n>stub</span><span class=p>:</span>
+            <span class=k>return</span>
+
+        <span class=n>inst_id</span> <span class=o>=</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;instance_id&quot;</span><span class=p>)</span> <span class=ow>or</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;uuid&quot;</span><span class=p>)</span>  <span class=c1># legacy</span>
+        <span class=k>if</span> <span class=ow>not</span> <span class=n>inst_id</span><span class=p>:</span>
+            <span class=n>log</span><span class=o>.</span><span class=n>warning</span><span class=p>(</span><span class=s2>&quot;No instance identifier for </span><span class=si>{}</span><span class=s2>&quot;</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>instance</span><span class=p>))</span>
+            <span class=k>return</span>
+
+        <span class=n>stub</span><span class=o>.</span><span class=n>remove_instance</span><span class=p>(</span><span class=n>inst_id</span><span class=p>)</span>
+
+        <span class=k>if</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;members&quot;</span><span class=p>):</span>
+            <span class=n>item</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layer</span><span class=p>(</span><span class=n>instance</span><span class=p>[</span><span class=s2>&quot;members&quot;</span><span class=p>][</span><span class=mi>0</span><span class=p>])</span>
+            <span class=k>if</span> <span class=n>item</span><span class=p>:</span>
+                <span class=n>stub</span><span class=o>.</span><span class=n>rename_layer</span><span class=p>(</span><span class=n>item</span><span class=o>.</span><span class=n>id</span><span class=p>,</span>
+                                  <span class=n>item</span><span class=o>.</span><span class=n>name</span><span class=o>.</span><span class=n>replace</span><span class=p>(</span><span class=n>stub</span><span class=o>.</span><span class=n>PUBLISH_ICON</span><span class=p>,</span> <span class=s1>&#39;&#39;</span><span class=p>))</span>
+</code></pre></div></td></tr></table></div> </details> <div class="doc doc-children"> <div class="doc doc-object doc-function"> <h3 id=client.ayon_photoshop.api.PhotoshopHost.get_context_data class="doc doc-heading"> <code class="highlight language-python"><span class=n>get_context_data</span><span class=p>()</span></code> </h3> <div class="doc doc-contents "> <p>Get stored values for context (validation enable/disable etc)</p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>90</span>
+<span class=normal>91</span>
+<span class=normal>92</span>
+<span class=normal>93</span>
+<span class=normal>94</span>
+<span class=normal>95</span>
+<span class=normal>96</span>
+<span class=normal>97</span>
+<span class=normal>98</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>get_context_data</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Get stored values for context (validation enable/disable etc)&quot;&quot;&quot;</span>
+    <span class=n>meta</span> <span class=o>=</span> <span class=n>_get_stub</span><span class=p>()</span><span class=o>.</span><span class=n>get_layers_metadata</span><span class=p>()</span>
+    <span class=k>for</span> <span class=n>item</span> <span class=ow>in</span> <span class=n>meta</span><span class=p>:</span>
+        <span class=k>if</span> <span class=n>item</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;id&quot;</span><span class=p>)</span> <span class=o>==</span> <span class=s2>&quot;publish_context&quot;</span><span class=p>:</span>
+            <span class=n>item</span><span class=o>.</span><span class=n>pop</span><span class=p>(</span><span class=s2>&quot;id&quot;</span><span class=p>)</span>
+            <span class=k>return</span> <span class=n>item</span>
+
+    <span class=k>return</span> <span class=p>{}</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h3 id=client.ayon_photoshop.api.PhotoshopHost.install class="doc doc-heading"> <code class="highlight language-python"><span class=n>install</span><span class=p>()</span></code> </h3> <div class="doc doc-contents "> <p>Install Photoshop-specific functionality needed for integration.</p> <p>This function is called automatically on calling <code>api.install(photoshop)</code>.</p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>41</span>
+<span class=normal>42</span>
+<span class=normal>43</span>
+<span class=normal>44</span>
+<span class=normal>45</span>
+<span class=normal>46</span>
+<span class=normal>47</span>
+<span class=normal>48</span>
+<span class=normal>49</span>
+<span class=normal>50</span>
+<span class=normal>51</span>
+<span class=normal>52</span>
+<span class=normal>53</span>
+<span class=normal>54</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>install</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Install Photoshop-specific functionality needed for integration.</span>
+
+<span class=sd>    This function is called automatically on calling</span>
+<span class=sd>    `api.install(photoshop)`.</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=s2>&quot;Installing OpenPype Photoshop...&quot;</span><span class=p>)</span>
+    <span class=n>pyblish</span><span class=o>.</span><span class=n>api</span><span class=o>.</span><span class=n>register_host</span><span class=p>(</span><span class=s2>&quot;photoshop&quot;</span><span class=p>)</span>
+
+    <span class=n>pyblish</span><span class=o>.</span><span class=n>api</span><span class=o>.</span><span class=n>register_plugin_path</span><span class=p>(</span><span class=n>PUBLISH_PATH</span><span class=p>)</span>
+    <span class=n>register_loader_plugin_path</span><span class=p>(</span><span class=n>LOAD_PATH</span><span class=p>)</span>
+    <span class=n>register_creator_plugin_path</span><span class=p>(</span><span class=n>CREATE_PATH</span><span class=p>)</span>
+
+    <span class=n>register_event_callback</span><span class=p>(</span><span class=s2>&quot;application.launched&quot;</span><span class=p>,</span> <span class=n>on_application_launch</span><span class=p>)</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h3 id=client.ayon_photoshop.api.PhotoshopHost.list_instances class="doc doc-heading"> <code class="highlight language-python"><span class=n>list_instances</span><span class=p>()</span></code> </h3> <div class="doc doc-contents "> <p>List all created instances to publish from current workfile.</p> <p>Pulls from File &gt; File Info</p> <p><span class=doc-section-title>Returns:</span></p> <table> <thead> <tr> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td> </td> <td> <div class=doc-md-description> <p>(list) of dictionaries matching instances format</p> </div> </td> </tr> </tbody> </table> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>106</span>
+<span class=normal>107</span>
+<span class=normal>108</span>
+<span class=normal>109</span>
+<span class=normal>110</span>
+<span class=normal>111</span>
+<span class=normal>112</span>
+<span class=normal>113</span>
+<span class=normal>114</span>
+<span class=normal>115</span>
+<span class=normal>116</span>
+<span class=normal>117</span>
+<span class=normal>118</span>
+<span class=normal>119</span>
+<span class=normal>120</span>
+<span class=normal>121</span>
+<span class=normal>122</span>
+<span class=normal>123</span>
+<span class=normal>124</span>
+<span class=normal>125</span>
+<span class=normal>126</span>
+<span class=normal>127</span>
+<span class=normal>128</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>list_instances</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;List all created instances to publish from current workfile.</span>
+
+<span class=sd>    Pulls from File &gt; File Info</span>
+
+<span class=sd>    Returns:</span>
+<span class=sd>        (list) of dictionaries matching instances format</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=n>stub</span> <span class=o>=</span> <span class=n>_get_stub</span><span class=p>()</span>
+
+    <span class=k>if</span> <span class=ow>not</span> <span class=n>stub</span><span class=p>:</span>
+        <span class=k>return</span> <span class=p>[]</span>
+
+    <span class=n>instances</span> <span class=o>=</span> <span class=p>[]</span>
+    <span class=n>layers_meta</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layers_metadata</span><span class=p>()</span>
+    <span class=k>if</span> <span class=n>layers_meta</span><span class=p>:</span>
+        <span class=k>for</span> <span class=n>instance</span> <span class=ow>in</span> <span class=n>layers_meta</span><span class=p>:</span>
+            <span class=k>if</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;id&quot;</span><span class=p>)</span> <span class=ow>in</span> <span class=p>{</span>
+                <span class=n>AYON_INSTANCE_ID</span><span class=p>,</span> <span class=n>AVALON_INSTANCE_ID</span>
+            <span class=p>}:</span>
+                <span class=n>instances</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>instance</span><span class=p>)</span>
+
+    <span class=k>return</span> <span class=n>instances</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h3 id=client.ayon_photoshop.api.PhotoshopHost.remove_instance class="doc doc-heading"> <code class="highlight language-python"><span class=n>remove_instance</span><span class=p>(</span><span class=n>instance</span><span class=p>)</span></code> </h3> <div class="doc doc-contents "> <p>Remove instance from current workfile metadata.</p> <p>Updates metadata of current file in File &gt; File Info and removes icon highlight on group layer.</p> <p><span class=doc-section-title>Parameters:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> <th>Default</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td> <code>instance</code> </td> <td> <code><span title=dict>dict</span></code> </td> <td> <div class=doc-md-description> <p>instance representation from subsetmanager model</p> </div> </td> <td> <em>required</em> </td> </tr> </tbody> </table> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>130</span>
+<span class=normal>131</span>
+<span class=normal>132</span>
+<span class=normal>133</span>
+<span class=normal>134</span>
+<span class=normal>135</span>
+<span class=normal>136</span>
+<span class=normal>137</span>
+<span class=normal>138</span>
+<span class=normal>139</span>
+<span class=normal>140</span>
+<span class=normal>141</span>
+<span class=normal>142</span>
+<span class=normal>143</span>
+<span class=normal>144</span>
+<span class=normal>145</span>
+<span class=normal>146</span>
+<span class=normal>147</span>
+<span class=normal>148</span>
+<span class=normal>149</span>
+<span class=normal>150</span>
+<span class=normal>151</span>
+<span class=normal>152</span>
+<span class=normal>153</span>
+<span class=normal>154</span>
+<span class=normal>155</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>remove_instance</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>instance</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Remove instance from current workfile metadata.</span>
+
+<span class=sd>    Updates metadata of current file in File &gt; File Info and removes</span>
+<span class=sd>    icon highlight on group layer.</span>
+
+<span class=sd>    Args:</span>
+<span class=sd>        instance (dict): instance representation from subsetmanager model</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=n>stub</span> <span class=o>=</span> <span class=n>_get_stub</span><span class=p>()</span>
+
+    <span class=k>if</span> <span class=ow>not</span> <span class=n>stub</span><span class=p>:</span>
+        <span class=k>return</span>
+
+    <span class=n>inst_id</span> <span class=o>=</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;instance_id&quot;</span><span class=p>)</span> <span class=ow>or</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;uuid&quot;</span><span class=p>)</span>  <span class=c1># legacy</span>
+    <span class=k>if</span> <span class=ow>not</span> <span class=n>inst_id</span><span class=p>:</span>
+        <span class=n>log</span><span class=o>.</span><span class=n>warning</span><span class=p>(</span><span class=s2>&quot;No instance identifier for </span><span class=si>{}</span><span class=s2>&quot;</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>instance</span><span class=p>))</span>
+        <span class=k>return</span>
+
+    <span class=n>stub</span><span class=o>.</span><span class=n>remove_instance</span><span class=p>(</span><span class=n>inst_id</span><span class=p>)</span>
+
+    <span class=k>if</span> <span class=n>instance</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&quot;members&quot;</span><span class=p>):</span>
+        <span class=n>item</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layer</span><span class=p>(</span><span class=n>instance</span><span class=p>[</span><span class=s2>&quot;members&quot;</span><span class=p>][</span><span class=mi>0</span><span class=p>])</span>
+        <span class=k>if</span> <span class=n>item</span><span class=p>:</span>
+            <span class=n>stub</span><span class=o>.</span><span class=n>rename_layer</span><span class=p>(</span><span class=n>item</span><span class=o>.</span><span class=n>id</span><span class=p>,</span>
+                              <span class=n>item</span><span class=o>.</span><span class=n>name</span><span class=o>.</span><span class=n>replace</span><span class=p>(</span><span class=n>stub</span><span class=o>.</span><span class=n>PUBLISH_ICON</span><span class=p>,</span> <span class=s1>&#39;&#39;</span><span class=p>))</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h3 id=client.ayon_photoshop.api.PhotoshopHost.update_context_data class="doc doc-heading"> <code class="highlight language-python"><span class=n>update_context_data</span><span class=p>(</span><span class=n>data</span><span class=p>,</span> <span class=n>changes</span><span class=p>)</span></code> </h3> <div class="doc doc-contents "> <p>Store value needed for context</p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>100</span>
+<span class=normal>101</span>
+<span class=normal>102</span>
+<span class=normal>103</span>
+<span class=normal>104</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>update_context_data</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>data</span><span class=p>,</span> <span class=n>changes</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Store value needed for context&quot;&quot;&quot;</span>
+    <span class=n>item</span> <span class=o>=</span> <span class=n>data</span>
+    <span class=n>item</span><span class=p>[</span><span class=s2>&quot;id&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=s2>&quot;publish_context&quot;</span>
+    <span class=n>_get_stub</span><span class=p>()</span><span class=o>.</span><span class=n>imprint</span><span class=p>(</span><span class=n>item</span><span class=p>[</span><span class=s2>&quot;id&quot;</span><span class=p>],</span> <span class=n>item</span><span class=p>)</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> </div> </div> </div> <div class="doc doc-object doc-function"> <h2 id=client.ayon_photoshop.api.containerise class="doc doc-heading"> <code class="highlight language-python"><span class=n>containerise</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>namespace</span><span class=p>,</span> <span class=n>layer</span><span class=p>,</span> <span class=n>context</span><span class=p>,</span> <span class=n>loader</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>suffix</span><span class=o>=</span><span class=s1>&#39;_CON&#39;</span><span class=p>)</span></code> </h2> <div class="doc doc-contents "> <p>Imprint layer with metadata</p> <p>Containerisation enables a tracking of version, author and origin for loaded assets.</p> <p><span class=doc-section-title>Parameters:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> <th>Default</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td> <code>name</code> </td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> <p>Name of resulting assembly</p> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>namespace</code> </td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> <p>Namespace under which to host container</p> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>layer</code> </td> <td> <code><span title=PSItem>PSItem</span></code> </td> <td> <div class=doc-md-description> <p>Layer to containerise</p> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>context</code> </td> <td> <code><span title=dict>dict</span></code> </td> <td> <div class=doc-md-description> <p>Asset information</p> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>loader</code> </td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> <p>Name of loader used to produce this container.</p> </div> </td> <td> <code>None</code> </td> </tr> <tr class=doc-section-item> <td> <code>suffix</code> </td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> <p>Suffix of container, defaults to <code>_CON</code>.</p> </div> </td> <td> <code>&#39;_CON&#39;</code> </td> </tr> </tbody> </table> <p><span class=doc-section-title>Returns:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td><code>container</code></td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> <p>Name of container assembly</p> </div> </td> </tr> </tbody> </table> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>233</span>
+<span class=normal>234</span>
+<span class=normal>235</span>
+<span class=normal>236</span>
+<span class=normal>237</span>
+<span class=normal>238</span>
+<span class=normal>239</span>
+<span class=normal>240</span>
+<span class=normal>241</span>
+<span class=normal>242</span>
+<span class=normal>243</span>
+<span class=normal>244</span>
+<span class=normal>245</span>
+<span class=normal>246</span>
+<span class=normal>247</span>
+<span class=normal>248</span>
+<span class=normal>249</span>
+<span class=normal>250</span>
+<span class=normal>251</span>
+<span class=normal>252</span>
+<span class=normal>253</span>
+<span class=normal>254</span>
+<span class=normal>255</span>
+<span class=normal>256</span>
+<span class=normal>257</span>
+<span class=normal>258</span>
+<span class=normal>259</span>
+<span class=normal>260</span>
+<span class=normal>261</span>
+<span class=normal>262</span>
+<span class=normal>263</span>
+<span class=normal>264</span>
+<span class=normal>265</span>
+<span class=normal>266</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>containerise</span><span class=p>(</span>
+    <span class=n>name</span><span class=p>,</span> <span class=n>namespace</span><span class=p>,</span> <span class=n>layer</span><span class=p>,</span> <span class=n>context</span><span class=p>,</span> <span class=n>loader</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>suffix</span><span class=o>=</span><span class=s2>&quot;_CON&quot;</span>
+<span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Imprint layer with metadata</span>
+
+<span class=sd>    Containerisation enables a tracking of version, author and origin</span>
+<span class=sd>    for loaded assets.</span>
+
+<span class=sd>    Arguments:</span>
+<span class=sd>        name (str): Name of resulting assembly</span>
+<span class=sd>        namespace (str): Namespace under which to host container</span>
+<span class=sd>        layer (PSItem): Layer to containerise</span>
+<span class=sd>        context (dict): Asset information</span>
+<span class=sd>        loader (str, optional): Name of loader used to produce this container.</span>
+<span class=sd>        suffix (str, optional): Suffix of container, defaults to `_CON`.</span>
+
+<span class=sd>    Returns:</span>
+<span class=sd>        container (str): Name of container assembly</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=n>layer</span><span class=o>.</span><span class=n>name</span> <span class=o>=</span> <span class=n>name</span> <span class=o>+</span> <span class=n>suffix</span>
+
+    <span class=n>data</span> <span class=o>=</span> <span class=p>{</span>
+        <span class=s2>&quot;schema&quot;</span><span class=p>:</span> <span class=s2>&quot;openpype:container-2.0&quot;</span><span class=p>,</span>
+        <span class=s2>&quot;id&quot;</span><span class=p>:</span> <span class=n>AVALON_CONTAINER_ID</span><span class=p>,</span>
+        <span class=s2>&quot;name&quot;</span><span class=p>:</span> <span class=n>name</span><span class=p>,</span>
+        <span class=s2>&quot;namespace&quot;</span><span class=p>:</span> <span class=n>namespace</span><span class=p>,</span>
+        <span class=s2>&quot;loader&quot;</span><span class=p>:</span> <span class=nb>str</span><span class=p>(</span><span class=n>loader</span><span class=p>),</span>
+        <span class=s2>&quot;representation&quot;</span><span class=p>:</span> <span class=n>context</span><span class=p>[</span><span class=s2>&quot;representation&quot;</span><span class=p>][</span><span class=s2>&quot;id&quot;</span><span class=p>],</span>
+        <span class=s2>&quot;members&quot;</span><span class=p>:</span> <span class=p>[</span><span class=nb>str</span><span class=p>(</span><span class=n>layer</span><span class=o>.</span><span class=n>id</span><span class=p>)]</span>
+    <span class=p>}</span>
+    <span class=n>stub</span> <span class=o>=</span> <span class=n>lib</span><span class=o>.</span><span class=n>stub</span><span class=p>()</span>
+    <span class=n>stub</span><span class=o>.</span><span class=n>imprint</span><span class=p>(</span><span class=n>layer</span><span class=o>.</span><span class=n>id</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+
+    <span class=k>return</span> <span class=n>layer</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h2 id=client.ayon_photoshop.api.get_unique_layer_name class="doc doc-heading"> <code class="highlight language-python"><span class=n>get_unique_layer_name</span><span class=p>(</span><span class=n>layers</span><span class=p>,</span> <span class=n>container_name</span><span class=p>,</span> <span class=n>product_name</span><span class=p>)</span></code> </h2> <div class="doc doc-contents "> <p>Prepare unique layer name.</p> <p>Gets all layer names and if '<container_name>_<product_name>' is present, it adds suffix '1', or increases the suffix by 1.</p> <p><span class=doc-section-title>Parameters:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> <th>Default</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td> <code>container_name</code> </td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>product_name</code> </td> <td> <code><span title=str>str</span></code> </td> <td> <div class=doc-md-description> </div> </td> <td> <em>required</em> </td> </tr> </tbody> </table> <p><span class=doc-section-title>Returns:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td><code>str</code></td> <td> </td> <td> <div class=doc-md-description> <p>name_00X (without version)</p> </div> </td> </tr> </tbody> </table> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/plugin.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal> 7</span>
+<span class=normal> 8</span>
+<span class=normal> 9</span>
+<span class=normal>10</span>
+<span class=normal>11</span>
+<span class=normal>12</span>
+<span class=normal>13</span>
+<span class=normal>14</span>
+<span class=normal>15</span>
+<span class=normal>16</span>
+<span class=normal>17</span>
+<span class=normal>18</span>
+<span class=normal>19</span>
+<span class=normal>20</span>
+<span class=normal>21</span>
+<span class=normal>22</span>
+<span class=normal>23</span>
+<span class=normal>24</span>
+<span class=normal>25</span>
+<span class=normal>26</span>
+<span class=normal>27</span>
+<span class=normal>28</span>
+<span class=normal>29</span>
+<span class=normal>30</span>
+<span class=normal>31</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>get_unique_layer_name</span><span class=p>(</span><span class=n>layers</span><span class=p>,</span> <span class=n>container_name</span><span class=p>,</span> <span class=n>product_name</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Prepare unique layer name.</span>
+
+<span class=sd>    Gets all layer names and if &#39;&lt;container_name&gt;_&lt;product_name&gt;&#39; is present,</span>
+<span class=sd>    it adds suffix &#39;1&#39;, or increases the suffix by 1.</span>
+
+<span class=sd>    Args:</span>
+<span class=sd>        layers (list) of dict with layers info (name, id etc.)</span>
+<span class=sd>        container_name (str):</span>
+<span class=sd>        product_name (str):</span>
+
+<span class=sd>    Returns:</span>
+<span class=sd>        str: name_00X (without version)</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=n>name</span> <span class=o>=</span> <span class=s2>&quot;</span><span class=si>{}</span><span class=s2>_</span><span class=si>{}</span><span class=s2>&quot;</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>container_name</span><span class=p>,</span> <span class=n>product_name</span><span class=p>)</span>
+    <span class=n>names</span> <span class=o>=</span> <span class=p>{}</span>
+    <span class=k>for</span> <span class=n>layer</span> <span class=ow>in</span> <span class=n>layers</span><span class=p>:</span>
+        <span class=n>layer_name</span> <span class=o>=</span> <span class=n>re</span><span class=o>.</span><span class=n>sub</span><span class=p>(</span><span class=sa>r</span><span class=s1>&#39;_\d</span><span class=si>{3}</span><span class=s1>$&#39;</span><span class=p>,</span> <span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=n>layer</span><span class=o>.</span><span class=n>name</span><span class=p>)</span>
+        <span class=k>if</span> <span class=n>layer_name</span> <span class=ow>in</span> <span class=n>names</span><span class=o>.</span><span class=n>keys</span><span class=p>():</span>
+            <span class=n>names</span><span class=p>[</span><span class=n>layer_name</span><span class=p>]</span> <span class=o>=</span> <span class=n>names</span><span class=p>[</span><span class=n>layer_name</span><span class=p>]</span> <span class=o>+</span> <span class=mi>1</span>
+        <span class=k>else</span><span class=p>:</span>
+            <span class=n>names</span><span class=p>[</span><span class=n>layer_name</span><span class=p>]</span> <span class=o>=</span> <span class=mi>1</span>
+    <span class=n>occurrences</span> <span class=o>=</span> <span class=n>names</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=mi>0</span><span class=p>)</span>
+
+    <span class=k>return</span> <span class=s2>&quot;</span><span class=si>{}</span><span class=s2>_</span><span class=si>{:0&gt;3d}</span><span class=s2>&quot;</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>occurrences</span> <span class=o>+</span> <span class=mi>1</span><span class=p>)</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h2 id=client.ayon_photoshop.api.isolated_layers_visibility class="doc doc-heading"> <code class="highlight language-python"><span class=n>isolated_layers_visibility</span><span class=p>(</span><span class=n>stub</span><span class=p>,</span> <span class=n>layer_ids</span><span class=p>,</span> <span class=n>all_layers</span><span class=o>=</span><span class=kc>None</span><span class=p>)</span></code> </h2> <div class="doc doc-contents "> <p>Show only the specified layers and their ancestor paths, hiding all siblings.</p> <p>Similar to isolated_instance_visibility but supports multiple layer IDs. All specified layers and their ancestors will be visible simultaneously.</p> <p><span class=doc-section-title>Parameters:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> <th>Default</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td> <code>stub</code> </td> <td> </td> <td> <div class=doc-md-description> <p>PhotoshopServerStub</p> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>layer_ids</code> </td> <td> </td> <td> <div class=doc-md-description> <p>List of layer IDs to show (can be single layer or multiple)</p> </div> </td> <td> <em>required</em> </td> </tr> <tr class=doc-section-item> <td> <code>all_layers</code> </td> <td> </td> <td> <div class=doc-md-description> <p>Optional list of PSItem layers (fetched if not provided)</p> </div> </td> <td> <code>None</code> </td> </tr> </tbody> </table> <p>Tracks original visibility and restores it on exit.</p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/lib.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal> 97</span>
+<span class=normal> 98</span>
+<span class=normal> 99</span>
+<span class=normal>100</span>
+<span class=normal>101</span>
+<span class=normal>102</span>
+<span class=normal>103</span>
+<span class=normal>104</span>
+<span class=normal>105</span>
+<span class=normal>106</span>
+<span class=normal>107</span>
+<span class=normal>108</span>
+<span class=normal>109</span>
+<span class=normal>110</span>
+<span class=normal>111</span>
+<span class=normal>112</span>
+<span class=normal>113</span>
+<span class=normal>114</span>
+<span class=normal>115</span>
+<span class=normal>116</span>
+<span class=normal>117</span>
+<span class=normal>118</span>
+<span class=normal>119</span>
+<span class=normal>120</span>
+<span class=normal>121</span>
+<span class=normal>122</span>
+<span class=normal>123</span>
+<span class=normal>124</span>
+<span class=normal>125</span>
+<span class=normal>126</span>
+<span class=normal>127</span>
+<span class=normal>128</span>
+<span class=normal>129</span>
+<span class=normal>130</span>
+<span class=normal>131</span>
+<span class=normal>132</span>
+<span class=normal>133</span>
+<span class=normal>134</span>
+<span class=normal>135</span>
+<span class=normal>136</span>
+<span class=normal>137</span>
+<span class=normal>138</span>
+<span class=normal>139</span>
+<span class=normal>140</span>
+<span class=normal>141</span>
+<span class=normal>142</span>
+<span class=normal>143</span>
+<span class=normal>144</span>
+<span class=normal>145</span>
+<span class=normal>146</span>
+<span class=normal>147</span>
+<span class=normal>148</span>
+<span class=normal>149</span>
+<span class=normal>150</span>
+<span class=normal>151</span>
+<span class=normal>152</span>
+<span class=normal>153</span>
+<span class=normal>154</span>
+<span class=normal>155</span>
+<span class=normal>156</span>
+<span class=normal>157</span>
+<span class=normal>158</span></pre></div></td><td class=code><div><pre><span></span><code><span class=nd>@contextlib</span><span class=o>.</span><span class=n>contextmanager</span>
+<span class=k>def</span><span class=w> </span><span class=nf>isolated_layers_visibility</span><span class=p>(</span><span class=n>stub</span><span class=p>,</span> <span class=n>layer_ids</span><span class=p>,</span> <span class=n>all_layers</span><span class=o>=</span><span class=kc>None</span><span class=p>):</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Show only the specified layers and their ancestor paths, hiding all siblings.</span>
+
+<span class=sd>    Similar to isolated_instance_visibility but supports multiple layer IDs.</span>
+<span class=sd>    All specified layers and their ancestors will be visible simultaneously.</span>
+
+<span class=sd>    Args:</span>
+<span class=sd>        stub: PhotoshopServerStub</span>
+<span class=sd>        layer_ids: List of layer IDs to show (can be single layer or multiple)</span>
+<span class=sd>        all_layers: Optional list of PSItem layers (fetched if not provided)</span>
+
+<span class=sd>    Tracks original visibility and restores it on exit.</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=k>if</span> <span class=n>all_layers</span> <span class=ow>is</span> <span class=kc>None</span><span class=p>:</span>
+        <span class=n>all_layers</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layers</span><span class=p>()</span>
+
+    <span class=c1># Normalize to list if single ID provided</span>
+    <span class=k>if</span> <span class=ow>not</span> <span class=nb>isinstance</span><span class=p>(</span><span class=n>layer_ids</span><span class=p>,</span> <span class=p>(</span><span class=nb>list</span><span class=p>,</span> <span class=nb>tuple</span><span class=p>,</span> <span class=nb>set</span><span class=p>)):</span>
+        <span class=n>layer_ids</span> <span class=o>=</span> <span class=p>[</span><span class=n>layer_ids</span><span class=p>]</span>
+
+    <span class=n>layers_by_id</span> <span class=o>=</span> <span class=p>{</span><span class=n>layer</span><span class=o>.</span><span class=n>id</span><span class=p>:</span> <span class=n>layer</span> <span class=k>for</span> <span class=n>layer</span> <span class=ow>in</span> <span class=n>all_layers</span><span class=p>}</span>
+    <span class=n>layers_by_parent</span> <span class=o>=</span> <span class=n>_get_layers_by_parent</span><span class=p>(</span><span class=n>all_layers</span><span class=p>)</span>
+
+    <span class=c1># Build paths from all target layers to top-level</span>
+    <span class=n>path_ids</span> <span class=o>=</span> <span class=nb>set</span><span class=p>()</span>
+    <span class=k>for</span> <span class=n>layer_id</span> <span class=ow>in</span> <span class=n>layer_ids</span><span class=p>:</span>
+        <span class=n>current</span> <span class=o>=</span> <span class=n>layers_by_id</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>layer_id</span><span class=p>)</span>
+        <span class=k>if</span> <span class=ow>not</span> <span class=n>current</span><span class=p>:</span>
+            <span class=k>continue</span>  <span class=c1># Skip if layer not found</span>
+        <span class=k>while</span> <span class=n>current</span><span class=p>:</span>
+            <span class=n>path_ids</span><span class=o>.</span><span class=n>add</span><span class=p>(</span><span class=n>current</span><span class=o>.</span><span class=n>id</span><span class=p>)</span>
+            <span class=n>current</span> <span class=o>=</span> <span class=n>layers_by_id</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>current</span><span class=o>.</span><span class=n>parents</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>])</span> <span class=k>if</span> <span class=n>current</span><span class=o>.</span><span class=n>parents</span> <span class=k>else</span> <span class=kc>None</span>
+
+    <span class=k>if</span> <span class=ow>not</span> <span class=n>path_ids</span><span class=p>:</span>
+        <span class=k>yield</span>  <span class=c1># No-op if no valid layers found</span>
+        <span class=k>return</span>
+
+    <span class=c1># Record original visibility and build change map</span>
+    <span class=n>original_visibility</span> <span class=o>=</span> <span class=p>{}</span>
+    <span class=n>visibility_changes</span> <span class=o>=</span> <span class=p>{}</span>
+
+    <span class=k>for</span> <span class=n>layer_id</span> <span class=ow>in</span> <span class=n>path_ids</span><span class=p>:</span>
+        <span class=n>layer</span> <span class=o>=</span> <span class=n>layers_by_id</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>layer_id</span><span class=p>)</span>
+        <span class=k>if</span> <span class=ow>not</span> <span class=n>layer</span><span class=p>:</span>
+            <span class=k>continue</span>
+        <span class=n>parent_id</span> <span class=o>=</span> <span class=n>layer</span><span class=o>.</span><span class=n>parents</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span> <span class=k>if</span> <span class=n>layer</span><span class=o>.</span><span class=n>parents</span> <span class=k>else</span> <span class=kc>None</span>
+        <span class=k>for</span> <span class=n>sibling</span> <span class=ow>in</span> <span class=n>layers_by_parent</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>parent_id</span><span class=p>,</span> <span class=p>[]):</span>
+            <span class=c1># Record original state before any changes</span>
+            <span class=k>if</span> <span class=n>sibling</span><span class=o>.</span><span class=n>id</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>original_visibility</span><span class=p>:</span>
+                <span class=n>original_visibility</span><span class=p>[</span><span class=n>sibling</span><span class=o>.</span><span class=n>id</span><span class=p>]</span> <span class=o>=</span> <span class=n>sibling</span><span class=o>.</span><span class=n>visible</span>
+            <span class=c1># Path layers visible, siblings hidden</span>
+            <span class=n>visibility_changes</span><span class=p>[</span><span class=n>sibling</span><span class=o>.</span><span class=n>id</span><span class=p>]</span> <span class=o>=</span> <span class=n>sibling</span><span class=o>.</span><span class=n>id</span> <span class=ow>in</span> <span class=n>path_ids</span>
+
+    <span class=k>try</span><span class=p>:</span>
+        <span class=k>if</span> <span class=n>visibility_changes</span><span class=p>:</span>
+            <span class=n>stub</span><span class=o>.</span><span class=n>set_layers_visibility</span><span class=p>(</span><span class=n>visibility_changes</span><span class=p>)</span>
+        <span class=k>yield</span>
+    <span class=k>finally</span><span class=p>:</span>
+        <span class=c1># Restore original visibility state</span>
+        <span class=k>if</span> <span class=n>original_visibility</span><span class=p>:</span>
+            <span class=n>stub</span><span class=o>.</span><span class=n>set_layers_visibility</span><span class=p>(</span><span class=n>original_visibility</span><span class=p>)</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h2 id=client.ayon_photoshop.api.ls class="doc doc-heading"> <code class="highlight language-python"><span class=n>ls</span><span class=p>()</span></code> </h2> <div class="doc doc-contents "> <p>Yields containers from active Photoshop document</p> <p>This is the host-equivalent of api.ls(), but instead of listing assets on disk, it lists assets already loaded in Photoshop; once loaded they are called 'containers'</p> <p><span class=doc-section-title>Yields:</span></p> <table> <thead> <tr> <th>Name</th> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr class=doc-section-item> <td><code>dict</code></td> <td> </td> <td> <div class=doc-md-description> <p>container</p> </div> </td> </tr> </tbody> </table> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/pipeline.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>176</span>
+<span class=normal>177</span>
+<span class=normal>178</span>
+<span class=normal>179</span>
+<span class=normal>180</span>
+<span class=normal>181</span>
+<span class=normal>182</span>
+<span class=normal>183</span>
+<span class=normal>184</span>
+<span class=normal>185</span>
+<span class=normal>186</span>
+<span class=normal>187</span>
+<span class=normal>188</span>
+<span class=normal>189</span>
+<span class=normal>190</span>
+<span class=normal>191</span>
+<span class=normal>192</span>
+<span class=normal>193</span>
+<span class=normal>194</span>
+<span class=normal>195</span>
+<span class=normal>196</span>
+<span class=normal>197</span>
+<span class=normal>198</span>
+<span class=normal>199</span>
+<span class=normal>200</span>
+<span class=normal>201</span>
+<span class=normal>202</span>
+<span class=normal>203</span>
+<span class=normal>204</span>
+<span class=normal>205</span>
+<span class=normal>206</span>
+<span class=normal>207</span>
+<span class=normal>208</span>
+<span class=normal>209</span>
+<span class=normal>210</span>
+<span class=normal>211</span>
+<span class=normal>212</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>ls</span><span class=p>():</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Yields containers from active Photoshop document</span>
+
+<span class=sd>    This is the host-equivalent of api.ls(), but instead of listing</span>
+<span class=sd>    assets on disk, it lists assets already loaded in Photoshop; once loaded</span>
+<span class=sd>    they are called &#39;containers&#39;</span>
+
+<span class=sd>    Yields:</span>
+<span class=sd>        dict: container</span>
+
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=k>try</span><span class=p>:</span>
+        <span class=n>stub</span> <span class=o>=</span> <span class=n>lib</span><span class=o>.</span><span class=n>stub</span><span class=p>()</span>  <span class=c1># only after Photoshop is up</span>
+    <span class=k>except</span> <span class=n>lib</span><span class=o>.</span><span class=n>ConnectionNotEstablishedYet</span><span class=p>:</span>
+        <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;Not connected yet, ignoring&quot;</span><span class=p>)</span>
+        <span class=k>return</span>
+
+    <span class=k>if</span> <span class=ow>not</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_active_document_name</span><span class=p>():</span>
+        <span class=k>return</span>
+
+    <span class=n>layers_meta</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layers_metadata</span><span class=p>()</span>  <span class=c1># minimalize calls to PS</span>
+    <span class=k>for</span> <span class=n>layer</span> <span class=ow>in</span> <span class=n>stub</span><span class=o>.</span><span class=n>get_layers</span><span class=p>():</span>
+        <span class=n>data</span> <span class=o>=</span> <span class=n>stub</span><span class=o>.</span><span class=n>read</span><span class=p>(</span><span class=n>layer</span><span class=p>,</span> <span class=n>layers_meta</span><span class=p>)</span>
+
+        <span class=c1># Skip non-tagged layers.</span>
+        <span class=k>if</span> <span class=ow>not</span> <span class=n>data</span><span class=p>:</span>
+            <span class=k>continue</span>
+
+        <span class=c1># Filter to only containers.</span>
+        <span class=k>if</span> <span class=s2>&quot;container&quot;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>data</span><span class=p>[</span><span class=s2>&quot;id&quot;</span><span class=p>]:</span>
+            <span class=k>continue</span>
+
+        <span class=c1># Append transient data</span>
+        <span class=n>data</span><span class=p>[</span><span class=s2>&quot;objectName&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=n>layer</span><span class=o>.</span><span class=n>name</span><span class=o>.</span><span class=n>replace</span><span class=p>(</span><span class=n>stub</span><span class=o>.</span><span class=n>LOADED_ICON</span><span class=p>,</span> <span class=s1>&#39;&#39;</span><span class=p>)</span>
+        <span class=n>data</span><span class=p>[</span><span class=s2>&quot;layer&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=n>layer</span>
+
+        <span class=k>yield</span> <span class=n>data</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h2 id=client.ayon_photoshop.api.maintained_selection class="doc doc-heading"> <code class="highlight language-python"><span class=n>maintained_selection</span><span class=p>()</span></code> </h2> <div class="doc doc-contents "> <p>Maintain selection during context.</p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/lib.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>76</span>
+<span class=normal>77</span>
+<span class=normal>78</span>
+<span class=normal>79</span>
+<span class=normal>80</span>
+<span class=normal>81</span>
+<span class=normal>82</span>
+<span class=normal>83</span></pre></div></td><td class=code><div><pre><span></span><code><span class=nd>@contextlib</span><span class=o>.</span><span class=n>contextmanager</span>
+<span class=k>def</span><span class=w> </span><span class=nf>maintained_selection</span><span class=p>():</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;Maintain selection during context.&quot;&quot;&quot;</span>
+    <span class=n>selection</span> <span class=o>=</span> <span class=n>stub</span><span class=p>()</span><span class=o>.</span><span class=n>get_selected_layers</span><span class=p>()</span>
+    <span class=k>try</span><span class=p>:</span>
+        <span class=k>yield</span> <span class=n>selection</span>
+    <span class=k>finally</span><span class=p>:</span>
+        <span class=n>stub</span><span class=p>()</span><span class=o>.</span><span class=n>select_layers</span><span class=p>(</span><span class=n>selection</span><span class=p>)</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h2 id=client.ayon_photoshop.api.stub class="doc doc-heading"> <code class="highlight language-python"><span class=n>stub</span><span class=p>()</span></code> </h2> <div class="doc doc-contents "> <pre><code>Convenience function to get server RPC stub to call methods directed
+for host (Photoshop).
+It expects already created connection, started from client.
+Currently created when panel is opened (PS: Window&gt;Extensions&gt;Avalon)
+</code></pre> <p>:return: <photoshopclientstub> where functions could be called from</p> <details class=mkdocstrings-source> <summary>Source code in <code>client/ayon_photoshop/api/launch_logic.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal> 95</span>
+<span class=normal> 96</span>
+<span class=normal> 97</span>
+<span class=normal> 98</span>
+<span class=normal> 99</span>
+<span class=normal>100</span>
+<span class=normal>101</span>
+<span class=normal>102</span>
+<span class=normal>103</span>
+<span class=normal>104</span>
+<span class=normal>105</span>
+<span class=normal>106</span>
+<span class=normal>107</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>stub</span><span class=p>():</span>
+<span class=w>    </span><span class=sd>&quot;&quot;&quot;</span>
+<span class=sd>        Convenience function to get server RPC stub to call methods directed</span>
+<span class=sd>        for host (Photoshop).</span>
+<span class=sd>        It expects already created connection, started from client.</span>
+<span class=sd>        Currently created when panel is opened (PS: Window&gt;Extensions&gt;Avalon)</span>
+<span class=sd>    :return: &lt;PhotoshopClientStub&gt; where functions could be called from</span>
+<span class=sd>    &quot;&quot;&quot;</span>
+    <span class=n>ps_stub</span> <span class=o>=</span> <span class=n>PhotoshopServerStub</span><span class=p>()</span>
+    <span class=k>if</span> <span class=ow>not</span> <span class=n>ps_stub</span><span class=o>.</span><span class=n>client</span><span class=p>:</span>
+        <span class=k>raise</span> <span class=n>ConnectionNotEstablishedYet</span><span class=p>(</span><span class=s2>&quot;Connection is not created yet&quot;</span><span class=p>)</span>
+
+    <span class=k>return</span> <span class=n>ps_stub</span>
+</code></pre></div></td></tr></table></div> </details> </div> </div> </div> </div> </div> </article> </div> <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script> </div> </main> <footer class=md-footer> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-copyright> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs </a> </div> </div> </div> </footer> </div> <div class=md-dialog data-md-component=dialog> <div class="md-dialog__inner md-typeset"></div> </div> <script id=__config type=application/json>{"annotate": null, "base": "../../../..", "features": ["navigation.sections", "navigation.path", "navigation.prune"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script> <script src=../../../../assets/javascripts/bundle.79ae519e.min.js></script> </body> </html>
