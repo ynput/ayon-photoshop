@@ -24,6 +24,23 @@ extract_image_ext_enum = [
     {"value": "tga", "label": "tga"},
 ]
 
+color_mode_enum = [
+    {"value": "RGB", "label": "RGB"},
+    {"value": "CMYK", "label": "CMYK"},
+    {"value": "GRAYSCALE", "label": "Grayscale"},
+    {"value": "LAB", "label": "Lab"},
+    {"value": "BITMAP", "label": "Bitmap"},
+    {"value": "DUOTONE", "label": "Duotone"},
+    {"value": "INDEXEDCOLOR", "label": "Indexed Color"},
+    {"value": "MULTICHANNEL", "label": "Multichannel"},
+]
+
+bit_depth_enum = [
+    {"value": "8", "label": "8 bits"},
+    {"value": "16", "label": "16 bits"},
+    {"value": "32", "label": "32 bits"},
+]
+
 
 class ColorCodeMappings(BaseSettingsModel):
     color_code: list[str] = SettingsField(
@@ -37,9 +54,9 @@ class ColorCodeMappings(BaseSettingsModel):
         title="Layer name regex"
     )
 
-    product_type: str = SettingsField(
+    product_base_type: str = SettingsField(
         "",
-        title="Resulting product type"
+        title="Resulting product base type"
     )
 
     product_name_template: str = SettingsField(
@@ -56,7 +73,7 @@ class ExtractedOptions(BaseSettingsModel):
 
 
 class CollectColorCodedInstancesPlugin(BaseSettingsModel):
-    """Set color for publishable layers, set its resulting product type
+    """Set color for publishable layers, set its resulting product base type
     and template for product name. \n Can create flatten image from published
     instances.
     (Applicable only for remote publishing!)"""
@@ -129,6 +146,24 @@ class ExtractLayersPlugin(BaseSettingsModel):
     )
 
 
+class ValidateDocumentSettingsPlugin(BaseSettingsModel):
+    """Validate document resolution, color mode and bit depth."""
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
+    expected_dpi: int = SettingsField(72, title="Expected DPI")
+    expected_mode: str = SettingsField(
+        "RGB",
+        title="Expected Color Mode",
+        enum_resolver=lambda: color_mode_enum,
+    )
+    expected_bits: str = SettingsField(
+        "8",
+        title="Expected Bit Depth",
+        enum_resolver=lambda: bit_depth_enum,
+    )
+
+
 class PhotoshopPublishPlugins(BaseSettingsModel):
     CollectColorCodedInstances: CollectColorCodedInstancesPlugin = (
         SettingsField(
@@ -166,6 +201,11 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         default_factory=ExtractLayersPlugin,
     )
 
+    ValidateDocumentSettings: ValidateDocumentSettingsPlugin = SettingsField(
+        title="Validate Document Settings",
+        default_factory=ValidateDocumentSettingsPlugin,
+    )
+
 
 DEFAULT_PUBLISH_SETTINGS = {
     "CollectColorCodedInstances": {
@@ -195,5 +235,13 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ExtractLayers": {
         "enabled": False,
         "merge_layersets": False
+    },
+    "ValidateDocumentSettings": {
+        "enabled": False,
+        "optional": True,
+        "active": True,
+        "expected_dpi": 72,
+        "expected_mode": "RGB",
+        "expected_bits": "8"
     }
 }

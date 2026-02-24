@@ -29,6 +29,7 @@ class PSItem(object):
     members = attr.ib(factory=list)
     long_name = attr.ib(default=None)
     color_code = attr.ib(default=None)  # color code of layer
+    blend_mode = attr.ib(default=None)
     instance_id = attr.ib(default=None)
 
     @property
@@ -120,7 +121,7 @@ class PhotoshopServerStub:
         [{
             "active":true,
             "productName":"imageBG",
-            "productType":"image",
+            "productBaseType":"image",
             "id":"ayon.create.instance",
             "folderPath":"Town",
             "uuid": "8"
@@ -500,7 +501,7 @@ class PhotoshopServerStub:
             (list)
             example:
                 {"8":{"active":true,"productName":"imageBG",
-                      "productType":"image","id":"ayon.create.instance",
+                      "productBaseType":"image","id":"ayon.create.instance",
                       "folderPath":"/Town"}}
                 8 is layer(group) id - used for deletion, update etc.
         """
@@ -614,6 +615,53 @@ class PhotoshopServerStub:
             self.client.call('Photoshop.get_extension_version')
         )
 
+    def get_layer_blend_mode(self, layer_id):
+        """Returns blend mode string for specific layer."""
+        return self.websocketserver.call(
+            self.client.call('Photoshop.get_layer_blend_mode', layer_id=layer_id)
+        )
+
+    def get_document_settings(self):
+        """Returns dict with document resolution, mode and bits per channel."""
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_document_settings')
+        )
+        if not res:
+            return {}
+        try:
+            return json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+
+    def set_document_settings(self, resolution=None, mode=None, bits=None):
+        """Sets document resolution, color mode, and/or bit depth.
+
+        Args:
+            resolution (int, optional): Target DPI.
+            mode (str, optional): Target color mode (RGB, CMYK, GRAYSCALE, etc.)
+            bits (int or str, optional): Target bit depth (8, 16, or 32).
+
+        Returns:
+            dict: Result with 'success' key and optional 'errors' list.
+
+        Note:
+            Some conversions may be lossy (e.g., CMYK to RGB, 32 to 16 bits).
+        """
+        res = self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_document_settings',
+                resolution=resolution,
+                mode=mode,
+                bits=bits
+            )
+        )
+        if not res:
+            return {"success": False, "error": "No response from Photoshop"}
+        try:
+            return json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+
     def close(self):
         """Shutting down PS and process too.
 
@@ -621,6 +669,25 @@ class PhotoshopServerStub:
         """
         # TODO change client.call to method with checks for client
         self.websocketserver.call(self.client.call('Photoshop.close'))
+
+    def eval(self, code: str):
+        """Execute Javascript code.
+
+        Args:
+            code (str): Javascript code to execute.
+
+        Returns:
+            Any: Result of javascript execution.
+
+        """
+        # TODO: Can we provide more info to the user on execution failure
+        #  on the javascript side, like raising an informative error?
+        return self.websocketserver.call(
+            self.client.call(
+                'Photoshop.eval_code',
+                code=code,
+            )
+        )
 
     def _to_records(self, res):
         """Converts string json representation into list of PSItem for
@@ -653,6 +720,7 @@ class PhotoshopServerStub:
                 d.get('members'),
                 d.get('long_name'),
                 d.get("color_code"),
+                d.get("blend_mode"),
                 d.get("instance_id")
             ))
         return ret

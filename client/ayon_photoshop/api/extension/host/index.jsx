@@ -84,6 +84,8 @@ function getLayers() {
       layer.parents = parents.slice();
       layer.type = getLayerTypeWithName(layer.name);
       layer.visible = desc.getBoolean(stringIDToTypeID("visible"));
+      var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+      layer.blend_mode = typeIDToStringID(blendMode);
       //log(" name: " + layer.name + " groupId " + layer.groupId + 
       //" group " + layer.group);
       if (layerSection == 'layerSectionStart') { // Group start and end
@@ -104,6 +106,7 @@ function getLayers() {
         layer.parents = [];
         layer.type = 'background';
         layer.visible = bck.visible;
+        layer.blend_mode = typeIDToStringID(bck.blendMode);
         layers.push(JSON.stringify(layer));
     }catch(e){
         // do nothing, no background layer
@@ -165,6 +168,118 @@ function getColorProfileName() {
   return app.activeDocument.colorProfileName;
 }
 
+function getDocumentSettings() {
+    /**
+     * Returns JSON with document settings:
+     * resolution (dpi), color mode, bits per channel
+     **/
+    if (documents.length == 0){
+        return '';
+    }
+    var doc = app.activeDocument;
+    var info = {
+        resolution: doc.resolution,
+        mode: doc.mode.toString(),
+        bitsPerChannel: doc.bitsPerChannel.toString()
+    };
+    return JSON.stringify(info);
+}
+
+function setDocumentSettings(resolution, mode, bits) {
+    /**
+     * Sets document resolution, color mode, and/or bit depth.
+     * Pass null for any parameter to skip changing that setting.
+     *
+     * resolution - target DPI (number)
+     * mode - target color mode: RGB, CMYK, GRAYSCALE, LAB, BITMAP, DUOTONE, INDEXEDCOLOR, MULTICHANNEL
+     * bits - target bit depth: 8, 16, or 32
+     *
+     * Returns JSON with success status and any errors.
+     * Note: Some conversions may be lossy (e.g., CMYK to RGB, 32 to 16 bits).
+     **/
+    if (documents.length == 0) {
+        return JSON.stringify({success: false, error: "No document open"});
+    }
+
+    var doc = app.activeDocument;
+    var errors = [];
+
+    // Change resolution (without changing pixels)
+    if (resolution !== null && resolution !== undefined) {
+        try {
+            doc.resizeImage(
+              undefined,
+              undefined,
+              resolution,
+              ResampleMethod.NONE
+            );
+        } catch (e) {
+            errors.push("Failed to change resolution: " + e.message);
+        }
+    }
+
+    // Change color mode
+    if (mode !== null && mode !== undefined) {
+        try {
+            var modeMap = {
+                "RGB": ChangeMode.RGB,
+                "CMYK": ChangeMode.CMYK,
+                "GRAYSCALE": ChangeMode.GRAYSCALE,
+                "LAB": ChangeMode.LAB,
+                "BITMAP": ChangeMode.BITMAP,
+                "INDEXEDCOLOR": ChangeMode.INDEXEDCOLOR,
+                "MULTICHANNEL": ChangeMode.MULTICHANNEL
+            };
+            var targetMode = modeMap[mode.toUpperCase()];
+            if (targetMode) {
+                doc.changeMode(targetMode);
+            } else {
+                errors.push("Unknown color mode: " + mode);
+            }
+        } catch (e) {
+            errors.push("Failed to change color mode: " + e.message);
+        }
+    }
+
+    // Change bit depth
+    if (bits !== null && bits !== undefined) {
+        try {
+            var bitsMap = {
+                "8": BitsPerChannelType.EIGHT,
+                "16": BitsPerChannelType.SIXTEEN,
+                "32": BitsPerChannelType.THIRTYTWO
+            };
+            var targetBits = bitsMap[String(bits)];
+            if (targetBits) {
+                doc.bitsPerChannel = targetBits;
+            } else {
+                errors.push("Unknown bit depth: " + bits);
+            }
+        } catch (e) {
+            errors.push("Failed to change bit depth: " + e.message);
+        }
+    }
+
+    if (errors.length > 0) {
+        return JSON.stringify({success: false, errors: errors});
+    }
+    return JSON.stringify({success: true});
+}
+
+function getLayerBlendMode(layer_id) {
+    /**
+     * Returns blend mode string for a layer id
+     **/
+    if (documents.length == 0){
+        return '';
+    }
+    var ref = new ActionReference();
+    ref.putIdentifier(stringIDToTypeID("layer"), layer_id);
+    var desc = executeActionGet(ref);
+    var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+    return typeIDToStringID(blendMode);
+}
+
 function saveAs(output_path, ext, as_copy){
     /** Exports scene to various formats
      * 
@@ -177,38 +292,62 @@ function saveAs(output_path, ext, as_copy){
      * */
     var saveName = output_path;
     var saveOptions;
-    if (ext == 'jpg'){
-      saveOptions = new JPEGSaveOptions();
-      saveOptions.quality = 12;
-      saveOptions.embedColorProfile = true;
-      saveOptions.formatOptions = FormatOptions.PROGRESSIVE;
-      if(saveOptions.formatOptions == FormatOptions.PROGRESSIVE){
-      saveOptions.scans = 5};
-      saveOptions.matte = MatteType.NONE;
+
+    var doc = app.activeDocument;
+    var is_temp_doc = false;
+
+    try {
+        if (
+          doc.bitsPerChannel === BitsPerChannelType.THIRTYTWO
+          && (ext === 'png' || ext === 'jpg' || ext === 'tga')
+        ) {
+            // Create a temp duplicate of the document that we convert to 8
+            // bit to avoid a file save prompt for png/jpg/tga
+            doc = doc.duplicate();
+            is_temp_doc = true;
+            doc.bitsPerChannel = BitsPerChannelType.EIGHT;
+        }
+
+        if (ext === 'jpg') {
+            saveOptions = new JPEGSaveOptions();
+            saveOptions.quality = 12;
+            saveOptions.embedColorProfile = true;
+            saveOptions.formatOptions = FormatOptions.PROGRESSIVE;
+            if (saveOptions.formatOptions === FormatOptions.PROGRESSIVE) {
+                saveOptions.scans = 5
+            }
+            saveOptions.matte = MatteType.NONE;
+        }
+        if (ext === 'png') {
+            saveOptions = new PNGSaveOptions();
+            saveOptions.interlaced = true;
+            saveOptions.transparency = true;
+        }
+        if (ext === 'tga') {
+            saveOptions = new TargaSaveOptions();
+            saveOptions.alphaChannels = true;
+        }
+        if (ext === 'psd') {
+            return doc.saveAs(
+              new File(saveName),
+              new PhotoshopSaveOptions(),
+              as_copy,
+              Extension.LOWERCASE
+            );
+        }
+        if (ext === 'psb') {
+            return savePSB(output_path);
+        }
+
+        return doc.saveAs(new File(saveName), saveOptions, as_copy);
     }
-    if (ext == 'png'){
-      saveOptions = new PNGSaveOptions();
-      saveOptions.interlaced = true;
-      saveOptions.transparency = true;
-    }
-    if (ext == 'tga'){
-        saveOptions = new TargaSaveOptions();
-        saveOptions.alphaChannels = true;
-    }
-    if (ext == 'psd'){
-        return app.activeDocument.saveAs(
-            new File(saveName),
-            new PhotoshopSaveOptions(),
-            as_copy,
-            Extension.LOWERCASE
-        );
-    }
-    if (ext == 'psb'){
-        return savePSB(output_path);
+    finally {
+        // Close temporary duplicate doc
+        if (is_temp_doc) {
+            doc.close(SaveOptions.DONOTSAVECHANGES);
+        }
     }
 
-    return app.activeDocument.saveAs(new File(saveName), saveOptions, as_copy);   
-    
 }
 
 /**
@@ -241,7 +380,7 @@ function closeDocument(documentId) {
             throw new Error("Document with ID " + documentId + " not found.");
         }
     }
-    
+
     document.close(SaveOptions.DONOTSAVECHANGES);
 }
 
@@ -271,6 +410,15 @@ function getActiveDocumentFullName(){
     if (documents.length == 0){
         return null;
     }
+    try {
+        app.activeDocument.fullName;
+    }
+    catch (e) {
+        // Unsaved saved document has no full name
+        return null;
+    }
+    // convert URI path to system path, as PS returns URI format (eg. /c/..
+    // instead of c:/)
     var f = new File(app.activeDocument.fullName);
     var path = f.fsName;
     f.close();
