@@ -201,10 +201,15 @@ function setDocumentSettings(resolution, mode, bits) {
     var doc = app.activeDocument;
     var errors = [];
 
-    // Change resolution (without resizing pixel dimensions)
+    // Change resolution (without changing pixels)
     if (resolution !== null && resolution !== undefined) {
         try {
-            doc.resizeImage(undefined, undefined, resolution, undefined);
+            doc.resizeImage(
+              undefined,
+              undefined,
+              resolution,
+              ResampleMethod.NONE
+            );
         } catch (e) {
             errors.push("Failed to change resolution: " + e.message);
         }
