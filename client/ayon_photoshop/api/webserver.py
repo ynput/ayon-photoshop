@@ -9,6 +9,7 @@ forward. Server is closed before Python process is killed.
 """
 import os
 import logging
+import time
 import urllib
 import threading
 import asyncio
@@ -16,7 +17,7 @@ import socket
 
 from aiohttp import web
 
-from wsrpc_aiohttp import WSRPCClient
+from wsrpc_aiohttp import WSRPCClient, WebSocketAsync
 
 from ayon_core.pipeline import get_global_context
 
@@ -113,14 +114,73 @@ class WebServerTool:
             print(f"Port {port} is already in use")
         return result
 
-    def call(self, func):
-        log.debug("websocket.call {}".format(func))
-        future = asyncio.run_coroutine_threadsafe(
-            func,
-            self.webserver_thread.loop
-        )
-        result = future.result()
-        return result
+    def _wait_for_healthy_client(self, timeout: float):
+        """Poll for a WebSocket client whose transport is not closed. 
+        
+        Return when one is found or timeout (seconds) is reached.
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            clients = WebSocketAsync.get_clients()
+            for client in clients.values():
+                sock = getattr(client, "socket", None)
+                if sock is not None and getattr(sock, "closed", False):
+                    continue
+                return
+            time.sleep(0.25)
+
+    def call(self, func, max_retries=3, retry_delay=6.0):
+        """Run a coroutine on the websocket thread, with retry on connection errors.
+
+        When the CEP extension is blocked by a long JSX operation (e.g. get_layers
+        on a large PSD or save()), the WebSocket transport can close. This method
+        retries the call after a delay to allow the extension to reconnect.
+
+        Args:
+            func: Either a coroutine to run once, or a callable that returns a
+                coroutine (e.g. lambda: self.client.call(...)). Use a callable
+                to enable retries; a raw coroutine is run once only.
+            max_retries: Number of attempts (first try + retries). Default 3.
+            retry_delay: Seconds to wait before retry. CEP reconnect is 5s. Default 6.
+
+        Returns:
+            Result of the coroutine.
+
+        Raises:
+            ConnectionResetError, ConnectionError, OSError: After all retries failed.
+        """
+        # Allow retries only when func is a callable (we need a fresh coroutine each time)
+        is_factory = callable(func) and not asyncio.iscoroutine(func)
+        last_exception = None
+
+        for attempt in range(max_retries):
+            try:
+                coro = func() if is_factory else func
+                if not asyncio.iscoroutine(coro):
+                    raise TypeError("call() requires a coroutine or callable returning a coroutine")
+                log.debug(f"websocket.call attempt {attempt + 1}/{max_retries}")
+                future = asyncio.run_coroutine_threadsafe(
+                    coro,
+                    self.webserver_thread.loop
+                )
+                result = future.result()
+                return result
+            except (ConnectionResetError, ConnectionError, OSError) as e:
+                last_exception = e
+                if not is_factory or attempt >= max_retries - 1:
+                    log.warning(
+                        f"WebSocket call failed after {attempt + 1} attempt(s): {e}",
+                        exc_info=True
+                    )
+                    raise last_exception
+                log.warning(
+                    f"WebSocket connection error (attempt {attempt + 1}/{max_retries}), waiting for "
+                    f"healthy client (up to {retry_delay}s): {e}"
+                )
+                self._wait_for_healthy_client(retry_delay)
+
+        if last_exception is not None:
+            raise last_exception
 
     @staticmethod
     def get_instance():
@@ -160,7 +220,7 @@ class WebServerThread(threading.Thread):
         it creates separate thread and separate asyncio event loop
     """
     def __init__(self, module, port):
-        super(WebServerThread, self).__init__()
+        super(WebServerThread, self).__init__(daemon=True)
 
         self.is_running = False
         self.port = port

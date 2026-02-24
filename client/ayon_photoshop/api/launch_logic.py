@@ -119,8 +119,15 @@ def show_tool_by_name(tool_name):
 class ProcessLauncher(QtCore.QObject):
     route_name = "Photoshop"
     _main_thread_callbacks = collections.deque()
+    _instance = None
+
+    @classmethod
+    def instance(cls):
+        """Return the current ProcessLauncher instance, if any (e.g. for shutdown)."""
+        return cls._instance
 
     def __init__(self, subprocess_args):
+        ProcessLauncher._instance = self
         self._subprocess_args = subprocess_args
         self._log = None
 
