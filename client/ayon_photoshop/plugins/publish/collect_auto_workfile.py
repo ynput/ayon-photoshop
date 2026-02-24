@@ -8,16 +8,13 @@ from ayon_core.pipeline.create import get_product_name
 class CollectAutoWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
-    # TODO lower order when 'CollectContextEntities' lowers order
-    # order = pyblish.api.CollectorOrder - 0.4
-    order = pyblish.api.CollectorOrder - 0.09
+    order = pyblish.api.CollectorOrder - 0.4
     label = "Collect Workfile"
     hosts = ["photoshop"]
 
     targets = ["automated"]
 
     def process(self, context):
-        product_type = "workfile"
         file_path = context.data["currentFile"]
         ext = os.path.splitext(file_path)[1].lstrip(".")
         staging_dir = os.path.dirname(file_path)
@@ -55,6 +52,8 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
                     self.log.debug("Workfile instance disabled")
                     return
 
+        product_base_type = "workfile"
+
         # context.data["variant"] might come only from collect_batch_data
         variant = (
             context.data.get("variant")
@@ -64,32 +63,19 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         host_name = context.data["hostName"]
         folder_entity = context.data["folderEntity"]
         task_entity = context.data["taskEntity"]
-        task_name = task_type = None
+        task_name = None
         if task_entity:
             task_name = task_entity["name"]
-            task_type = task_entity["taskType"]
-
-        get_product_name_kwargs = {}
-        if getattr(get_product_name, "use_entities", False):
-            get_product_name_kwargs.update({
-                "folder_entity": folder_entity,
-                "task_entity": task_entity,
-                # TODO (antirotor): handle product_base_type properly
-                "product_base_type": product_type,
-            })
-        else:
-            get_product_name_kwargs.update({
-                "task_name": task_name,
-                "task_type": task_type,
-            })
 
         product_name = get_product_name(
             project_name=project_name,
+            folder_entity=folder_entity,
+            task_entity=task_entity,
             host_name=host_name,
-            product_type=product_type,
+            product_base_type=product_base_type,
+            product_type=product_base_type,
             variant=variant,
             project_settings=proj_settings,
-            **get_product_name_kwargs
         )
 
         # Create instance
@@ -98,14 +84,13 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "productName": product_name,
-            "productType": product_type,
-            # TODO (antirotor): handle product_base_type properly
-            "productBaseType": product_type,
-            "family": product_type,
-            "families": [product_type],
+            "productType": product_base_type,
+            "productBaseType": product_base_type,
+            "family": product_base_type,
+            "families": [product_base_type],
             "representations": [workfile_representation],
             "folderPath": folder_entity["path"],
-            "task": task_name
+            "task": task_name,
         })
 
         # creating representation
