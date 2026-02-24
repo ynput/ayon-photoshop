@@ -123,6 +123,26 @@
                   return result;
                 });
       });
+      RPC.addRoute('Photoshop.get_document_settings', function (data) {
+              log.warn('Server called client route "get_document_settings":', data);
+              return runEvalScript("getDocumentSettings()")
+                .then(function (result) {
+                  log.warn("get_document_settings: " + result);
+                  return result;
+                });
+      });
+      RPC.addRoute('Photoshop.set_document_settings', function (data) {
+              log.warn('Server called client route "set_document_settings":', data);
+              var resolution = data.resolution !== undefined ? data.resolution : null;
+              var mode = data.mode !== undefined ? "'" + data.mode + "'" : null;
+              var bits = data.bits !== undefined ? "'" + data.bits + "'" : null;
+              return runEvalScript("setDocumentSettings(" + resolution + ", " +
+                                   mode + ", " + bits + ")")
+                .then(function (result) {
+                  log.warn("set_document_settings: " + result);
+                  return result;
+                });
+      });
       RPC.addRoute('Photoshop.set_visible', function (data) {
               log.warn('Server called client route "set_visible":', data);
               return runEvalScript("setVisible(" + data.layer_id + ", " +
@@ -346,6 +366,13 @@
       RPC.addRoute('Photoshop.close', function (data) {
         log.warn('Server called client route "close":', data);
         return runEvalScript("close()");
+      });
+
+      RPC.addRoute('Photoshop.eval_code', function (data) {
+        log.warn('Server called client route "eval_code":', data);
+        return runEvalScript(data.code).then(function(result){
+                      return result;
+                  });
       });
 
       RPC.call('Photoshop.ping').then(function (data) {
