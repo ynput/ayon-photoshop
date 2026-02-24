@@ -12,6 +12,7 @@ import ayon_api
 from qtpy import QtCore
 
 from ayon_core.lib import Logger
+from ayon_core.lib.events import emit_event
 from ayon_core.pipeline import (
     registered_host,
     Anatomy,
@@ -326,6 +327,7 @@ class PhotoshopRoute(WebSocketRoute):
             notification after long running job on the server or similar
     """
     instance = None
+    _application_launched_emitted = False
 
     def init(self, **kwargs):
         # Python __init__ must be return "self".
@@ -337,6 +339,11 @@ class PhotoshopRoute(WebSocketRoute):
     # server functions
     async def ping(self):
         log.debug("someone called Photoshop route ping")
+        if not PhotoshopRoute._application_launched_emitted:
+            PhotoshopRoute._application_launched_emitted = True
+            ProcessLauncher.execute_in_main_thread(
+                lambda: emit_event("application.launched")
+            )
 
     # This method calls function on the client side
     # client functions
