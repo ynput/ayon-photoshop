@@ -29,14 +29,20 @@ class ExtractImage(
     settings_category = "photoshop"
 
     def process(self, context):
-        stub = photoshop.stub()
-        hidden_layer_ids = set()
+        # Filter instances
+        filtered_instances = []
+        for instance in context:
+            product_base_type = instance.data.get("productBaseType")
+            if not product_base_type:
+                product_base_type = instance.data["productType"]
+            if product_base_type in self.families:
+                filtered_instances.append(instance)
 
-        all_layers = stub.get_layers()
-        for layer in all_layers:
-            if not layer.visible:
-                hidden_layer_ids.add(layer.id)
-        stub.hide_all_others_layers_ids([], layers=all_layers)
+        if not filtered_instances:
+            return
+
+        stub = photoshop.stub()
+        all_layers = stub.get_layers()  # Fetch once, reuse for all instances
         native_colorspace = stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
         host_name = context.data["hostName"]
@@ -44,31 +50,30 @@ class ExtractImage(
         host_imageio_settings = project_settings["photoshop"]["imageio"]
 
         with photoshop.maintained_selection():
-            with photoshop.maintained_visibility(layers=all_layers):
-                for instance in context:
-                    if instance.data["productType"] not in self.families:
-                        continue
-                    suffix = instance.data["name"]
-                    staging_dir = self.staging_dir(instance)
-                    self.log.info("Outputting image to {}".format(staging_dir))
+            for instance in filtered_instances:
+                suffix = instance.data["name"]
+                staging_dir = self.staging_dir(instance)
+                self.log.info(f"Outputting image to {staging_dir}")
 
+                # Get instance layer ID
+                members = instance.data("members")
+                if not members:
+                    continue
+                instance_id = int(members[0])
+
+                # Context manager handles all visibility: show instance path,
+                # hide siblings, restore original state on exit
+                with photoshop.isolated_layers_visibility(stub, instance_id, all_layers):
                     # Perform extraction
                     files = {}
                     ids = set()
                     # real layers and groups
-                    members = instance.data("members")
                     if members:
-                        ids.update(set([int(member) for member in members]))
+                        ids.update(int(member) for member in members)
                     # virtual groups collected by color coding or auto_image
                     add_ids = instance.data.pop("ids", None)
                     if add_ids:
                         ids.update(set(add_ids))
-                    extract_ids = set([ll.id for ll in stub.
-                                      get_layers_in_layers_ids(ids, all_layers)
-                                       if ll.id not in hidden_layer_ids])
-
-                    for extracted_id in extract_ids:
-                        stub.set_visible(extracted_id, True)
 
                     file_basename, workfile_extension = os.path.splitext(
                         stub.get_active_document_name()
@@ -118,9 +123,6 @@ class ExtractImage(
                     instance.data["stagingDir"] = staging_dir
 
                     self.log.info(f"Extracted {instance} to {staging_dir}")
-
-                    for extracted_id in extract_ids:
-                        stub.set_visible(extracted_id, False)
 
     def staging_dir(self, instance):
         """Provide a temporary directory in which to store extracted files

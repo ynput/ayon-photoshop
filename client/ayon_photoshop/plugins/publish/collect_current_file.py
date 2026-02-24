@@ -1,8 +1,6 @@
-import os
-
 import pyblish.api
 
-from ayon_photoshop import api as photoshop
+from ayon_core.pipeline import registered_host
 
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):
@@ -13,6 +11,10 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
-        context.data["currentFile"] = os.path.normpath(
-            photoshop.stub().get_active_document_full_name()
-        ).replace("\\", "/")
+        host = registered_host()
+        filename: str = host.get_current_workfile() or ""
+        if not filename:
+            self.log.debug("Current file appears to be unsaved.")
+
+        self.log.debug(f"Collected current file: '{filename}'")
+        context.data["currentFile"] = filename

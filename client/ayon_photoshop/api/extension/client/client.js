@@ -153,6 +153,15 @@
                   });
       });
 
+      RPC.addRoute('Photoshop.set_layers_visibility', function (data) {
+              log.warn('Server called client route "set_layers_visibility":', data);
+              return runEvalScript("setLayersVisibility('" + data.visibility_map + "')")
+                  .then(function(result){
+                      log.warn("setLayersVisibility: " + result);
+                      return result;
+                  });
+      });
+
       RPC.addRoute('Photoshop.get_active_document_name', function (data) {
               log.warn('Server called client route "get_active_document_name":',
                         data);
@@ -357,6 +366,13 @@
       RPC.addRoute('Photoshop.close', function (data) {
         log.warn('Server called client route "close":', data);
         return runEvalScript("close()");
+      });
+
+      RPC.addRoute('Photoshop.eval_code', function (data) {
+        log.warn('Server called client route "eval_code":', data);
+        return runEvalScript(data.code).then(function(result){
+                      return result;
+                  });
       });
 
       RPC.call('Photoshop.ping').then(function (data) {

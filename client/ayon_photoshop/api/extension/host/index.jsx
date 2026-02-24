@@ -126,6 +126,19 @@ function setVisible(layer_id, visibility){
     
 }
 
+function setLayersVisibility(visibilityMap) {
+    /**
+     * Sets visibility for multiple layers in one call.
+     * visibilityMap: JSON string of {layer_id: boolean, ...}
+     */
+    var map = JSON.parse(visibilityMap);
+    for (var layerId in map) {
+        if (map.hasOwnProperty(layerId)) {
+            setVisible(parseInt(layerId), map[layerId]);
+        }
+    }
+}
+
 function getHeadline(){
     /**
      *  Returns headline of current document with metadata 
@@ -257,38 +270,62 @@ function saveAs(output_path, ext, as_copy){
      * */
     var saveName = output_path;
     var saveOptions;
-    if (ext == 'jpg'){
-      saveOptions = new JPEGSaveOptions();
-      saveOptions.quality = 12;
-      saveOptions.embedColorProfile = true;
-      saveOptions.formatOptions = FormatOptions.PROGRESSIVE;
-      if(saveOptions.formatOptions == FormatOptions.PROGRESSIVE){
-      saveOptions.scans = 5};
-      saveOptions.matte = MatteType.NONE;
+
+    var doc = app.activeDocument;
+    var is_temp_doc = false;
+
+    try {
+        if (
+          doc.bitsPerChannel === BitsPerChannelType.THIRTYTWO
+          && (ext === 'png' || ext === 'jpg' || ext === 'tga')
+        ) {
+            // Create a temp duplicate of the document that we convert to 8
+            // bit to avoid a file save prompt for png/jpg/tga
+            doc = doc.duplicate();
+            is_temp_doc = true;
+            doc.bitsPerChannel = BitsPerChannelType.EIGHT;
+        }
+
+        if (ext === 'jpg') {
+            saveOptions = new JPEGSaveOptions();
+            saveOptions.quality = 12;
+            saveOptions.embedColorProfile = true;
+            saveOptions.formatOptions = FormatOptions.PROGRESSIVE;
+            if (saveOptions.formatOptions === FormatOptions.PROGRESSIVE) {
+                saveOptions.scans = 5
+            }
+            saveOptions.matte = MatteType.NONE;
+        }
+        if (ext === 'png') {
+            saveOptions = new PNGSaveOptions();
+            saveOptions.interlaced = true;
+            saveOptions.transparency = true;
+        }
+        if (ext === 'tga') {
+            saveOptions = new TargaSaveOptions();
+            saveOptions.alphaChannels = true;
+        }
+        if (ext === 'psd') {
+            return doc.saveAs(
+              new File(saveName),
+              new PhotoshopSaveOptions(),
+              as_copy,
+              Extension.LOWERCASE
+            );
+        }
+        if (ext === 'psb') {
+            return savePSB(output_path);
+        }
+
+        return doc.saveAs(new File(saveName), saveOptions, as_copy);
     }
-    if (ext == 'png'){
-      saveOptions = new PNGSaveOptions();
-      saveOptions.interlaced = true;
-      saveOptions.transparency = true;
-    }
-    if (ext == 'tga'){
-        saveOptions = new TargaSaveOptions();
-        saveOptions.alphaChannels = true;
-    }
-    if (ext == 'psd'){
-        return app.activeDocument.saveAs(
-            new File(saveName),
-            new PhotoshopSaveOptions(),
-            as_copy,
-            Extension.LOWERCASE
-        );
-    }
-    if (ext == 'psb'){
-        return savePSB(output_path);
+    finally {
+        // Close temporary duplicate doc
+        if (is_temp_doc) {
+            doc.close(SaveOptions.DONOTSAVECHANGES);
+        }
     }
 
-    return app.activeDocument.saveAs(new File(saveName), saveOptions, as_copy);   
-    
 }
 
 /**
@@ -321,7 +358,7 @@ function closeDocument(documentId) {
             throw new Error("Document with ID " + documentId + " not found.");
         }
     }
-    
+
     document.close(SaveOptions.DONOTSAVECHANGES);
 }
 
@@ -351,6 +388,15 @@ function getActiveDocumentFullName(){
     if (documents.length == 0){
         return null;
     }
+    try {
+        app.activeDocument.fullName;
+    }
+    catch (e) {
+        // Unsaved saved document has no full name
+        return null;
+    }
+    // convert URI path to system path, as PS returns URI format (eg. /c/..
+    // instead of c:/)
     var f = new File(app.activeDocument.fullName);
     var path = f.fsName;
     f.close();
