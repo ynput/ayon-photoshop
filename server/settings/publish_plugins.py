@@ -237,7 +237,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "merge_layersets": False
     },
     "ValidateDocumentSettings": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
         "active": True,
         "expected_dpi": 72,
