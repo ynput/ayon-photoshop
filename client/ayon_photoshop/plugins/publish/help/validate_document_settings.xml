@@ -8,9 +8,6 @@
 - {expected_mode}
 - {expected_bits} bits
 
-Details:
-{details}
-
 ### How to repair?
 Adjust the document settings in Photoshop and re-run publish.
 </description>

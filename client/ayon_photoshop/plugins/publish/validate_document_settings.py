@@ -98,7 +98,7 @@ class ValidateDocumentSettings(
                 },
             )
 
-        issues = []
+        invalid: bool = False
 
         resolution = info.get("resolution")
         try:
@@ -106,34 +106,32 @@ class ValidateDocumentSettings(
         except (ValueError, TypeError):
             resolution_value = None
         if resolution_value != int(self.expected_dpi):
-            issues.append(
-                "Resolution is {} dpi (expected {} dpi)".format(
-                    resolution_value, self.expected_dpi
-                )
+            self.log.warning(
+                f"Resolution is {resolution_value} dpi"
+                f" (expected {self.expected_dpi} dpi)"
             )
+            invalid = True
 
         mode = _normalize_mode(info.get("mode"))
         if mode != self.expected_mode.upper():
-            issues.append(
-                "Color mode is {} (expected {})".format(
-                    mode or info.get("mode"), self.expected_mode
-                )
+            mode_label = mode or info.get("mode")
+            self.log.warning(
+                f"Color mode is {mode_label} (expected {self.expected_mode})"
             )
+            invalid = True
 
         bits = _normalize_bits(info.get("bitsPerChannel"))
         if bits != int(self.expected_bits):
-            issues.append(
-                "Bit depth is {} (expected {})".format(
-                    bits, self.expected_bits
-                )
+            self.log.warning(
+                f"Bit depth is {bits} (expected {self.expected_bits})"
             )
+            invalid = True
 
-        if issues:
+        if invalid:
             raise PublishXmlValidationError(
                 self,
                 "Document settings are not compliant.",
                 formatting_data={
-                    "details": "\n".join(issues),
                     "expected_dpi": self.expected_dpi,
                     "expected_mode": self.expected_mode,
                     "expected_bits": self.expected_bits,
