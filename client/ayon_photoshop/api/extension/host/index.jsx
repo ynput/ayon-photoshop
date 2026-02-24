@@ -187,7 +187,7 @@ function saveAs(output_path, ext, as_copy){
           && (ext === 'png' || ext === 'jpg' || ext === 'tga')
         ) {
             // Create a temp duplicate of the document that we convert to 8
-            // bit to avoid a file save prompt for png/jpg
+            // bit to avoid a file save prompt for png/jpg/tga
             doc = doc.duplicate();
             is_temp_doc = true;
             doc.bitsPerChannel = BitsPerChannelType.EIGHT;
