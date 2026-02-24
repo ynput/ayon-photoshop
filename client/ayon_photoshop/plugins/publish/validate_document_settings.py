@@ -77,9 +77,9 @@ class ValidateDocumentSettings(
     optional = True
     active = True
 
-    expected_dpi = 72
-    expected_mode = "RGB"
-    expected_bits = 16
+    expected_dpi: int = 72
+    expected_mode: str = "RGB"
+    expected_bits: int = 8
 
     def process(self, context):
         if not self.is_active(context.data):

@@ -158,7 +158,7 @@ class ValidateDocumentSettingsPlugin(BaseSettingsModel):
         enum_resolver=lambda: color_mode_enum,
     )
     expected_bits: str = SettingsField(
-        "16",
+        "8",
         title="Expected Bit Depth",
         enum_resolver=lambda: bit_depth_enum,
     )
@@ -242,6 +242,6 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True,
         "expected_dpi": 72,
         "expected_mode": "RGB",
-        "expected_bits": "16"
+        "expected_bits": "8"
     }
 }
