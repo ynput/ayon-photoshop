@@ -614,6 +614,47 @@ class PhotoshopServerStub:
             self.client.call('Photoshop.get_extension_version')
         )
 
+    def get_document_settings(self):
+        """Returns dict with document resolution, mode and bits per channel."""
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_document_settings')
+        )
+        if not res:
+            return {}
+        try:
+            return json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+
+    def set_document_settings(self, resolution=None, mode=None, bits=None):
+        """Sets document resolution, color mode, and/or bit depth.
+
+        Args:
+            resolution (int, optional): Target DPI.
+            mode (str, optional): Target color mode (RGB, CMYK, GRAYSCALE, etc.)
+            bits (int or str, optional): Target bit depth (8, 16, or 32).
+
+        Returns:
+            dict: Result with 'success' key and optional 'errors' list.
+
+        Note:
+            Some conversions may be lossy (e.g., CMYK to RGB, 32 to 16 bits).
+        """
+        res = self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_document_settings',
+                resolution=resolution,
+                mode=mode,
+                bits=bits
+            )
+        )
+        if not res:
+            return {"success": False, "error": "No response from Photoshop"}
+        try:
+            return json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+
     def close(self):
         """Shutting down PS and process too.
 
