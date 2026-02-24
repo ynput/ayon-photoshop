@@ -17,9 +17,9 @@ class CollectReviewData(pyblish.api.InstancePlugin):
 
     label = "Collect Review data"
     hosts = ["photoshop"]
-    # TODO lower order when 'CollectContextEntities' lowers order
-    # order = pyblish.api.CollectorOrder - 0.4
-    order = pyblish.api.CollectorOrder - 0.09
+
+    order = pyblish.api.CollectorOrder - 0.4
+
     settings_category = "photoshop"
     families = ["review"]
 

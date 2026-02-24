@@ -120,7 +120,7 @@ class PhotoshopServerStub:
         [{
             "active":true,
             "productName":"imageBG",
-            "productType":"image",
+            "productBaseType":"image",
             "id":"ayon.create.instance",
             "folderPath":"Town",
             "uuid": "8"
@@ -500,7 +500,7 @@ class PhotoshopServerStub:
             (list)
             example:
                 {"8":{"active":true,"productName":"imageBG",
-                      "productType":"image","id":"ayon.create.instance",
+                      "productBaseType":"image","id":"ayon.create.instance",
                       "folderPath":"/Town"}}
                 8 is layer(group) id - used for deletion, update etc.
         """

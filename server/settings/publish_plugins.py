@@ -54,9 +54,9 @@ class ColorCodeMappings(BaseSettingsModel):
         title="Layer name regex"
     )
 
-    product_type: str = SettingsField(
+    product_base_type: str = SettingsField(
         "",
-        title="Resulting product type"
+        title="Resulting product base type"
     )
 
     product_name_template: str = SettingsField(
@@ -73,7 +73,7 @@ class ExtractedOptions(BaseSettingsModel):
 
 
 class CollectColorCodedInstancesPlugin(BaseSettingsModel):
-    """Set color for publishable layers, set its resulting product type
+    """Set color for publishable layers, set its resulting product base type
     and template for product name. \n Can create flatten image from published
     instances.
     (Applicable only for remote publishing!)"""

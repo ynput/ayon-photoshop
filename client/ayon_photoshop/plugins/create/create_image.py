@@ -21,9 +21,10 @@ class ImageCreator(Creator):
     """
     identifier = "image"
     label = "Image"
-    product_type = "image"
     product_base_type = "image"
+    product_type = product_base_type
     description = "Image creator"
+    settings_category = "photoshop"
 
     # Settings
     default_variants = ""
@@ -79,6 +80,11 @@ class ImageCreator(Creator):
         # to differentiate them
         use_layer_name = (pre_create_data.get("use_layer_name") or
                           len(groups_to_create) > 1)
+
+        product_type = data.get("productType")
+        if not product_type:
+            product_type = self.product_base_type
+
         for group in groups_to_create:
             product_name = product_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
@@ -119,7 +125,11 @@ class ImageCreator(Creator):
                 data["active"] = False
 
             new_instance = CreatedInstance(
-                self.product_type, product_name, data, self
+                product_base_type=self.product_base_type,
+                product_type=product_type,
+                product_name=product_name,
+                data=data,
+                creator=self,
             )
 
             stub.imprint(new_instance.get("instance_id"),
@@ -183,20 +193,10 @@ class ImageCreator(Creator):
             )
         ]
 
-    def apply_settings(self, project_settings):
-        plugin_settings = (
-            project_settings["photoshop"]["create"]["ImageCreator"]
-        )
-
-        self.active_on_create = plugin_settings["active_on_create"]
-        self.default_variants = plugin_settings["default_variants"]
-        self.mark_for_review = plugin_settings["mark_for_review"]
-        self.enabled = plugin_settings["enabled"]
-
     def get_detail_description(self):
         return """Creator for Image instances
 
-        Main publishable item in Photoshop will be of `image` product type.
+        Main publishable item in Photoshop will be of `image` product.
         Result of this item (instance) is picture that could be loaded and
         used in another DCCs (for example as single layer in composition in
         AfterEffects, reference in Maya etc).
@@ -242,13 +242,16 @@ class ImageCreator(Creator):
             instance_data["task"] = self.create_context.get_current_task_name()
 
         if not instance_data.get("variant"):
-            instance_data["variant"] = ''
+            instance_data["variant"] = ""
 
         return instance_data
 
     def _clean_highlights(self, stub, item):
-        return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
-                                                           '')
+        return (
+            item
+            .replace(stub.PUBLISH_ICON, "")
+            .replace(stub.LOADED_ICON, "")
+        )
 
     def get_dynamic_data(
         self,
@@ -257,7 +260,9 @@ class ImageCreator(Creator):
         task_entity,
         variant,
         host_name,
-        instance
+        instance=None,
+        project_entity=None,
+        product_type=None,
     ):
         if instance is not None:
             layer_name = instance.get("layer_name")
