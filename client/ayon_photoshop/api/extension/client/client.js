@@ -123,6 +123,7 @@
                   return result;
                 });
       });
+
       RPC.addRoute('Photoshop.get_document_settings', function (data) {
               log.warn('Server called client route "get_document_settings":', data);
               return runEvalScript("getDocumentSettings()")
@@ -143,6 +144,7 @@
                   return result;
                 });
       });
+
       RPC.addRoute('Photoshop.set_visible', function (data) {
               log.warn('Server called client route "set_visible":', data);
               return runEvalScript("setVisible(" + data.layer_id + ", " +
@@ -198,6 +200,15 @@
               return runEvalScript("getSelectedLayers()")
                   .then(function(result){
                       log.warn("get_selected_layers: " + result);
+                      return result;
+                  });
+      });
+
+      RPC.addRoute('Photoshop.get_layer_blend_mode', function (data) {
+              log.warn('Server called client route "get_layer_blend_mode":', data);
+              return runEvalScript("getLayerBlendMode(" + data.layer_id + ")")
+                  .then(function(result){
+                      log.warn("get_layer_blend_mode: " + result);
                       return result;
                   });
       });

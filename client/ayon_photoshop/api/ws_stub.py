@@ -29,6 +29,7 @@ class PSItem(object):
     members = attr.ib(factory=list)
     long_name = attr.ib(default=None)
     color_code = attr.ib(default=None)  # color code of layer
+    blend_mode = attr.ib(default=None)
     instance_id = attr.ib(default=None)
 
     @property
@@ -614,6 +615,12 @@ class PhotoshopServerStub:
             self.client.call('Photoshop.get_extension_version')
         )
 
+    def get_layer_blend_mode(self, layer_id):
+        """Returns blend mode string for specific layer."""
+        return self.websocketserver.call(
+            self.client.call('Photoshop.get_layer_blend_mode', layer_id=layer_id)
+        )
+
     def get_document_settings(self):
         """Returns dict with document resolution, mode and bits per channel."""
         res = self.websocketserver.call(
@@ -713,6 +720,7 @@ class PhotoshopServerStub:
                 d.get('members'),
                 d.get('long_name'),
                 d.get("color_code"),
+                d.get("blend_mode"),
                 d.get("instance_id")
             ))
         return ret

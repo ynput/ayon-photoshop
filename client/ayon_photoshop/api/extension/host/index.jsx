@@ -84,6 +84,8 @@ function getLayers() {
       layer.parents = parents.slice();
       layer.type = getLayerTypeWithName(layer.name);
       layer.visible = desc.getBoolean(stringIDToTypeID("visible"));
+      var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+      layer.blend_mode = typeIDToStringID(blendMode);
       //log(" name: " + layer.name + " groupId " + layer.groupId + 
       //" group " + layer.group);
       if (layerSection == 'layerSectionStart') { // Group start and end
@@ -104,6 +106,7 @@ function getLayers() {
         layer.parents = [];
         layer.type = 'background';
         layer.visible = bck.visible;
+        layer.blend_mode = typeIDToStringID(bck.blendMode);
         layers.push(JSON.stringify(layer));
     }catch(e){
         // do nothing, no background layer
@@ -261,6 +264,20 @@ function setDocumentSettings(resolution, mode, bits) {
         return JSON.stringify({success: false, errors: errors});
     }
     return JSON.stringify({success: true});
+}
+
+function getLayerBlendMode(layer_id) {
+    /**
+     * Returns blend mode string for a layer id
+     **/
+    if (documents.length == 0){
+        return '';
+    }
+    var ref = new ActionReference();
+    ref.putIdentifier(stringIDToTypeID("layer"), layer_id);
+    var desc = executeActionGet(ref);
+    var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+    return typeIDToStringID(blendMode);
 }
 
 function saveAs(output_path, ext, as_copy){
