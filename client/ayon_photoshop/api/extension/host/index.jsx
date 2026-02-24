@@ -84,6 +84,8 @@ function getLayers() {
       layer.parents = parents.slice();
       layer.type = getLayerTypeWithName(layer.name);
       layer.visible = desc.getBoolean(stringIDToTypeID("visible"));
+      var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+      layer.blend_mode = typeIDToStringID(blendMode);
       //log(" name: " + layer.name + " groupId " + layer.groupId + 
       //" group " + layer.group);
       if (layerSection == 'layerSectionStart') { // Group start and end
@@ -104,6 +106,7 @@ function getLayers() {
         layer.parents = [];
         layer.type = 'background';
         layer.visible = bck.visible;
+        layer.blend_mode = typeIDToStringID(bck.blendMode);
         layers.push(JSON.stringify(layer));
     }catch(e){
         // do nothing, no background layer
@@ -163,6 +166,118 @@ function save(){
 
 function getColorProfileName() {
   return app.activeDocument.colorProfileName;
+}
+
+function getDocumentSettings() {
+    /**
+     * Returns JSON with document settings:
+     * resolution (dpi), color mode, bits per channel
+     **/
+    if (documents.length == 0){
+        return '';
+    }
+    var doc = app.activeDocument;
+    var info = {
+        resolution: doc.resolution,
+        mode: doc.mode.toString(),
+        bitsPerChannel: doc.bitsPerChannel.toString()
+    };
+    return JSON.stringify(info);
+}
+
+function setDocumentSettings(resolution, mode, bits) {
+    /**
+     * Sets document resolution, color mode, and/or bit depth.
+     * Pass null for any parameter to skip changing that setting.
+     *
+     * resolution - target DPI (number)
+     * mode - target color mode: RGB, CMYK, GRAYSCALE, LAB, BITMAP, DUOTONE, INDEXEDCOLOR, MULTICHANNEL
+     * bits - target bit depth: 8, 16, or 32
+     *
+     * Returns JSON with success status and any errors.
+     * Note: Some conversions may be lossy (e.g., CMYK to RGB, 32 to 16 bits).
+     **/
+    if (documents.length == 0) {
+        return JSON.stringify({success: false, error: "No document open"});
+    }
+
+    var doc = app.activeDocument;
+    var errors = [];
+
+    // Change resolution (without changing pixels)
+    if (resolution !== null && resolution !== undefined) {
+        try {
+            doc.resizeImage(
+              undefined,
+              undefined,
+              resolution,
+              ResampleMethod.NONE
+            );
+        } catch (e) {
+            errors.push("Failed to change resolution: " + e.message);
+        }
+    }
+
+    // Change color mode
+    if (mode !== null && mode !== undefined) {
+        try {
+            var modeMap = {
+                "RGB": ChangeMode.RGB,
+                "CMYK": ChangeMode.CMYK,
+                "GRAYSCALE": ChangeMode.GRAYSCALE,
+                "LAB": ChangeMode.LAB,
+                "BITMAP": ChangeMode.BITMAP,
+                "INDEXEDCOLOR": ChangeMode.INDEXEDCOLOR,
+                "MULTICHANNEL": ChangeMode.MULTICHANNEL
+            };
+            var targetMode = modeMap[mode.toUpperCase()];
+            if (targetMode) {
+                doc.changeMode(targetMode);
+            } else {
+                errors.push("Unknown color mode: " + mode);
+            }
+        } catch (e) {
+            errors.push("Failed to change color mode: " + e.message);
+        }
+    }
+
+    // Change bit depth
+    if (bits !== null && bits !== undefined) {
+        try {
+            var bitsMap = {
+                "8": BitsPerChannelType.EIGHT,
+                "16": BitsPerChannelType.SIXTEEN,
+                "32": BitsPerChannelType.THIRTYTWO
+            };
+            var targetBits = bitsMap[String(bits)];
+            if (targetBits) {
+                doc.bitsPerChannel = targetBits;
+            } else {
+                errors.push("Unknown bit depth: " + bits);
+            }
+        } catch (e) {
+            errors.push("Failed to change bit depth: " + e.message);
+        }
+    }
+
+    if (errors.length > 0) {
+        return JSON.stringify({success: false, errors: errors});
+    }
+    return JSON.stringify({success: true});
+}
+
+function getLayerBlendMode(layer_id) {
+    /**
+     * Returns blend mode string for a layer id
+     **/
+    if (documents.length == 0){
+        return '';
+    }
+    var ref = new ActionReference();
+    ref.putIdentifier(stringIDToTypeID("layer"), layer_id);
+    var desc = executeActionGet(ref);
+    var blendMode = desc.getEnumerationValue(stringIDToTypeID("mode"));
+    return typeIDToStringID(blendMode);
 }
 
 function saveAs(output_path, ext, as_copy){

@@ -13,6 +13,12 @@ from ayon_photoshop.api.pipeline import cache_and_get_instances
 
 class PSAutoCreator(AutoCreator):
     """Generic autocreator to extend."""
+    skip_discovery = True
+    settings_category = "photoshop"
+
+    # Settings based attribute
+    active_on_create = True
+
     def get_instance_attr_defs(self):
         return []
 
@@ -82,7 +88,11 @@ class PSAutoCreator(AutoCreator):
                 data["active"] = False
 
             new_instance = CreatedInstance(
-                self.product_type, product_name, data, self
+                product_base_type=self.product_base_type,
+                product_type=self.product_base_type,
+                product_name=product_name,
+                data=data,
+                creator=self,
             )
             self._add_instance_to_context(new_instance)
             api.stub().imprint(new_instance.get("instance_id"),
