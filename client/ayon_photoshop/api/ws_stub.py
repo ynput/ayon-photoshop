@@ -465,30 +465,18 @@ class PhotoshopServerStub:
             )
         )
 
-    def hide_all_others_layers(self, layers):
-        """hides all layers that are not part of the list or that are not
-        children of this list
+    def set_layers_visibility(self, visibility_map: dict[int, bool]):
+        """Set visibility for multiple layers in one call.
 
         Args:
-            layers (list): list of PSItem - highest hierarchy
+            visibility_map (dict[int, bool]): {layer_id: bool, ...}
         """
-        extract_ids = set([ll.id for ll in self.get_layers_in_layers(layers)])
-
-        self.hide_all_others_layers_ids(extract_ids)
-
-    def hide_all_others_layers_ids(self, extract_ids, layers=None):
-        """hides all layers that are not part of the list or that are not
-        children of this list
-
-        Args:
-            extract_ids (list): list of integer that should be visible
-            layers (list) of PSItem (used for caching)
-        """
-        if not layers:
-            layers = self.get_layers()
-        for layer in layers:
-            if layer.visible and layer.id not in extract_ids:
-                self.set_visible(layer.id, False)
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_layers_visibility',
+                visibility_map=json.dumps(visibility_map)
+            )
+        )
 
     def delete_all_layers(self, exclude_layers=None, exclude_recursive=False):
         """Delete all layers except the ones in the exclude_layers list.
@@ -633,6 +621,47 @@ class PhotoshopServerStub:
             self.client.call('Photoshop.get_layer_blend_mode', layer_id=layer_id)
         )
 
+    def get_document_settings(self):
+        """Returns dict with document resolution, mode and bits per channel."""
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_document_settings')
+        )
+        if not res:
+            return {}
+        try:
+            return json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+
+    def set_document_settings(self, resolution=None, mode=None, bits=None):
+        """Sets document resolution, color mode, and/or bit depth.
+
+        Args:
+            resolution (int, optional): Target DPI.
+            mode (str, optional): Target color mode (RGB, CMYK, GRAYSCALE, etc.)
+            bits (int or str, optional): Target bit depth (8, 16, or 32).
+
+        Returns:
+            dict: Result with 'success' key and optional 'errors' list.
+
+        Note:
+            Some conversions may be lossy (e.g., CMYK to RGB, 32 to 16 bits).
+        """
+        res = self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_document_settings',
+                resolution=resolution,
+                mode=mode,
+                bits=bits
+            )
+        )
+        if not res:
+            return {"success": False, "error": "No response from Photoshop"}
+        try:
+            return json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+
     def close(self):
         """Shutting down PS and process too.
 
@@ -640,6 +669,25 @@ class PhotoshopServerStub:
         """
         # TODO change client.call to method with checks for client
         self.websocketserver.call(self.client.call('Photoshop.close'))
+
+    def eval(self, code: str):
+        """Execute Javascript code.
+
+        Args:
+            code (str): Javascript code to execute.
+
+        Returns:
+            Any: Result of javascript execution.
+
+        """
+        # TODO: Can we provide more info to the user on execution failure
+        #  on the javascript side, like raising an informative error?
+        return self.websocketserver.call(
+            self.client.call(
+                'Photoshop.eval_code',
+                code=code,
+            )
+        )
 
     def _to_records(self, res):
         """Converts string json representation into list of PSItem for
