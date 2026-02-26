@@ -9,6 +9,7 @@ forward. Server is closed before Python process is killed.
 """
 import os
 import logging
+import time
 import urllib
 import threading
 import asyncio
@@ -16,7 +17,7 @@ import socket
 
 from aiohttp import web
 
-from wsrpc_aiohttp import WSRPCClient
+from wsrpc_aiohttp import WSRPCClient, WebSocketAsync
 
 from ayon_core.pipeline import get_global_context
 
@@ -113,14 +114,54 @@ class WebServerTool:
             print(f"Port {port} is already in use")
         return result
 
-    def call(self, func):
-        log.debug("websocket.call {}".format(func))
-        future = asyncio.run_coroutine_threadsafe(
-            func,
-            self.webserver_thread.loop
-        )
-        result = future.result()
-        return result
+    def call_on_client(self, stub, method_name, **kwargs):
+        """Run a single RPC on the current WebSocket client, with retry on connection errors.
+
+        When the CEP extension is blocked by a long JSX operation (e.g. get_layers
+        on a large PSD or save()), the WebSocket transport can close. This method
+        retries after a delay so the extension can reconnect.
+
+        Args:
+            stub: Object with a .client property.
+            method_name: RPC method name.
+            **kwargs: Keyword arguments passed to client.call().
+
+        Returns:
+            Result of the RPC.
+
+        Raises:
+            ConnectionResetError, ConnectionError, OSError: After all retries failed.
+        """
+        last_exception = None
+        for attempt in range(self._CALL_MAX_RETRIES):
+            try:
+                client = stub.client
+                if client is None:
+                    raise ConnectionError("No WebSocket client connected")
+                log.debug(
+                    f"websocket.call_on_client attempt {attempt + 1}/{self._CALL_MAX_RETRIES}",
+                )
+                future = asyncio.run_coroutine_threadsafe(
+                    client.call(method_name, **kwargs),
+                    self.webserver_thread.loop,
+                )
+                return future.result()
+            except (ConnectionResetError, ConnectionError, OSError) as e:
+                last_exception = e
+                if attempt >= self._CALL_MAX_RETRIES - 1:
+                    log.warning(
+                        f"WebSocket call failed after {attempt + 1} attempt(s): {e}",
+                        exc_info=True,
+                    )
+                    raise e
+                log.warning(
+                    f"WebSocket connection error (attempt {attempt + 1}/{self._CALL_MAX_RETRIES}), waiting for "
+                    f"healthy client (up to {self._CALL_RETRY_DELAY}s): {e}",
+                )
+                self._wait_for_healthy_client(self._CALL_RETRY_DELAY)
+
+        if last_exception is not None:
+            raise last_exception
 
     @staticmethod
     def get_instance():
@@ -151,6 +192,24 @@ class WebServerTool:
         for callback in self.on_stop_callbacks:
             callback()
 
+    # Retry policy for WebSocket calls (internal; CEP reconnect is ~5s)
+    _CALL_MAX_RETRIES = 3
+    _CALL_RETRY_DELAY = 6.0
+
+    def _wait_for_healthy_client(self, timeout: float):
+        """Poll for a WebSocket client whose transport is not closed.
+
+        Return when one is found or timeout (seconds) is reached.
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            clients = WebSocketAsync.get_clients()
+            for client in clients.values():
+                sock = getattr(client, "socket", None)
+                if sock is not None and getattr(sock, "closed", False):
+                    continue
+                return
+            time.sleep(0.25)
 
 class WebServerThread(threading.Thread):
     """ Listener for websocket rpc requests.
@@ -160,7 +219,7 @@ class WebServerThread(threading.Thread):
         it creates separate thread and separate asyncio event loop
     """
     def __init__(self, module, port):
-        super(WebServerThread, self).__init__()
+        super(WebServerThread, self).__init__(daemon=True)
 
         self.is_running = False
         self.port = port

@@ -12,7 +12,7 @@ import ayon_api
 from qtpy import QtCore
 
 from ayon_core.lib import Logger
-from ayon_core.lib.events import emit_event
+from ayon_core.lib.events import emit_event, register_event_callback
 from ayon_core.pipeline import (
     registered_host,
     Anatomy,
@@ -143,6 +143,13 @@ class ProcessLauncher(QtCore.QObject):
 
         self._start_process_timer = start_process_timer
         self._loop_timer = loop_timer
+
+        self._application.close_callback = (
+            lambda: ProcessLauncher.execute_in_main_thread(self.exit)
+        )
+        register_event_callback(
+            "application.close", self._application.close_callback
+        )
 
     @property
     def log(self):
