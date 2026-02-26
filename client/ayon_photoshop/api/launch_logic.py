@@ -12,6 +12,7 @@ import ayon_api
 from qtpy import QtCore
 
 from ayon_core.lib import Logger
+from ayon_core.lib.events import emit_event
 from ayon_core.pipeline import (
     registered_host,
     Anatomy,
@@ -28,6 +29,9 @@ from .webserver import WebServerTool
 from .ws_stub import PhotoshopServerStub
 
 log = Logger.get_logger(__name__)
+
+
+console_window = None
 
 
 class ConnectionNotEstablishedYet(Exception):
@@ -296,6 +300,25 @@ class ProcessLauncher(QtCore.QObject):
             self.exit()
 
 
+def show_script_editor():
+    from ayon_core.tools.console_interpreter import InterpreterController
+    from ayon_core.tools.console_interpreter.ui import ConsoleInterpreterWindow
+
+    # Global so it doesn't get garbage collected instantly
+    global console_window
+    if console_window is None:
+        controller = InterpreterController(name="photoshop")
+        console_window = ConsoleInterpreterWindow(controller)
+        console_window.setWindowTitle("Python Script Editor - PS")
+        console_window.setWindowFlags(
+            console_window.windowFlags() |
+            QtCore.Qt.Dialog |
+            QtCore.Qt.WindowMinimizeButtonHint)
+    console_window.show()
+    console_window.raise_()
+    console_window.activateWindow()
+
+
 class PhotoshopRoute(WebSocketRoute):
     """
         One route, mimicking external application (like Harmony, etc).
@@ -304,6 +327,7 @@ class PhotoshopRoute(WebSocketRoute):
             notification after long running job on the server or similar
     """
     instance = None
+    _application_launched_emitted = False
 
     def init(self, **kwargs):
         # Python __init__ must be return "self".
@@ -315,6 +339,11 @@ class PhotoshopRoute(WebSocketRoute):
     # server functions
     async def ping(self):
         log.debug("someone called Photoshop route ping")
+        if not PhotoshopRoute._application_launched_emitted:
+            PhotoshopRoute._application_launched_emitted = True
+            ProcessLauncher.execute_in_main_thread(
+                lambda: emit_event("application.launched")
+            )
 
     # This method calls function on the client side
     # client functions
@@ -366,6 +395,9 @@ class PhotoshopRoute(WebSocketRoute):
 
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")
+
+    async def scripteditor_route(self):
+        ProcessLauncher.execute_in_main_thread(show_script_editor)
 
     def _tool_route(self, _tool_name):
         """The address accessed when clicking on the buttons."""

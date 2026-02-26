@@ -1,3 +1,11 @@
+"""
+Requires:
+    context -> version
+
+Provides:
+    instance -> version - incremented latest published workfile version
+
+"""
 import pyblish.api
 
 
@@ -17,8 +25,10 @@ class CollectVersion(pyblish.api.InstancePlugin):
     because of Webpublisher.
     (This plugin must run after CollectPublishedVersion!)
     """
-    order = pyblish.api.CollectorOrder + 0.200
-    label = 'Collect Version'
+    # QUESTION can we move the logic to the 'CollectPublishedVersion'?
+    order = pyblish.api.CollectorOrder - 0.35
+
+    label = "Collect Version"
 
     hosts = ["photoshop"]
     families = ["image", "review", "workfile"]

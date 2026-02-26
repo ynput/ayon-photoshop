@@ -4,7 +4,6 @@ import re
 import pyblish.api
 
 from ayon_core.lib import prepare_template_data, is_in_tests
-from ayon_core.settings import get_project_settings
 from ayon_photoshop import api as photoshop
 
 
@@ -30,7 +29,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Color-coded Instances"
-    order = pyblish.api.CollectorOrder
+
+    order = pyblish.api.CollectorOrder - 0.4
+
     hosts = ["photoshop"]
     targets = ["automated"]
     settings_category = "photoshop"
@@ -42,10 +43,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info("CollectColorCodedInstances")
-        batch_dir = (
-            os.environ.get("AYON_PUBLISH_DATA")
-            or os.environ.get("OPENPYPE_PUBLISH_DATA")
-        )
+        batch_dir = os.environ.get("AYON_PUBLISH_DATA")
         if (
             is_in_tests()
             and (
@@ -61,21 +59,22 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         folder_path = context.data["folderPath"]
         task_name = context.data["task"]
         variant = context.data["variant"]
-        project_name = context.data["projectEntity"]["name"]
-
-        naming_conventions = get_project_settings(project_name).get(
-            "photoshop", {}).get(
-            "publish", {}).get(
-            "ValidateNaming", {})
+        project_settings = context.data["project_settings"]
+        naming_conventions = (
+            project_settings
+            ["photoshop"]
+            ["publish"]
+            ["ValidateNaming"]
+        )
 
         stub = photoshop.stub()
         layers = stub.get_layers()
 
         publishable_layers = []
         created_instances = []
-        product_type_from_settings = None
+        product_base_type_from_settings = None
         for layer in layers:
-            self.log.debug("Layer:: {}".format(layer))
+            self.log.debug(f"Layer:: {layer}")
             if layer.parents:
                 self.log.debug("!!! Not a top layer, skip")
                 continue
@@ -84,21 +83,28 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                 self.log.debug("Not visible, skip")
                 continue
 
-            resolved_product_type, resolved_product_template = (
-                self._resolve_mapping(layer)
-            )
+            (
+                resolved_product_base_type,
+                resolved_product_template
+            ) = self._resolve_mapping(layer)
 
-            if not resolved_product_template or not resolved_product_type:
+            if (
+                not resolved_product_template
+                or not resolved_product_base_type
+            ):
                 self.log.debug("!!! Not found product type or template, skip")
                 continue
 
-            if not product_type_from_settings:
-                product_type_from_settings = resolved_product_type
+            if not product_base_type_from_settings:
+                product_base_type_from_settings = resolved_product_base_type
 
             fill_pairs = {
                 "variant": variant,
-                "family": resolved_product_type,
-                "product": {"type": resolved_product_type},
+                "family": resolved_product_base_type,
+                "product": {
+                    "type": resolved_product_base_type,
+                    "basetype": resolved_product_base_type,
+                },
                 "task": task_name,
                 "layer": layer.clean_name
             }
@@ -111,16 +117,16 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             )
 
             if product_name in existing_product_names:
-                self.log.info((
-                    "Product {} already created, skipping."
-                ).format(product_name))
+                self.log.info(
+                    f"Product {product_name} already created, skipping."
+                )
                 continue
 
             if self.create_flatten_image != "flatten_only":
                 instance = self._create_instance(
                     context,
                     layer,
-                    resolved_product_type,
+                    resolved_product_base_type,
                     folder_path,
                     product_name,
                     task_name
@@ -142,11 +148,12 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             first_layer = publishable_layers[0]  # dummy layer
             first_layer.name = product_name
-            product_type = product_type_from_settings  # inherit product type
+            # inherit product base type
+            product_base_type = product_base_type_from_settings
             instance = self._create_instance(
                 context,
                 first_layer,
-                product_type,
+                product_base_type,
                 folder_path,
                 product_name,
                 task_name
@@ -158,7 +165,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.info("instance: {} ".format(instance.data))
+            self.log.debug(f"instance: {instance.data} ")
 
     def _get_existing_product_names(self, context):
         """Collect manually created instances from workfile.
@@ -169,7 +176,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         existing_product_names = []
         for instance in context:
             if instance.data.get("publish") is not False:
-                existing_product_names.append(instance.data.get("productName"))
+                existing_product_names.append(
+                    instance.data.get("productName")
+                )
 
         return existing_product_names
 
@@ -177,20 +186,21 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         self,
         context,
         layer,
-        product_type,
+        product_base_type,
         folder_path,
         product_name,
         task_name
     ):
         instance = context.create_instance(layer.name)
         instance.data["publish"] = True
-        instance.data["productType"] = product_type
+        instance.data["productType"] = product_base_type
+        instance.data["productBaseType"] = product_base_type
         instance.data["productName"] = product_name
         instance.data["folderPath"] = folder_path
         instance.data["task"] = task_name
         instance.data["layer"] = layer
-        instance.data["family"] = product_type
-        instance.data["families"] = [product_type]
+        instance.data["family"] = product_base_type
+        instance.data["families"] = [product_base_type]
 
         return instance
 
@@ -200,7 +210,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             If both color code AND name regex is configured, BOTH must be valid
             If layer matches to multiple mappings, only first is used!
         """
-        product_type_list = []
+        product_base_type_list = []
         product_name_list = []
         for mapping in self.color_code_mapping:
             if (
@@ -218,7 +228,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             ):
                 continue
 
-            product_type_list.append(mapping["product_type"])
+            product_base_type_list.append(mapping["product_base_type"])
             product_name_list.append(mapping["product_name_template"])
 
         if len(product_name_list) > 1:
@@ -228,25 +238,26 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             self.log.warning("Only first product name template used!")
             product_name_list[:] = product_name_list[0]
 
-        if len(product_type_list) > 1:
+        if len(product_base_type_list) > 1:
             self.log.warning(
                 "Multiple mappings found for '{}'".format(layer.name)
             )
             self.log.warning("Only first product type used!")
-            product_type_list[:] = product_type_list[0]
+            product_base_type_list[:] = product_base_type_list[0]
 
         resolved_product_template = None
         if product_name_list:
             resolved_product_template = product_name_list.pop()
 
-        product_type = None
-        if product_type_list:
-            product_type = product_type_list.pop()
+        product_base_type = None
+        if product_base_type_list:
+            product_base_type = product_base_type_list.pop()
 
-        self.log.debug("resolved_product_type {}".format(product_type))
-        self.log.debug("resolved_product_template {}".format(
-            resolved_product_template))
-        return product_type, resolved_product_template
+        self.log.debug(f"resolved_product_base_type {product_base_type}")
+        self.log.debug(
+            f"resolved_product_template {resolved_product_template}"
+        )
+        return product_base_type, resolved_product_template
 
     def _clean_product_name(
         self, stub, naming_conventions, product_name, layer

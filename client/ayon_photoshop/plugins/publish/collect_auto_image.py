@@ -10,35 +10,25 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
 
     label = "Collect Auto Image"
     hosts = ["photoshop"]
-    order = pyblish.api.CollectorOrder + 0.2
+
+    order = pyblish.api.CollectorOrder - 0.4
 
     targets = ["automated"]
 
     def process(self, context):
-        for instance in context:
-            creator_identifier = instance.data.get("creator_identifier")
-            if creator_identifier and creator_identifier == "auto_image":
-                self.log.debug("Auto image instance found, won't create new")
-                return
-
-        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
-        host_name = context.data["hostName"]
-        folder_entity = context.data["folderEntity"]
-        task_entity = context.data["taskEntity"]
-        task_name = task_type = None
-        if task_entity:
-            task_name = task_entity["name"]
-            task_type = task_entity["taskType"]
+        create_settings = proj_settings["photoshop"]["create"]
+        auto_creator = create_settings["AutoImageCreator"]
 
-        auto_creator = proj_settings.get(
-            "photoshop", {}).get(
-            "create", {}).get(
-            "AutoImageCreator", {})
-
-        if not auto_creator or not auto_creator["enabled"]:
+        if not auto_creator["enabled"]:
             self.log.debug("Auto image creator disabled, won't create new")
             return
+
+        for instance in context:
+            creator_identifier = instance.data.get("creator_identifier")
+            if creator_identifier == "auto_image":
+                self.log.debug("Auto image instance found, won't create new")
+                return
 
         stub = photoshop.stub()
         stored_items = stub.get_layers_metadata()
@@ -70,52 +60,49 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
             if layer_meta_data.get("active", True) and layer_item.visible:
                 instance_names.append(layer_meta_data["productName"])
 
-        if len(instance_names) == 0:
-            variants = proj_settings.get(
-                "photoshop", {}).get(
-                "create", {}).get(
-                "CreateImage", {}).get(
-                "default_variants", [''])
-            product_type = "image"
-            # TODO (antirotor): handle product_base_type properly if needed
-            product_base_type = product_type
+        # NOTE: This return can be moved where is the product name
+        #   added to 'instance_names'
+        if instance_names:
+            return
 
-            variant = context.data.get("variant") or variants[0]
+        variants = create_settings["ImageCreator"]["default_variants"]
+        if not variants:
+            variants = [""]
 
-            get_product_name_kwargs = {}
-            if getattr(get_product_name, "use_entities", False):
-                get_product_name_kwargs.update({
-                    "folder_entity": folder_entity,
-                    "task_entity": task_entity,
-                    "product_base_type": product_base_type,
-                })
-            else:
-                get_product_name_kwargs.update({
-                    "task_name": task_name,
-                    "task_type": task_type,
-                })
+        variant = context.data.get("variant") or variants[0]
 
-            product_name = get_product_name(
-                project_name=project_name,
-                host_name=host_name,
-                product_type=product_type,
-                variant=variant,
-                **get_product_name_kwargs
-            )
+        product_type = "image"
+        # TODO (antirotor): handle product_base_type properly if needed
+        product_base_type = product_type
 
-            instance = context.create_instance(product_name)
-            instance.data["folderPath"] = folder_entity["path"]
-            instance.data["productType"] = product_type
-            instance.data["productBaseType"] = product_base_type
-            instance.data["productName"] = product_name
-            instance.data["ids"] = publishable_ids
-            instance.data["publish"] = True
-            instance.data["creator_identifier"] = "auto_image"
-            instance.data["family"] = product_type
-            instance.data["families"] = [product_type]
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        folder_entity = context.data["folderEntity"]
+        task_entity = context.data["taskEntity"]
 
-            if auto_creator["mark_for_review"]:
-                instance.data["creator_attributes"] = {"mark_for_review": True}
-                instance.data["families"].append("review")
+        product_name = get_product_name(
+            project_name=project_name,
+            host_name=host_name,
+            product_type=product_type,
+            variant=variant,
+            folder_entity=folder_entity,
+            task_entity=task_entity,
+            product_base_type=product_base_type,
+        )
 
-            self.log.info("auto image instance: {} ".format(instance.data))
+        instance = context.create_instance(product_name)
+        instance.data["folderPath"] = folder_entity["path"]
+        instance.data["productType"] = product_type
+        instance.data["productBaseType"] = product_base_type
+        instance.data["productName"] = product_name
+        instance.data["ids"] = publishable_ids
+        instance.data["publish"] = True
+        instance.data["creator_identifier"] = "auto_image"
+        instance.data["family"] = product_base_type
+        instance.data["families"] = [product_base_type]
+
+        if auto_creator["mark_for_review"]:
+            instance.data["creator_attributes"] = {"mark_for_review": True}
+            instance.data["families"].append("review")
+
+        self.log.info("auto image instance: {} ".format(instance.data))

@@ -57,7 +57,7 @@ class ExtractSourcesReview(
         self.output_seq_filename = os.path.splitext(
             stub.get_active_document_name())[0] + ".%04d.jpg"
 
-        layers = self._get_layers_from_image_instances(instance)
+        layers = self._get_review_layers_for_instance(instance)
         self.log.info("Layers image instance found: {}".format(layers))
 
         additional_repre = {
@@ -69,8 +69,10 @@ class ExtractSourcesReview(
             "stagingDir": staging_dir,
             "tags": ["review"],
         }
-
-        if instance.data["productType"] == "image":
+        product_base_type = instance.data.get("productBaseType")
+        if not product_base_type:
+            product_base_type = instance.data["productType"]
+        if product_base_type == "image":
             self._attach_review_tag(instance)
         elif self.make_image_sequence and len(layers) > 1:
             self.log.debug("Extract layers to image sequence.")
@@ -126,7 +128,7 @@ class ExtractSourcesReview(
             repre = instance.data["representations"][0]
             repre["tags"].append("review")
 
-    def _get_layers_from_image_instances(self, instance):
+    def _get_review_layers_for_instance(self, instance):
         """Collect all layers from image instance(s)
 
         If `instance` is `image` it returns just layers out of it to create
@@ -138,24 +140,31 @@ class ExtractSourcesReview(
         Returns:
             (list) of PSItem
         """
-        layers = []
         # creating review for existing 'image' instance
-        if (
-            instance.data["productType"] == "image"
-            and instance.data.get("layer")
-        ):
-            layers.append(instance.data["layer"])
-            return layers
+        product_base_type = instance.data.get("productBaseType")
+        if not product_base_type:
+            product_base_type = instance.data["productType"]
 
+        layer = instance.data.get("layer")
+        if product_base_type == "image" and layer:
+            return [layer]
+
+        return self._get_all_image_layers(instance.context)
+
+    def _get_all_image_layers(self, context):
         # collect all layers from published image instances
-        for image_instance in instance.context:
-            if image_instance.data["productType"] != "image":
+        layers = []
+        for instance in context:
+            product_base_type = instance.data.get("productBaseType")
+            if not product_base_type:
+                product_base_type = instance.data["productType"]
+            if product_base_type != "image":
                 continue
-            layer =  image_instance.data.get("layer")
+            layer = instance.data.get("layer")
             if layer:
                 layers.append(layer)
-
-        return sorted(layers)
+        layers.sort()
+        return layers
 
     def _save_flatten_image(self, staging_dir, layers):
         """Creates flat image from 'layers' into 'staging_dir'.
@@ -167,11 +176,15 @@ class ExtractSourcesReview(
         output_image_path = os.path.join(staging_dir, img_filename)
         stub = photoshop.stub()
 
-        with photoshop.maintained_visibility():
-            self.log.info("Extracting {}".format(layers))
-            if layers:
-                stub.hide_all_others_layers(layers)
-
+        self.log.info("Extracting {}".format(layers))
+        if layers:
+            all_layers = stub.get_layers()
+            layer_ids = [layer.id for layer in layers]
+            # Show all specified layers and their ancestors, hide all others
+            with photoshop.isolated_layers_visibility(stub, layer_ids, all_layers):
+                stub.saveAs(output_image_path, 'jpg', True)
+        else:
+            # No layers specified - save full flattened document as-is
             stub.saveAs(output_image_path, 'jpg', True)
 
         return output_image_path
@@ -186,18 +199,18 @@ class ExtractSourcesReview(
             (list): paths to new images
         """
         stub = photoshop.stub()
+        all_layers = stub.get_layers()
 
         list_img_filename = []
-        with photoshop.maintained_visibility():
-            for i, layer in enumerate(layers):
-                self.log.info("Extracting {}".format(layer))
+        for i, layer in enumerate(layers):
+            self.log.info("Extracting {}".format(layer))
 
-                img_filename = self.output_seq_filename % i
-                output_image_path = os.path.join(staging_dir, img_filename)
-                list_img_filename.append(img_filename)
+            img_filename = self.output_seq_filename % i
+            output_image_path = os.path.join(staging_dir, img_filename)
+            list_img_filename.append(img_filename)
 
-                with photoshop.maintained_visibility():
-                    stub.hide_all_others_layers([layer])
-                    stub.saveAs(output_image_path, 'jpg', True)
+            # Show only the layer and its ancestors, hide all others
+            with photoshop.isolated_layers_visibility(stub, layer.id, all_layers):
+                stub.saveAs(output_image_path, 'jpg', True)
 
         return list_img_filename
