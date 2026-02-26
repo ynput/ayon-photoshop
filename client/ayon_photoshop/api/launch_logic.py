@@ -12,7 +12,7 @@ import ayon_api
 from qtpy import QtCore
 
 from ayon_core.lib import Logger
-from ayon_core.lib.events import emit_event
+from ayon_core.lib.events import emit_event, register_event_callback
 from ayon_core.pipeline import (
     registered_host,
     Anatomy,
@@ -119,15 +119,8 @@ def show_tool_by_name(tool_name):
 class ProcessLauncher(QtCore.QObject):
     route_name = "Photoshop"
     _main_thread_callbacks = collections.deque()
-    _instance = None
-
-    @classmethod
-    def instance(cls):
-        """Return the current ProcessLauncher instance, if any (e.g. for shutdown)."""
-        return cls._instance
 
     def __init__(self, subprocess_args):
-        ProcessLauncher._instance = self
         self._subprocess_args = subprocess_args
         self._log = None
 
@@ -150,6 +143,13 @@ class ProcessLauncher(QtCore.QObject):
 
         self._start_process_timer = start_process_timer
         self._loop_timer = loop_timer
+
+        self._application_closed_callback = (
+            lambda: ProcessLauncher.execute_in_main_thread(self.exit)
+        )
+        register_event_callback(
+            "application.closed", self._application_closed_callback
+        )
 
     @property
     def log(self):
