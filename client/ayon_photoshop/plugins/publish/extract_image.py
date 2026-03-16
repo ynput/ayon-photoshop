@@ -91,8 +91,7 @@ class ExtractImage(
                                 stub,
                                 full_filename,
                                 extension,
-                                workfile_extension,
-                                self.compression
+                                workfile_extension
                             )
                         else:
                             stub.saveAs(full_filename, extension, True)
