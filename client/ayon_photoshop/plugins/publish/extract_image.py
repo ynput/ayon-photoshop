@@ -25,7 +25,7 @@ class ExtractImage(
     hosts = ["photoshop"]
 
     families = ["image", "background"]
-    formats = ["png", "jpg", "tga"]
+    formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
 
     def process(self, context):
@@ -86,8 +86,8 @@ class ExtractImage(
 
                         full_filename = os.path.join(
                             staging_dir, repre_filename)
-                        if extension == "tga":
-                            self._save_image_to_targa(
+                        if extension in ("tga", "exr"):
+                            self._save_image_to_targa_or_exr(
                                 stub,
                                 full_filename,
                                 extension,
@@ -136,8 +136,8 @@ class ExtractImage(
         return get_instance_staging_dir(instance)
 
 
-    def _save_image_to_targa(self, stub, full_filename, extension, workfile_extension):
-        """Hacky way to save image in targa. Save the psd file
+    def _save_image_to_targa_or_exr(self, stub, full_filename, extension, workfile_extension):
+        """Hacky way to save image in targa or exr. Save the psd file
         in quiet mode with targa options first and then convert it into targa
         ***Caution to use it.
 
