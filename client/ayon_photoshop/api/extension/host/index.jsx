@@ -326,15 +326,6 @@ function saveAs(output_path, ext, as_copy){
             saveOptions = new TargaSaveOptions();
             saveOptions.alphaChannels = true;
         }
-        if (ext === 'exr') {
-            if (doc.bitsPerChannel === BitsPerChannelType.THIRTYTWO) {
-                bitdepth = 32; // 32-bit float
-            }
-            else {
-                bitdepth = 16; // 16-bit half
-            }
-            return saveEXR(output_path, bitdepth);
-        }
         if (ext === 'psd') {
             return doc.saveAs(
               new File(saveName),
