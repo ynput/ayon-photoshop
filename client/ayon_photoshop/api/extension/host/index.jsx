@@ -307,6 +307,17 @@ function saveAs(output_path, ext, as_copy){
             is_temp_doc = true;
             doc.bitsPerChannel = BitsPerChannelType.EIGHT;
         }
+        if (
+          doc.bitsPerChannel === BitsPerChannelType.SIXTEEN ||
+          doc.bitsPerChannel === BitsPerChannelType.EIGHT
+          && (ext === 'exr')
+        ) {
+            // Create a temp duplicate of the document that we convert to 8
+            // bit to avoid a file save prompt for png/jpg/tga
+            doc = doc.duplicate();
+            is_temp_doc = true;
+            doc.bitsPerChannel = BitsPerChannelType.THIRTYTWO;
+        }
         if (ext === 'jpg') {
             saveOptions = new JPEGSaveOptions();
             saveOptions.quality = 12;
@@ -325,6 +336,9 @@ function saveAs(output_path, ext, as_copy){
         if (ext === 'tga') {
             saveOptions = new TargaSaveOptions();
             saveOptions.alphaChannels = true;
+        }
+        if (ext === 'exr') {
+            return saveEXR(output_path);
         }
         if (ext === 'psd') {
             return doc.saveAs(
@@ -698,7 +712,7 @@ function _undo() {
     executeAction(charIDToTypeID("undo", undefined, DialogModes.NO));
 };
 
-function saveEXR(savePath, bitdepth) {
+function saveEXR(savePath) {
 /**
  * @description saves EXR using Photoshop EXR Export
  * @param  {string} path    - a full path of exr to save as a string, ex /c/temp/myfile.exr
@@ -710,7 +724,7 @@ function saveEXR(savePath, bitdepth) {
 
 		var desc1 = new ActionDescriptor();
 		var desc2 = new ActionDescriptor();
-        desc2.putInteger(charIDToTypeID('BtDp'), bitdepth);
+        desc2.putInteger(charIDToTypeID('BtDp'), 32);
         desc2.putInteger(charIDToTypeID('Cmpr'), 1);
         desc2.putInteger(charIDToTypeID('AChn'), 1);
         desc1.putObject(charIDToTypeID('As  '), charIDToTypeID('EXRf'), desc2);
