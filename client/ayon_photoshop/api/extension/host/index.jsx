@@ -312,8 +312,8 @@ function saveAs(output_path, ext, as_copy){
           doc.bitsPerChannel === BitsPerChannelType.EIGHT
           && (ext === 'exr')
         ) {
-            // Create a temp duplicate of the document that we convert to 8
-            // bit to avoid a file save prompt for png/jpg/tga
+            // Create a temp duplicate of the document to enforce 32 bit
+            // document, because EXR save is only supported from 32 bit
             doc = doc.duplicate();
             is_temp_doc = true;
             doc.bitsPerChannel = BitsPerChannelType.THIRTYTWO;
