@@ -136,12 +136,10 @@ class ExtractImage(
         return get_instance_staging_dir(instance)
 
 
-    def _save_image_via_workfile_extension(
-            self, stub, full_filename, extension, workfile_extension):
+    def _save_image_via_workfile_extension(self, stub, full_filename, extension, workfile_extension):
         """Hacky way to save image. Save the psd file
         in quiet mode and rename it to the expected filename.
-        Backward compatibility for old extension.zxp
-        and be caution to use it.
+        ***Caution to use it.
 
         Args:
             stub (RPC stub): stub to call method
