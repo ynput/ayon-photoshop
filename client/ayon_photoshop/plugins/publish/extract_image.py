@@ -87,7 +87,7 @@ class ExtractImage(
                         full_filename = os.path.join(
                             staging_dir, repre_filename)
                         if extension in ("tga", "exr"):
-                            self._save_image_to_targa_or_exr(
+                            self._save_image_via_workfile_extension(
                                 stub,
                                 full_filename,
                                 extension,
@@ -136,10 +136,12 @@ class ExtractImage(
         return get_instance_staging_dir(instance)
 
 
-    def _save_image_to_targa_or_exr(self, stub, full_filename, extension, workfile_extension):
-        """Hacky way to save image in targa or exr. Save the psd file
-        in quiet mode with targa options first and then convert it into targa
-        ***Caution to use it.
+    def _save_image_via_workfile_extension(
+            self, stub, full_filename, extension, workfile_extension):
+        """Hacky way to save image. Save the psd file
+        in quiet mode and rename it to the expected filename.
+        Backward compatibility for old extension.zxp
+        and be caution to use it.
 
         Args:
             stub (RPC stub): stub to call method
