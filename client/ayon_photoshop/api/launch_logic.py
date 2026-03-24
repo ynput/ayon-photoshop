@@ -144,11 +144,11 @@ class ProcessLauncher(QtCore.QObject):
         self._start_process_timer = start_process_timer
         self._loop_timer = loop_timer
 
-        self._application.close_callback = (
+        self._application_close_callback = (
             lambda: ProcessLauncher.execute_in_main_thread(self.exit)
         )
         register_event_callback(
-            "application.close", self._application.close_callback
+            "application.close", self._application_close_callback
         )
 
     @property
