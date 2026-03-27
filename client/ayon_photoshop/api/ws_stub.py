@@ -48,29 +48,38 @@ class PhotoshopServerStub:
         Stub for calling function on client (Photoshop js) side.
         Expects that client is already connected (started when avalon menu
         is opened).
-        'self.websocketserver.call' is used as async wrapper
+        'self.websocketserver.call_on_client' is used as async wrapper
     """
     PUBLISH_ICON = '\u2117 '
     LOADED_ICON = '\u25bc'
 
     def __init__(self):
         self.websocketserver = WebServerTool.get_instance()
-        self.client = self.get_client()
+
+    @property
+    def client(self):
+        """Current connected WebSocket client.
+        
+        Resolved on each access so retries use a reconnected client
+        after the CEP extension reconnects.
+        """
+        return self.get_client()
 
     @staticmethod
     def get_client():
         """
-            Return first connected client to WebSocket
+            Return first connected client to WebSocket whose transport is not
+            closing/closed. Skips stale entries so retries use a reconnected client.
             TODO implement selection by Route
-        :return: <WebSocketAsync> client
+        :return: <WebSocketAsync> client or None
         """
         clients = WebSocketAsync.get_clients()
-        client = None
-        if len(clients) > 0:
-            key = list(clients.keys())[0]
-            client = clients.get(key)
-
-        return client
+        for client in clients.values():
+            sock = getattr(client, "socket", None)
+            if sock is not None and getattr(sock, "closed", False):
+                continue
+            return client
+        return None
 
     def open(self, path):
         """Open file located at 'path' (local).
@@ -79,9 +88,7 @@ class PhotoshopServerStub:
             path(string): file path locally
         Returns: None
         """
-        self.websocketserver.call(
-            self.client.call('Photoshop.open', path=path)
-        )
+        self.websocketserver.call_on_client(self, 'Photoshop.open', path=path)
 
     def read(self, layer, layers_meta=None):
         """Parses layer metadata from Headline field of active document.
@@ -186,8 +193,8 @@ class PhotoshopServerStub:
             cleaned_data.append(item)
 
         payload = json.dumps(cleaned_data, indent=4)
-        self.websocketserver.call(
-            self.client.call('Photoshop.imprint', payload=payload)
+        self.websocketserver.call_on_client(
+            self, 'Photoshop.imprint', payload=payload
         )
 
     def get_layers(self):
@@ -199,8 +206,8 @@ class PhotoshopServerStub:
                                      'type': 'GUIDE'|'FG'|'BG'|'OBJ'
                                      'visible': 'true'|'false'
         """
-        res = self.websocketserver.call(
-            self.client.call('Photoshop.get_layers')
+        res = self.websocketserver.call_on_client(
+            self, 'Photoshop.get_layers'
         )
 
         return self._to_records(res)
@@ -269,8 +276,8 @@ class PhotoshopServerStub:
             <PSItem>
         """
         enhanced_name = self.PUBLISH_ICON + name
-        ret = self.websocketserver.call(
-            self.client.call('Photoshop.create_group', name=enhanced_name)
+        ret = self.websocketserver.call_on_client(
+            self, 'Photoshop.create_group', name=enhanced_name
         )
         # create group on PS is asynchronous, returns only id
         return PSItem(id=ret, name=name, group=True)
@@ -282,10 +289,8 @@ class PhotoshopServerStub:
             (Layer)
         """
         enhanced_name = self.PUBLISH_ICON + name
-        res = self.websocketserver.call(
-            self.client.call(
-                'Photoshop.group_selected_layers', name=enhanced_name
-            )
+        res = self.websocketserver.call_on_client(
+            self, 'Photoshop.group_selected_layers', name=enhanced_name
         )
         res = self._to_records(res)
         if res:
@@ -299,8 +304,8 @@ class PhotoshopServerStub:
 
         Returns: <list of Layer('id':XX, 'name':"YYY")>
         """
-        res = self.websocketserver.call(
-            self.client.call('Photoshop.get_selected_layers')
+        res = self.websocketserver.call_on_client(
+            self, 'Photoshop.get_selected_layers'
         )
         return self._to_records(res)
 
@@ -311,11 +316,10 @@ class PhotoshopServerStub:
             layers: <list of Layer('id':XX, 'name':"YYY")>
         """
         layers_id = [str(lay.id) for lay in layers]
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.select_layers',
-                layers=json.dumps(layers_id)
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.select_layers',
+            layers=json.dumps(layers_id),
         )
 
     def dissolve_layerset(self, layerset_id: str):
@@ -326,11 +330,10 @@ class PhotoshopServerStub:
         Args:
             layerset_id (str): id of layer set to dissolve
         """
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.dissolve_layerset',
-                layerset_id=layerset_id
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.dissolve_layerset',
+            layerset_id=layerset_id,
         )
 
     def merge_all_layersets(self, parent_set=None):
@@ -340,11 +343,10 @@ class PhotoshopServerStub:
             parent_set (str): id of layer set to merge layers sets it contains.
                 If None, all first level layer sets will be merged.
         """
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.merge_all_layersets',
-                parent_set=parent_set,
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.merge_all_layersets',
+            parent_set=parent_set,
         )
 
     def get_active_document_full_name(self):
@@ -353,8 +355,8 @@ class PhotoshopServerStub:
         Returns(string):
             full path with name
         """
-        res = self.websocketserver.call(
-            self.client.call('Photoshop.get_active_document_full_name')
+        res = self.websocketserver.call_on_client(
+            self, 'Photoshop.get_active_document_full_name'
         )
 
         return res
@@ -365,8 +367,8 @@ class PhotoshopServerStub:
         Returns(string):
             file name
         """
-        return self.websocketserver.call(
-            self.client.call('Photoshop.get_active_document_name')
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.get_active_document_name'
         )
 
     def is_saved(self):
@@ -375,15 +377,13 @@ class PhotoshopServerStub:
         Returns:
             <boolean>
         """
-        return self.websocketserver.call(
-            self.client.call('Photoshop.is_saved')
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.is_saved'
         )
 
     def save(self):
         """Saves active document"""
-        self.websocketserver.call(
-            self.client.call('Photoshop.save')
-        )
+        self.websocketserver.call_on_client(self, 'Photoshop.save')
 
     def saveAs(self, image_path, ext, as_copy):
         """Saves active document to psd (copy) or png or jpg
@@ -394,13 +394,12 @@ class PhotoshopServerStub:
             as_copy: <boolean>
         Returns: None
         """
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.saveAs',
-                image_path=image_path,
-                ext=ext,
-                as_copy=as_copy
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.saveAs',
+            image_path=image_path,
+            ext=ext,
+            as_copy=as_copy,
         )
 
     @contextmanager
@@ -418,11 +417,10 @@ class PhotoshopServerStub:
         """
         try:
             path = Path(path)
-            document_id = self.websocketserver.call(
-                self.client.call(
-                    'Photoshop.duplicate_document',
-                    newName=path.name,
-                )
+            document_id = self.websocketserver.call_on_client(
+                self,
+                'Photoshop.duplicate_document',
+                newName=path.name,
             )
             yield
         finally:
@@ -436,17 +434,14 @@ class PhotoshopServerStub:
 
     def close_document(self, id: str):
         """Close document with id."""
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.close_document',
-                id=id
-            )
+        self.websocketserver.call_on_client(
+            self, 'Photoshop.close_document', id=id
         )
 
     def revert_to_previous(self):
         """Reverts active document to last saved state"""
-        self.websocketserver.call(
-            self.client.call('Photoshop.revert_to_previous')
+        self.websocketserver.call_on_client(
+            self, 'Photoshop.revert_to_previous'
         )
 
     def set_visible(self, layer_id, visibility):
@@ -457,12 +452,11 @@ class PhotoshopServerStub:
             visibility: <true - set visible, false - hide>
         Returns: None
         """
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.set_visible',
-                layer_id=layer_id,
-                visibility=visibility
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.set_visible',
+            layer_id=layer_id,
+            visibility=visibility,
         )
 
     def set_layers_visibility(self, visibility_map: dict[int, bool]):
@@ -471,11 +465,10 @@ class PhotoshopServerStub:
         Args:
             visibility_map (dict[int, bool]): {layer_id: bool, ...}
         """
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.set_layers_visibility',
-                visibility_map=json.dumps(visibility_map)
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.set_layers_visibility',
+            visibility_map=json.dumps(visibility_map),
         )
 
     def delete_all_layers(self, exclude_layers=None, exclude_recursive=False):
@@ -505,7 +498,7 @@ class PhotoshopServerStub:
                       "folderPath":"/Town"}}
                 8 is layer(group) id - used for deletion, update etc.
         """
-        res = self.websocketserver.call(self.client.call('Photoshop.read'))
+        res = self.websocketserver.call_on_client(self, 'Photoshop.read')
         layers_data = []
         try:
             if res:
@@ -531,13 +524,12 @@ class PhotoshopServerStub:
             as_reference (bool): pull in content or reference
         """
         enhanced_name = self.LOADED_ICON + layer_name
-        res = self.websocketserver.call(
-            self.client.call(
-                'Photoshop.import_smart_object',
-                path=path,
-                name=enhanced_name,
-                as_reference=as_reference
-            )
+        res = self.websocketserver.call_on_client(
+            self,
+            'Photoshop.import_smart_object',
+            path=path,
+            name=enhanced_name,
+            as_reference=as_reference,
         )
         rec = self._to_records(res).pop()
         if rec:
@@ -554,13 +546,12 @@ class PhotoshopServerStub:
                 same smart object was loaded
         """
         enhanced_name = self.LOADED_ICON + layer_name
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.replace_smart_object',
-                layer_id=layer.id,
-                path=path,
-                name=enhanced_name
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.replace_smart_object',
+            layer_id=layer.id,
+            path=path,
+            name=enhanced_name,
         )
 
     def delete_layer(self, layer_id):
@@ -569,8 +560,8 @@ class PhotoshopServerStub:
         Args:
             layer_id (int): id of layer to delete
         """
-        self.websocketserver.call(
-            self.client.call('Photoshop.delete_layer', layer_id=layer_id)
+        self.websocketserver.call_on_client(
+            self, 'Photoshop.delete_layer', layer_id=layer_id
         )
 
     def rename_layer(self, layer_id, name):
@@ -580,18 +571,17 @@ class PhotoshopServerStub:
             layer_id (int): id of layer to delete
             name (str): new name
         """
-        self.websocketserver.call(
-            self.client.call(
-                'Photoshop.rename_layer',
-                layer_id=layer_id,
-                name=name
-            )
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.rename_layer',
+            layer_id=layer_id,
+            name=name,
         )
 
     def get_color_profile_name(self):
         """Returns active document's color profile name."""
-        colorspace_profile = self.websocketserver.call(
-            self.client.call('Photoshop.get_color_profile_name')
+        colorspace_profile = self.websocketserver.call_on_client(
+            self, 'Photoshop.get_color_profile_name'
         )
         return colorspace_profile
 
@@ -605,26 +595,25 @@ class PhotoshopServerStub:
 
         payload = json.dumps(cleaned_data, indent=4)
 
-        self.websocketserver.call(
-            self.client.call('Photoshop.imprint', payload=payload)
+        self.websocketserver.call_on_client(
+            self, 'Photoshop.imprint', payload=payload
         )
 
     def get_extension_version(self):
         """Returns version number of installed extension."""
-        return self.websocketserver.call(
-            self.client.call('Photoshop.get_extension_version')
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.get_extension_version'
         )
 
     def get_layer_blend_mode(self, layer_id):
         """Returns blend mode string for specific layer."""
-        return self.websocketserver.call(
-            self.client.call('Photoshop.get_layer_blend_mode', layer_id=layer_id)
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.get_layer_blend_mode', layer_id=layer_id
         )
-
     def get_document_settings(self):
         """Returns dict with document resolution, mode and bits per channel."""
-        res = self.websocketserver.call(
-            self.client.call('Photoshop.get_document_settings')
+        res = self.websocketserver.call_on_client(
+            self, 'Photoshop.get_document_settings'
         )
         if not res:
             return {}
@@ -647,13 +636,12 @@ class PhotoshopServerStub:
         Note:
             Some conversions may be lossy (e.g., CMYK to RGB, 32 to 16 bits).
         """
-        res = self.websocketserver.call(
-            self.client.call(
-                'Photoshop.set_document_settings',
-                resolution=resolution,
-                mode=mode,
-                bits=bits
-            )
+        res = self.websocketserver.call_on_client(
+            self,
+            'Photoshop.set_document_settings',
+            resolution=resolution,
+            mode=mode,
+            bits=bits,
         )
         if not res:
             return {"success": False, "error": "No response from Photoshop"}
@@ -668,7 +656,7 @@ class PhotoshopServerStub:
             For webpublishing only.
         """
         # TODO change client.call to method with checks for client
-        self.websocketserver.call(self.client.call('Photoshop.close'))
+        self.websocketserver.call_on_client(self, 'Photoshop.close')
 
     def eval(self, code: str):
         """Execute Javascript code.
@@ -682,11 +670,8 @@ class PhotoshopServerStub:
         """
         # TODO: Can we provide more info to the user on execution failure
         #  on the javascript side, like raising an informative error?
-        return self.websocketserver.call(
-            self.client.call(
-                'Photoshop.eval_code',
-                code=code,
-            )
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.eval_code', code=code
         )
 
     def _to_records(self, res):
