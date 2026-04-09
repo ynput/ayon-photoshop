@@ -25,7 +25,7 @@ class ExtractImage(
     hosts = ["photoshop"]
 
     families = ["image", "background"]
-    formats = ["png", "jpg", "tga"]
+    formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
 
     def process(self, context):
@@ -86,15 +86,8 @@ class ExtractImage(
 
                         full_filename = os.path.join(
                             staging_dir, repre_filename)
-                        if extension == "tga":
-                            self._save_image_to_targa(
-                                stub,
-                                full_filename,
-                                extension,
-                                workfile_extension
-                            )
-                        else:
-                            stub.saveAs(full_filename, extension, True)
+
+                        stub.saveAs(full_filename, extension, True)
                         self.log.info(f"Extracted: {extension}")
 
                     representations = []
@@ -134,20 +127,3 @@ class ExtractImage(
         from ayon_core.pipeline.publish import get_instance_staging_dir
 
         return get_instance_staging_dir(instance)
-
-
-    def _save_image_to_targa(self, stub, full_filename, extension, workfile_extension):
-        """Hacky way to save image in targa. Save the psd file
-        in quiet mode with targa options first and then convert it into targa
-        ***Caution to use it.
-
-        Args:
-            stub (RPC stub): stub to call method
-            full_filename (str): full published filename
-            extension (str): published extension
-            workfile_extension (str): workfile extension
-        """
-        src_file = full_filename.replace(extension, workfile_extension)
-        stub.saveAs(full_filename, extension, True)
-        if os.path.exists(src_file):
-            os.rename(src_file, full_filename)
