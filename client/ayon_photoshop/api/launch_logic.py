@@ -1,7 +1,9 @@
-import os
-import subprocess
-import collections
 import asyncio
+import collections
+import os
+import platform
+import subprocess
+import sys
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
@@ -29,7 +31,6 @@ from .webserver import WebServerTool
 from .ws_stub import PhotoshopServerStub
 
 log = Logger.get_logger(__name__)
-
 
 console_window = None
 
@@ -297,14 +298,46 @@ class ProcessLauncher(QtCore.QObject):
             return
         self.log.info("Starting host process")
         try:
+            args = list(self._subprocess_args)
+            if platform.system().lower() == "darwin":
+                exe_arches = self._macos_get_arches(args[0])
+                current_arches = set(self._macos_get_arches(sys.executable))
+                # Define architecture of the executable if is not the same as
+                #   current process architecture
+                if (
+                    exe_arches
+                    and not current_arches.intersection(set(exe_arches))
+                ):
+                    arch = exe_arches[0]
+                    args.insert(0, "arch")
+                    args.insert(1, f"-{arch}")
+                    self.log.info(
+                        f"Using arch '{arch}' to launch host process"
+                    )
+
             self._process = subprocess.Popen(
-                self._subprocess_args,
+                args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
         except Exception:
             self.log.info("exce", exc_info=True)
             self.exit()
+
+    def _macos_get_arches(self, executable_path: str) -> list[str]:
+        try:
+            output = subprocess.check_output(
+                ["lipo", "-archs", executable_path],
+                text=True
+            ).strip()
+        except Exception:
+            self.log.warning(
+                "Failed to get architectures of an executable:"
+                f" {executable_path}",
+                exc_info=True
+            )
+            return []
+        return list(output.split())
 
 
 def show_script_editor():
