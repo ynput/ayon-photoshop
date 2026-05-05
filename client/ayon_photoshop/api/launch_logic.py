@@ -3,7 +3,6 @@ import collections
 import os
 import platform
 import subprocess
-import sys
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
