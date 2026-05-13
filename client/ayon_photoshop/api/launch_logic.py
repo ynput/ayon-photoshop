@@ -1,7 +1,8 @@
-import os
-import subprocess
-import collections
 import asyncio
+import collections
+import os
+import platform
+import subprocess
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
@@ -29,7 +30,6 @@ from .webserver import WebServerTool
 from .ws_stub import PhotoshopServerStub
 
 log = Logger.get_logger(__name__)
-
 
 console_window = None
 
@@ -297,8 +297,13 @@ class ProcessLauncher(QtCore.QObject):
             return
         self.log.info("Starting host process")
         try:
+            args = list(self._subprocess_args)
+            if platform.system().lower() == "darwin":
+                args.insert(0, "arch")
+                args.insert(1, "-x86_64")
+
             self._process = subprocess.Popen(
-                self._subprocess_args,
+                args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
