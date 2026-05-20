@@ -38,7 +38,7 @@ async function setup_rpc(websocket_url) {
     RPC.addRoute('Photoshop.read', async (data) => {
             console.log('Server called client route "read":', data);
             const result = await api.getHeadline();
-            console.log("read:", result.replace("\n",""), JSON.parse(result));
+            console.log("read:", result.replace("\n",""));
             return result
         }
     );

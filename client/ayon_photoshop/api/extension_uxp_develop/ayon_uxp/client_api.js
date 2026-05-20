@@ -19,7 +19,7 @@ async function execAsModal(func, commandName) {
  * @param {string} path 
  */
 async function fileOpen(path) {
-    const fileEntry = uxp_storage.localFileSystem.getEntryWithUrl(`file:${path}`);
+    const fileEntry = await uxp_storage.localFileSystem.getEntryWithUrl(`file:${path}`);
     await app.open(fileEntry);
     return path;
 }
@@ -31,11 +31,11 @@ async function save() {
 }
 
 async function getActiveDocument() {
-    doc = app.activeDocument;
+    const doc = app.activeDocument;
     if (!doc){
         return null;
     }
-    return app.activeDocument;
+    return doc;
 }
 
 async function getActiveDocumentFullName() {
@@ -371,7 +371,7 @@ async function renameLayer(layer_id, new_name) {
 async function createGroup(name) {
     let group;
     await execAsModal(async () => {
-        group = await app.activeDocument.createLayerGroup({ name });F
+        group = await app.activeDocument.createLayerGroup({ name });
     }, "Create Group");
     return group.id;
 }
