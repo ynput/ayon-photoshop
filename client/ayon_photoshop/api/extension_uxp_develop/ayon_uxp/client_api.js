@@ -1,4 +1,4 @@
-const {app, action, core, LayerKind, Layer, Document} = require("photoshop")
+const {app, action, core, constants, LayerKind, Layer, Document} = require("photoshop")
 const uxp_storage = require("uxp").storage
 const os = require("os")
 const batchPlay = action.batchPlay;
