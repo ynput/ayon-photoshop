@@ -19,9 +19,11 @@ async function execAsModal(func, commandName) {
  * @param {string} path 
  */
 async function fileOpen(path) {
-    const fileEntry = await uxp_storage.localFileSystem.getEntryWithUrl(`file:${path}`);
-    await app.open(fileEntry);
-    return path;
+    return await execAsModal(async () => {
+        const fileEntry = await uxp_storage.localFileSystem.getEntryWithUrl(`file:${path}`);
+        await app.open(fileEntry);
+        return path;
+    }, "Open Document");
 }
 
 async function save() {
