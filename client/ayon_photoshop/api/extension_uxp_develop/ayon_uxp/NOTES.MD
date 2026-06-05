@@ -9,8 +9,8 @@ Note, that we are using CommonJS style import/export.
 That means:
 
 ```js
-// importing through structured binding from a requires statement
-const {module1, module2} = requires("photoshop");
+// importing through structured binding from a 'require' statement
+const {module1, module2} = require("photoshop");
 
 // exporting through writing to a 'module.exports' object
 
@@ -61,7 +61,7 @@ Therefore we can't go and read stuff from our filesystem, in other textfiles tha
 in the folder that is bundled.
 
 Yet another quirk: **UXP Plugins can NOT read environment variables.**
-This has led me to have to decide that this plugin will need to communicate over a fixed adress.
+This has led me to have to decide that this plugin will need to communicate over a fixed address.
 
 The easiest way to get it to talk to the plugin for testing is to go to 
 `client/ayon_photoshop/api/webserver.py`, line 45.
