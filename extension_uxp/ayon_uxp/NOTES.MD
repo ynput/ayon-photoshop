@@ -103,7 +103,7 @@ the `manifest.json` 'requiredPermissions' key ->
   }
 ```
 
-and in the plugin itself, in `client/ayon_photoshop/api/extension_uxp/main.js`
+and in the plugin itself, in `ayon-photoshop/extension_uxp/main.js`
 
 ```js
 const get_RPC = require("./client_RPC").get_RPC
