@@ -229,7 +229,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    // this route appears to not exist anymore.
+    // Startup ping to validate connection / trigger server-side launch event.
     RPC.call('Photoshop.ping').then(function (data) {
           console.log('Result for calling server route "ping": ', data);
           return "pong";
