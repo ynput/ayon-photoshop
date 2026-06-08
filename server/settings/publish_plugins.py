@@ -146,7 +146,7 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
     enabled: bool = SettingsField(False, title="Enabled")
-    optional: bool = SettingsField(True, title="Optional")
+    optional: bool = SettingsField(False, title="Optional")
     merge_layersets: bool = SettingsField(
         False,
         title="Merge Layersets",
