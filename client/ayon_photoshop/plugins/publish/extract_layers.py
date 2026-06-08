@@ -20,7 +20,7 @@ class ExtractLayers(
     order = publish.Extractor.order  # Must be after ExtractImage
     hosts = ["photoshop"]
     families = ["image"]
-    optional = True
+    optional = False
     merge_layersets = False
     extension = "psd"
 
