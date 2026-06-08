@@ -238,7 +238,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractImage": {
         "enabled": True,
-        "optional": True,
+        "optional": False,
         "formats": [
             "png",
             "jpg",
