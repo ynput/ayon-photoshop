@@ -25,6 +25,11 @@ extract_image_ext_enum = [
     {"value": "exr", "label": "exr"},
 ]
 
+extract_layer_ext_enum = [
+    {"value": "psd", "label": "psd"},
+    {"value": "psb", "label": "psb"},
+]
+
 color_mode_enum = [
     {"value": "RGB", "label": "RGB"},
     {"value": "CMYK", "label": "CMYK"},
@@ -122,7 +127,8 @@ class ValidateNamingPlugin(BaseSettingsModel):
 
 class ExtractImagePlugin(BaseSettingsModel):
     """Extracts image products and representations per published instance"""
-
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
     formats: list[str] = SettingsField(
         title="Extract Formats",
         default_factory=list,
@@ -140,10 +146,16 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
     enabled: bool = SettingsField(False, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
     merge_layersets: bool = SettingsField(
         False,
         title="Merge Layersets",
         description="Merge all layersets within the instance set.",
+    )
+    extension: str = SettingsField(
+        "psd",
+        title="Extracted layer extension",
+        enum_resolver=lambda: extract_layer_ext_enum,
     )
 
 
@@ -225,6 +237,8 @@ DEFAULT_PUBLISH_SETTINGS = {
         "replace_char": "_"
     },
     "ExtractImage": {
+        "enabled": True,
+        "optional": True,
         "formats": [
             "png",
             "jpg",
@@ -235,7 +249,9 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractLayers": {
         "enabled": False,
-        "merge_layersets": False
+        "optional": True,
+        "merge_layersets": False,
+        "extension": "psd",
     },
     "ValidateDocumentSettings": {
         "enabled": False,

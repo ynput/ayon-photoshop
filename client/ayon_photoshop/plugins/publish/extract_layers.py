@@ -8,7 +8,8 @@ from ayon_photoshop import api as photoshop
 
 class ExtractLayers(
     publish.Extractor,
-    publish.ColormanagedPyblishPluginMixin
+    publish.ColormanagedPyblishPluginMixin,
+    publish.OptionalPyblishPluginMixin
 ):
     """Export layers within the instance layerset to a PSD file.
 
@@ -19,9 +20,13 @@ class ExtractLayers(
     order = publish.Extractor.order  # Must be after ExtractImage
     hosts = ["photoshop"]
     families = ["image"]
+    optional = True
     merge_layersets = False
+    extension = "psd"
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
@@ -64,8 +69,8 @@ class ExtractLayers(
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {
-            "name": "psd",
-            "ext": "psd",
+            "name": self.extension,
+            "ext": self.extension,
             "files": filepath.name,
             "stagingDir": filepath.parent,
         }

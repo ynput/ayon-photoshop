@@ -8,7 +8,8 @@ from ayon_photoshop import api as photoshop
 
 class ExtractImage(
     pyblish.api.ContextPlugin,
-    publish.ColormanagedPyblishPluginMixin
+    publish.ColormanagedPyblishPluginMixin,
+    publish.OptionalPyblishPluginMixin
 ):
     """Extract all layers (groups) marked for publish.
 
@@ -27,8 +28,11 @@ class ExtractImage(
     families = ["image", "background"]
     formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
+    optional = True
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
         # Filter instances
         filtered_instances = []
         for instance in context:
