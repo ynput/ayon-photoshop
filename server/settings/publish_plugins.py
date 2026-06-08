@@ -249,7 +249,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractLayers": {
         "enabled": False,
-        "optional": True,
+        "optional": False,
         "merge_layersets": False,
         "extension": "psd",
     },
