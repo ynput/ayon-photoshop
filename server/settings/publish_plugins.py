@@ -128,7 +128,7 @@ class ValidateNamingPlugin(BaseSettingsModel):
 class ExtractImagePlugin(BaseSettingsModel):
     """Extracts image products and representations per published instance"""
     enabled: bool = SettingsField(True, title="Enabled")
-    optional: bool = SettingsField(True, title="Optional")
+    optional: bool = SettingsField(False, title="Optional")
     formats: list[str] = SettingsField(
         title="Extract Formats",
         default_factory=list,
