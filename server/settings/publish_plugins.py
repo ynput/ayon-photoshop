@@ -154,7 +154,7 @@ class ExtractLayersPlugin(BaseSettingsModel):
     )
     extension: str = SettingsField(
         "psd",
-        title="Extracted layer extension",
+        title="Export extension",
         enum_resolver=lambda: extract_layer_ext_enum,
     )
 
