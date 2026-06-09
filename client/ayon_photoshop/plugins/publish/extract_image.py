@@ -28,7 +28,7 @@ class ExtractImage(
     families = ["image", "background"]
     formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
-    optional = True
+    optional = False
 
     def process(self, context):
         if not self.is_active(context.data):
