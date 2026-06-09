@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from ayon_core.pipeline import publish
@@ -28,8 +29,6 @@ class ExtractLayers(
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        attr_values = self.get_attr_values_from_data(instance.data)
-        layer_extension = attr_values.get("extension", self.extension)
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
@@ -43,14 +42,15 @@ class ExtractLayers(
         )
         self.log.debug(f"ayon_colorspace: {ayon_colorspace}")
         # Duplicate the document to the staging directory
+        filename = ps_stub.get_active_document_name()
+        filename_without_ext = os.path.splitext(filename)[0]
+
         filepath = Path(
             get_instance_staging_dir(instance),
-            ps_stub.get_active_document_name()
+            f"{filename_without_ext}.{self.extension}"
         )
         self.log.info(f"Duplicating document to staging directory: {filepath}")
-        with ps_stub.duplicate_document(
-            filepath
-        ):
+        with ps_stub.duplicate_document(filepath):
             # Delete all layers except the instance layerset
             layer = instance.data.get("layer")
             ps_stub.delete_all_layers(
@@ -72,8 +72,8 @@ class ExtractLayers(
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {
-            "name": layer_extension,
-            "ext": layer_extension,
+            "name": self.extension,
+            "ext": self.extension,
             "files": filepath.name,
             "stagingDir": filepath.parent,
         }
@@ -84,14 +84,3 @@ class ExtractLayers(
         )
         self.log.debug(f"Rrepresentation: {representation}")
         representations.append(representation)
-
-    @classmethod
-    def get_attribute_defs(cls):
-        return super().get_attribute_defs() + [
-            EnumDef(
-                "extension",
-                label="layer extension",
-                items=["psb", "psd"],
-                default=cls.extension
-            ),
-        ]
