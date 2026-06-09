@@ -90,7 +90,7 @@ class ExtractLayers(
         return [
             EnumDef(
                 "extension",
-                label="layer extension",
+                label="Layer extension",
                 items=["psb", "psd"],
                 default=cls.extension
             ),
