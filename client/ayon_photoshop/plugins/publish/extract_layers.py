@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ayon_core.pipeline import publish
+from ayon_core.lib import EnumDef
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_core.pipeline.publish import get_instance_staging_dir
 from ayon_photoshop import api as photoshop
@@ -27,6 +28,8 @@ class ExtractLayers(
     def process(self, instance):
         if not self.is_active(instance.data):
             return
+        attr_values = self.get_attr_values_from_data(instance.data)
+        layer_extension = attr_values.get("extension", self.extension)
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
@@ -69,8 +72,8 @@ class ExtractLayers(
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {
-            "name": self.extension,
-            "ext": self.extension,
+            "name": layer_extension,
+            "ext": layer_extension,
             "files": filepath.name,
             "stagingDir": filepath.parent,
         }
@@ -81,3 +84,14 @@ class ExtractLayers(
         )
         self.log.debug(f"Rrepresentation: {representation}")
         representations.append(representation)
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            EnumDef(
+                "extension",
+                label="layer extension",
+                items=["psb", "psd"],
+                default=cls.extension
+            ),
+        ]
