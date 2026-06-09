@@ -46,10 +46,10 @@ class ExtractLayers(
 
         filepath = Path(
             get_instance_staging_dir(instance),
-            f"{filename_without_ext}.{self.extension}"
+            filename
         )
         self.log.info(f"Duplicating document to staging directory: {filepath}")
-        with ps_stub.duplicate_document(filepath):
+        with ps_stub.duplicate_document(filepath, self.extension):
             # Delete all layers except the instance layerset
             layer = instance.data.get("layer")
             ps_stub.delete_all_layers(
@@ -73,7 +73,7 @@ class ExtractLayers(
         representation = {
             "name": self.extension,
             "ext": self.extension,
-            "files": filepath.name,
+            "files": f"{filename_without_ext}.{self.extension}",
             "stagingDir": filepath.parent,
         }
         # inject colorspace data

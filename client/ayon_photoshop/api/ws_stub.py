@@ -403,7 +403,7 @@ class PhotoshopServerStub:
         )
 
     @contextmanager
-    def duplicate_document(self, path: str):
+    def duplicate_document(self, path: str, extension: str):
         """Duplicate active document and save it to path.
 
         Can be used as context manager:
@@ -414,6 +414,7 @@ class PhotoshopServerStub:
 
         Args:
             path (str): file path to save duplicated document
+            extension (str): file extension for duplicated document (e.g. "psd")
         """
         try:
             path = Path(path)
@@ -427,7 +428,7 @@ class PhotoshopServerStub:
             # Save and close the duplicated document
             self.saveAs(
                 image_path=str(path),
-                ext=path.suffix[1:],
+                ext=extension,
                 as_copy=False
             )
             self.close_document(document_id)
