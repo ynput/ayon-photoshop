@@ -87,10 +87,10 @@ class ExtractLayers(
 
     @classmethod
     def get_attribute_defs(cls):
-        return [
+        return super().get_attribute_defs() + [
             EnumDef(
                 "extension",
-                label="Layer extension",
+                label="layer extension",
                 items=["psb", "psd"],
                 default=cls.extension
             ),
