@@ -11,7 +11,6 @@ from ayon_core.pipeline import (
     AVALON_CONTAINER_ID,
     AYON_INSTANCE_ID,
     AVALON_INSTANCE_ID,
-    get_current_project_name,
 )
 from ayon_core.settings import get_project_settings
 
@@ -60,9 +59,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def _set_default_workfile_extension(self) -> None:
         """Get the default workfile extension for the current project."""
 
-        project_name = get_current_project_name()
+        project_name = self.get_current_project_name()
         settings = get_project_settings(project_name)
-        default_workfile_extension = settings["photoshop"].get("default_workfile_extension", ".psd")
+        default_workfile_extension = settings["photoshop"]["default_workfile_extension"]
         if self.workfile_extensions[0] != default_workfile_extension:
             self.workfile_extensions.remove(default_workfile_extension)
             self.workfile_extensions.insert(0, default_workfile_extension)
