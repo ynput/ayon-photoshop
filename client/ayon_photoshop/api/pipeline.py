@@ -39,6 +39,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "photoshop"
+    workfile_extensions = [".psd", ".psb"]
 
     def install(self):
         """Install Photoshop-specific functionality needed for integration.
@@ -54,6 +55,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_creator_plugin_path(CREATE_PATH)
 
         register_event_callback("application.launched", on_application_launch)
+        self.workfile_extensions = _get_default_workfile_extension(
+            self.workfile_extensions
+        )
 
     def work_root(self, session):
         return os.path.normpath(session["AYON_WORKDIR"]).replace("\\", "/")
@@ -84,7 +88,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return False
 
     def get_workfile_extensions(self):
-        return get_default_workfile_extension()
+        return self.workfile_extensions
 
     def get_containers(self):
         return ls()
@@ -284,13 +288,13 @@ def cache_and_get_instances(creator):
     return creator.collection_shared_data[shared_key]
 
 
-def get_default_workfile_extension() -> list[str]:
+def _get_default_workfile_extension(workfile_extension_list: list[str]) -> list[str]:
     """Get the default workfile extension for the current project.
 
     Returns:
         list[str]: list of workfile extensions
     """
-    workfile_extension_list = [".psd", ".psb"]
+
     project_name = get_current_project_name()
     settings = get_project_settings(project_name)
     default_workfile_extension = settings["photoshop"].get("default_workfile_extension", ".psd")
