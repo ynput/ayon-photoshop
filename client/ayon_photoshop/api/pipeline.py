@@ -11,7 +11,9 @@ from ayon_core.pipeline import (
     AVALON_CONTAINER_ID,
     AYON_INSTANCE_ID,
     AVALON_INSTANCE_ID,
+    get_current_project_name,
 )
+from ayon_core.settings import get_project_settings
 
 from ayon_core.host import (
     HostBase,
@@ -82,7 +84,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return False
 
     def get_workfile_extensions(self):
-        return [".psd", ".psb"]
+        return get_default_workfile_extension()
 
     def get_containers(self):
         return ls()
@@ -280,3 +282,19 @@ def cache_and_get_instances(creator):
         creator.collection_shared_data[shared_key] = \
             creator.host.list_instances()
     return creator.collection_shared_data[shared_key]
+
+
+def get_default_workfile_extension() -> list[str]:
+    """Get the default workfile extension for the current project.
+
+    Returns:
+        list[str]: list of workfile extensions
+    """
+    workfile_extension_list = [".psd", ".psb"]
+    project_name = get_current_project_name()
+    settings = get_project_settings(project_name)
+    default_workfile_extension = settings["photoshop"].get("default_workfile_extension", ".psd")
+    return sorted(
+        workfile_extension_list,
+        key=lambda x: x != default_workfile_extension
+    )
