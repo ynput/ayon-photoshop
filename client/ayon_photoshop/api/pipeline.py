@@ -55,8 +55,21 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_creator_plugin_path(CREATE_PATH)
 
         register_event_callback("application.launched", on_application_launch)
-        self.workfile_extensions = _get_default_workfile_extension(
-            self.workfile_extensions
+        self.workfile_extensions = self.get_default_workfile_extension()
+
+    def get_default_workfile_extension(self) -> list[str]:
+        """Get the default workfile extension for the current project.
+
+        Returns:
+            list[str]: list of workfile extensions
+        """
+
+        project_name = get_current_project_name()
+        settings = get_project_settings(project_name)
+        default_workfile_extension = settings["photoshop"].get("default_workfile_extension", ".psd")
+        return sorted(
+            self.workfile_extensions,
+            key=lambda x: x != default_workfile_extension
         )
 
     def work_root(self, session):
@@ -286,19 +299,3 @@ def cache_and_get_instances(creator):
         creator.collection_shared_data[shared_key] = \
             creator.host.list_instances()
     return creator.collection_shared_data[shared_key]
-
-
-def _get_default_workfile_extension(workfile_extension_list: list[str]) -> list[str]:
-    """Get the default workfile extension for the current project.
-
-    Returns:
-        list[str]: list of workfile extensions
-    """
-
-    project_name = get_current_project_name()
-    settings = get_project_settings(project_name)
-    default_workfile_extension = settings["photoshop"].get("default_workfile_extension", ".psd")
-    return sorted(
-        workfile_extension_list,
-        key=lambda x: x != default_workfile_extension
-    )
