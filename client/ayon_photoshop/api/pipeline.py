@@ -57,12 +57,8 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_event_callback("application.launched", on_application_launch)
         self._set_default_workfile_extension()
 
-    def _set_default_workfile_extension(self) -> list[str]:
-        """Get the default workfile extension for the current project.
-
-        Returns:
-            list[str]: list of workfile extensions
-        """
+    def _set_default_workfile_extension(self) -> None:
+        """Get the default workfile extension for the current project."""
 
         project_name = get_current_project_name()
         settings = get_project_settings(project_name)
