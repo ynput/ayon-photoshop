@@ -55,9 +55,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_creator_plugin_path(CREATE_PATH)
 
         register_event_callback("application.launched", on_application_launch)
-        self._get_default_workfile_extension()
+        self._set_default_workfile_extension()
 
-    def _get_default_workfile_extension(self) -> list[str]:
+    def _set_default_workfile_extension(self) -> list[str]:
         """Get the default workfile extension for the current project.
 
         Returns:
