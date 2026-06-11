@@ -427,7 +427,7 @@ class PhotoshopServerStub:
             # Save and close the duplicated document
             self.saveAs(
                 image_path=str(path),
-                ext=extension,
+                ext=path.suffix[1:],
                 as_copy=False
             )
             self.close_document(document_id)
