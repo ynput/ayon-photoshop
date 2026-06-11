@@ -403,7 +403,7 @@ class PhotoshopServerStub:
         )
 
     @contextmanager
-    def duplicate_document(self, path: str, extension: str):
+    def duplicate_document(self, path: str):
         """Duplicate active document and save it to path.
 
         Can be used as context manager:
