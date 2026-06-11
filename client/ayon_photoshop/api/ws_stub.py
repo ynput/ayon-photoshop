@@ -414,7 +414,6 @@ class PhotoshopServerStub:
 
         Args:
             path (str): file path to save duplicated document
-            extension (str): file extension for duplicated document (e.g. "psd")
         """
         try:
             path = Path(path)
