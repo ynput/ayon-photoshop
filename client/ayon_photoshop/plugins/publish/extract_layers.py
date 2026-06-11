@@ -42,7 +42,8 @@ class ExtractLayers(
         self.log.debug(f"ayon_colorspace: {ayon_colorspace}")
         # Duplicate the document to the staging directory
         filename = ps_stub.get_active_document_name()
-        filename_without_ext = os.path.splitext(filename)[0]
+        basename = os.path.splitext(filename)[0]
+        filename = f"{basename}.{self.extension}
         filepath = Path(
             get_instance_staging_dir(instance),
             f"{filename_without_ext}.{self.extension}"
