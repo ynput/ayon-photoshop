@@ -46,7 +46,7 @@ class ExtractLayers(
         filename = f"{basename}.{self.extension}"
         filepath = Path(
             get_instance_staging_dir(instance),
-            f"{filename_without_ext}.{self.extension}"
+            filename
         )
         self.log.info(f"Duplicating document to staging directory: {filepath}")
         with ps_stub.duplicate_document(filepath):
@@ -81,5 +81,5 @@ class ExtractLayers(
             representation, instance.context,
             colorspace=ayon_colorspace
         )
-        self.log.debug(f"Rrepresentation: {representation}")
+        self.log.debug(f"Representation: {representation}")
         representations.append(representation)
