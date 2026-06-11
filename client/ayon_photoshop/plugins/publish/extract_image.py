@@ -1,9 +1,12 @@
 import os
+from typing import TYPE_CHECKING
 
 import pyblish.api
 from ayon_core.pipeline import publish
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
+if TYPE_CHECKING:
+    from ayon_core.pipeline import CreateContext, CreatedInstance
 
 
 class ExtractImage(
@@ -31,10 +34,14 @@ class ExtractImage(
     optional = False
 
     def process(self, context):
-        if not self.is_active(context.data):
-            return
         # Filter instances
         filtered_instances = []
+        for instance in context:
+            if (
+                instance.data["productBaseType"] != "image"
+                or not self.is_active(instance.data)
+            ):
+                continue
         for instance in context:
             product_base_type = instance.data.get("productBaseType")
             if not product_base_type:
@@ -131,3 +138,15 @@ class ExtractImage(
         from ayon_core.pipeline.publish import get_instance_staging_dir
 
         return get_instance_staging_dir(instance)
+
+    @classmethod
+    def get_attr_defs_for_context(cls, create_context: "CreateContext"):
+        return []
+
+    @classmethod
+    def get_attr_defs_for_instance(
+        cls, create_context: "CreateContext", instance: "CreatedInstance"
+    ):
+        if instance.product_base_type != "image":
+            return []
+        return cls.get_attribute_defs()
