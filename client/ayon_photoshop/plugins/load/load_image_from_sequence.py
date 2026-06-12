@@ -82,7 +82,7 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
                 label="Select specific file",
                 items=files,
                 default=files[0],
-                help="Which frame should be loaded?"
+                tooltip="Which frame should be loaded?"
             )
         ]
 
