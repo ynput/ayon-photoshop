@@ -1,7 +1,6 @@
 import os
 
-import qargparse
-
+from ayon_core.lib import EnumDef
 from ayon_photoshop import api as photoshop
 from ayon_photoshop.api import get_unique_layer_name
 
@@ -78,11 +77,11 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
             return []
 
         return [
-            qargparse.Choice(
+            EnumDef(
                 "frame",
                 label="Select specific file",
                 items=files,
-                default=0,
+                default=files[0],
                 help="Which frame should be loaded?"
             )
         ]
