@@ -28,6 +28,9 @@ class ExtractLayers(
     def process(self, instance):
         if not self.is_active(instance.data):
             return
+        if instance.data["creator_identifier"] == "auto_image":
+            self.log.info("Skipping instance created by auto_image creator")
+            return
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
