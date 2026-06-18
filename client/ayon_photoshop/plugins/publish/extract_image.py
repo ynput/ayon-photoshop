@@ -41,17 +41,6 @@ class ExtractImage(
                 or not self.is_active(instance.data)
             ):
                 continue
-        for instance in context:
-            product_base_type = instance.data.get("productBaseType")
-            if not product_base_type:
-                product_base_type = instance.data["productType"]
-            if product_base_type in self.families:
-        for instance in context:
-            if (
-                instance.data["productBaseType"] != "image"
-                or not self.is_active(instance.data)
-            ):
-                continue
             filtered_instances.append(instance)
 
         if not filtered_instances:
