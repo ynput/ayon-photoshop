@@ -28,7 +28,6 @@ class ExtractImage(
     label = "Extract Image"
     hosts = ["photoshop"]
 
-    families = ["image", "background"]
     formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
     optional = False
