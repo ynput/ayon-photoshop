@@ -1,10 +1,14 @@
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ayon_core.pipeline import publish
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_core.pipeline.publish import get_instance_staging_dir
 from ayon_photoshop import api as photoshop
+
+if TYPE_CHECKING:
+    from ayon_core.pipeline import CreateContext, CreatedInstance
 
 
 class ExtractLayers(
