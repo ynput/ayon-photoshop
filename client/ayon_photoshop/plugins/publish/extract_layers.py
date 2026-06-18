@@ -20,7 +20,6 @@ class ExtractLayers(
     label = "Extract Layers"
     order = publish.Extractor.order  # Must be after ExtractImage
     hosts = ["photoshop"]
-    families = ["image.layer"]
     optional = False
     merge_layersets = False
     extension = "psd"
@@ -83,3 +82,14 @@ class ExtractLayers(
         )
         self.log.debug(f"Representation: {representation}")
         representations.append(representation)
+
+    @classmethod
+    def get_attr_defs_for_instance(
+        cls, create_context: "CreateContext", instance: "CreatedInstance"
+    ):
+        if (
+            instance.product_base_type != "image"
+            or instance.creator_identifier == "auto_image"
+        ):
+            return []
+        return cls.get_attribute_defs()
