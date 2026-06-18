@@ -18,3 +18,6 @@ class CollectImage(pyblish.api.InstancePlugin):
         if instance.data.get("members"):
             layer = api.stub().get_layer(instance.data["members"][0])
             instance.data["layer"] = layer
+
+        if instance.data["creator_identifier"] != "auto_image":
+            instance.data["families"].append("image.layer")
