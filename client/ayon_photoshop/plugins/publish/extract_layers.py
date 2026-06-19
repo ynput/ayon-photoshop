@@ -55,6 +55,9 @@ class ExtractLayers(
         with ps_stub.duplicate_document(filepath):
             # Delete all layers except the instance layerset
             layer = instance.data.get("layer")
+            if not hasattr(layer, "id"):
+                self.log.warning("Instance layer does not have an id, skipping.")
+                return
             ps_stub.delete_all_layers(
                 exclude_layers=[layer],
                 exclude_recursive=True
