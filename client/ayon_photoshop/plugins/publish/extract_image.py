@@ -63,6 +63,7 @@ class ExtractImage(
                 # Get instance layer ID
                 members = instance.data.get("members")
                 if not members:
+                    self.log.debug(f"Instance {instance} has no members, skipping.")
                     continue
                 instance_id = int(members[0])
 
