@@ -75,23 +75,8 @@ class ExtractSourcesReview(
         representations = instance.data.setdefault("representations", [])
         if product_base_type == "image" and representations:
             self._attach_review_tag(instance)
-        elif self.make_image_sequence and len(layers) > 1:
-            self.log.debug("Extract layers to image sequence.")
-            img_list = self._save_sequence_images(staging_dir, layers)
 
-            instance.data["frameEnd"] = (
-                instance.data["frameStart"] + len(img_list) - 1)
-            additional_repre["output_name"] = "mov"
-            additional_repre["files"] = img_list
-
-            # inject colorspace data
-            self.set_representation_colorspace(
-                additional_repre, instance.context,
-                colorspace=ayon_colorspace
-            )
-            instance.data["representations"].append(additional_repre)
-
-        else:
+        elif product_base_type == "image" and not representations:
             self.log.debug("Extract layers to flatten image.")
             review_source_path = self._save_flatten_image(
                 staging_dir,
@@ -101,6 +86,22 @@ class ExtractSourcesReview(
             additional_repre["output_name"] = "jpg"
             # just intermediate repre to create a review from
             additional_repre["tags"].append("delete")
+            # inject colorspace data
+            self.set_representation_colorspace(
+                additional_repre, instance.context,
+                colorspace=ayon_colorspace
+            )
+            instance.data["representations"].append(additional_repre)
+
+        elif self.make_image_sequence and len(layers) > 1:
+            self.log.debug("Extract layers to image sequence.")
+            img_list = self._save_sequence_images(staging_dir, layers)
+
+            instance.data["frameEnd"] = (
+                instance.data["frameStart"] + len(img_list) - 1)
+            additional_repre["output_name"] = "mov"
+            additional_repre["files"] = img_list
+
             # inject colorspace data
             self.set_representation_colorspace(
                 additional_repre, instance.context,
