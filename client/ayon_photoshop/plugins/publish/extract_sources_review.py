@@ -72,7 +72,8 @@ class ExtractSourcesReview(
         product_base_type = instance.data.get("productBaseType")
         if not product_base_type:
             product_base_type = instance.data["productType"]
-        if product_base_type == "image":
+        representations = instance.data.setdefault("representations", [])
+        if product_base_type == "image" and representations:
             self._attach_review_tag(instance)
         elif self.make_image_sequence and len(layers) > 1:
             self.log.debug("Extract layers to image sequence.")
@@ -117,24 +118,15 @@ class ExtractSourcesReview(
         "jpg" representation is preferred.
 
         """
-        representations = instance.data.setdefault("representations", [])
-        if not representations:
-            self.log.warning(
-                "No representations found on instance '%s'; "
-                "skipping review tag attachment.",
-                instance.data.get("name", instance)
-            )
-            return
-
         jpg_source_repre = None
-        for repre in representations:
+        for repre in instance.data["representations"]:
             if repre["name"] == "jpg":
                 jpg_source_repre = repre
                 repre.setdefault("tags", []).append("review")
                 break
 
         if not jpg_source_repre:
-            repre = representations[0]
+            repre = instance.data["representations"][0]
             repre.setdefault("tags", []).append("review")
 
     def _get_review_layers_for_instance(self, instance):
