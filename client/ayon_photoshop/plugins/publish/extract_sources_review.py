@@ -117,16 +117,25 @@ class ExtractSourcesReview(
         "jpg" representation is preferred.
 
         """
+        representations = instance.data.setdefault("representations", [])
+        if not representations:
+            self.log.warning(
+                "No representations found on instance '%s'; "
+                "skipping review tag attachment.",
+                instance.data.get("name", instance)
+            )
+            return
+
         jpg_source_repre = None
-        for repre in instance.data["representations"]:
+        for repre in representations:
             if repre["name"] == "jpg":
                 jpg_source_repre = repre
-                repre["tags"].append("review")
+                repre.setdefault("tags", []).append("review")
                 break
 
         if not jpg_source_repre:
-            repre = instance.data["representations"][0]
-            repre["tags"].append("review")
+            repre = representations[0]
+            repre.setdefault("tags", []).append("review")
 
     def _get_review_layers_for_instance(self, instance):
         """Collect all layers from image instance(s)
