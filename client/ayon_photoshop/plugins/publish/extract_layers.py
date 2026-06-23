@@ -35,7 +35,6 @@ class ExtractLayers(
             or not self.is_active(instance.data)
         ):
             return
-            return
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
