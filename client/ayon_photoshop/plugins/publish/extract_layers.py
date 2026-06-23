@@ -29,7 +29,12 @@ class ExtractLayers(
     extension = "psd"
 
     def process(self, instance):
-        if not self.is_active(instance.data):
+        if (
+            instance.product_base_type != "image"
+            or instance.creator_identifier == "auto_image"
+            or not self.is_active(instance.data)
+        ):
+            return
             return
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
