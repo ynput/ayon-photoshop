@@ -61,7 +61,7 @@ class ExtractImage(
                 self.log.info(f"Outputting image to {staging_dir}")
 
                 # Get instance layer ID
-                members = instance.data("members")
+                members = instance.data.get("members")
                 if not members:
                     continue
                 instance_id = int(members[0])
