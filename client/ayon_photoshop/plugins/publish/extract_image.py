@@ -60,26 +60,30 @@ class ExtractImage(
                 staging_dir = self.staging_dir(instance)
                 self.log.info(f"Outputting image to {staging_dir}")
 
-                # Get instance layer ID
+                ids = set()
+
+                # real layers and groups
                 members = instance.data.get("members")
-                if not members:
-                    self.log.debug(f"Instance {instance} has no members, skipping.")
+                if members:
+                    ids.update(int(member) for member in members)
+
+                # virtual groups collected by color coding or auto_image
+                add_ids = instance.data.pop("ids", None)
+                if add_ids:
+                    ids.update(set(add_ids))
+
+                if not ids:
+                    self.log.debug(
+                        f"Instance {instance} has no publishable layers, "
+                        f"skipping."
+                    )
                     continue
-                instance_id = int(members[0])
 
                 # Context manager handles all visibility: show instance path,
                 # hide siblings, restore original state on exit
-                with photoshop.isolated_layers_visibility(stub, instance_id, all_layers):
+                with photoshop.isolated_layers_visibility(stub, ids, all_layers):
                     # Perform extraction
                     files = {}
-                    ids = set()
-                    # real layers and groups
-                    if members:
-                        ids.update(int(member) for member in members)
-                    # virtual groups collected by color coding or auto_image
-                    add_ids = instance.data.pop("ids", None)
-                    if add_ids:
-                        ids.update(set(add_ids))
 
                     file_basename, workfile_extension = os.path.splitext(
                         stub.get_active_document_name()
