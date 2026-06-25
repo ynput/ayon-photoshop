@@ -72,27 +72,8 @@ class ExtractSourcesReview(
         product_base_type = instance.data.get("productBaseType")
         if not product_base_type:
             product_base_type = instance.data["productType"]
-        representations = instance.data.setdefault("representations", [])
-        if product_base_type == "image" and representations:
+        if product_base_type == "image":
             self._attach_review_tag(instance)
-
-        elif product_base_type == "image" and not representations:
-            self.log.debug("Extract layers to flatten image.")
-            review_source_path = self._save_flatten_image(
-                staging_dir,
-                layers
-            )
-            additional_repre["files"] = os.path.basename(review_source_path)
-            additional_repre["output_name"] = "jpg"
-            # just intermediate repre to create a review from
-            additional_repre["tags"].append("delete")
-            # inject colorspace data
-            self.set_representation_colorspace(
-                additional_repre, instance.context,
-                colorspace=ayon_colorspace
-            )
-            instance.data["representations"].append(additional_repre)
-
         elif self.make_image_sequence and len(layers) > 1:
             self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
@@ -102,6 +83,23 @@ class ExtractSourcesReview(
             additional_repre["output_name"] = "mov"
             additional_repre["files"] = img_list
 
+            # inject colorspace data
+            self.set_representation_colorspace(
+                additional_repre, instance.context,
+                colorspace=ayon_colorspace
+            )
+            instance.data["representations"].append(additional_repre)
+
+        else:
+            self.log.debug("Extract layers to flatten image.")
+            review_source_path = self._save_flatten_image(
+                staging_dir,
+                layers
+            )
+            additional_repre["files"] = os.path.basename(review_source_path)
+            additional_repre["output_name"] = "jpg"
+            # just intermediate repre to create a review from
+            additional_repre["tags"].append("delete")
             # inject colorspace data
             self.set_representation_colorspace(
                 additional_repre, instance.context,
@@ -123,12 +121,12 @@ class ExtractSourcesReview(
         for repre in instance.data["representations"]:
             if repre["name"] == "jpg":
                 jpg_source_repre = repre
-                repre.setdefault("tags", []).append("review")
+                repre["tags"].append("review")
                 break
 
         if not jpg_source_repre:
             repre = instance.data["representations"][0]
-            repre.setdefault("tags", []).append("review")
+            repre["tags"].append("review")
 
     def _get_review_layers_for_instance(self, instance):
         """Collect all layers from image instance(s)
