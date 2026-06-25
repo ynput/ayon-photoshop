@@ -30,8 +30,8 @@ class ExtractLayers(
 
     def process(self, instance):
         if (
-            instance.product_base_type != "image"
-            or instance.creator_identifier == "auto_image"
+            instance.data.get("productBaseType") != "image"
+            or instance.data.get("creatorIdentifier") == "auto_image"
             or not self.is_active(instance.data)
         ):
             return
