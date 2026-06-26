@@ -147,6 +147,13 @@ class ExtractLayersPlugin(BaseSettingsModel):
     )
 
 
+class ValidateSmartObjectLinksPlugin(BaseSettingsModel):
+    """Validate that no Smart Object layers have broken or missing links."""
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
+
+
 class ValidateDocumentSettingsPlugin(BaseSettingsModel):
     """Validate document resolution, color mode and bit depth."""
     enabled: bool = SettingsField(True, title="Enabled")
@@ -202,6 +209,11 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         default_factory=ExtractLayersPlugin,
     )
 
+    ValidateSmartObjectLinks: ValidateSmartObjectLinksPlugin = SettingsField(
+        title="Validate Smart Object Links",
+        default_factory=ValidateSmartObjectLinksPlugin,
+    )
+
     ValidateDocumentSettings: ValidateDocumentSettingsPlugin = SettingsField(
         title="Validate Document Settings",
         default_factory=ValidateDocumentSettingsPlugin,
@@ -236,6 +248,11 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ExtractLayers": {
         "enabled": False,
         "merge_layersets": False
+    },
+    "ValidateSmartObjectLinks": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ValidateDocumentSettings": {
         "enabled": False,
