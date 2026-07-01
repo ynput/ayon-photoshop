@@ -27,7 +27,7 @@ class ExtractImage(
     order = publish.Extractor.order - 0.48
     label = "Extract Image"
     hosts = ["photoshop"]
-
+    families = ["image"]
     formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
     optional = False
