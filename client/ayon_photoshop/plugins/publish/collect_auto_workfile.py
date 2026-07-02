@@ -8,7 +8,7 @@ from ayon_core.pipeline.create import get_product_name
 class CollectAutoWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder - 0.4
+    order = pyblish.api.CollectorOrder - 0.49
     label = "Collect Workfile"
     hosts = ["photoshop"]
 

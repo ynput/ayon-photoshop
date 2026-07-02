@@ -30,7 +30,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
     label = "Collect Color-coded Instances"
 
-    order = pyblish.api.CollectorOrder - 0.4
+    order = pyblish.api.CollectorOrder - 0.49
 
     hosts = ["photoshop"]
     targets = ["automated"]
