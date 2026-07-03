@@ -785,6 +785,120 @@ function _get_parents_names(layer, itself_name){
     return long_names;
 }
 
+function _isSmartObjectLinkBroken(layer) {
+    /***
+     * Returns true if 'layer' (a SMARTOBJECT) has a broken or missing link.
+     * Handles both CC Libraries assets (linkMissing flag) and local linked
+     * files (link.status field).
+     *
+     * layer - ArtLayer whose kind === LayerKind.SMARTOBJECT
+     ***/
+    try {
+        app.activeDocument.activeLayer = layer;
+        var ref = new ActionReference();
+        ref.putEnumerated(
+            charIDToTypeID("Lyr "),
+            charIDToTypeID("Ordn"),
+            charIDToTypeID("Trgt")
+        );
+        var desc = executeActionGet(ref);
+        if (!desc.hasKey(stringIDToTypeID("smartObject"))) {
+            return false;
+        }
+        var smObjDesc = desc.getObjectValue(stringIDToTypeID("smartObject"));
+
+        if (smObjDesc.hasKey(stringIDToTypeID("linkMissing"))) {
+            if (smObjDesc.getBoolean(stringIDToTypeID("linkMissing"))) {
+                return true;
+            }
+        }
+
+        if (smObjDesc.hasKey(stringIDToTypeID("link"))) {
+            var linkDesc = smObjDesc.getObjectValue(stringIDToTypeID("link"));
+            if (linkDesc.hasKey(stringIDToTypeID("status"))) {
+                var status = linkDesc.getString(stringIDToTypeID("status"));
+                if (status === "missing" || status === "unresolved") {
+                    return true;
+                }
+            }
+        }
+    } catch (e) {}
+    return false;
+}
+
+function _collectBrokenSmartObjectLayers(layers, result) {
+    /***
+     * Recursively walk 'layers', pushing names of broken smart object layers
+     * into 'result'.
+     ***/
+    for (var i = 0; i < layers.length; i++) {
+        var layer = layers[i];
+        if (layer.typename === "LayerSet") {
+            _collectBrokenSmartObjectLayers(layer.layers, result);
+        } else if (layer.kind === LayerKind.SMARTOBJECT) {
+            if (_isSmartObjectLinkBroken(layer)) {
+                result.push(layer.name);
+            }
+        }
+    }
+}
+
+function getBrokenSmartObjectLinks() {
+    /***
+     * Return a JSON array of layer names that have broken or missing smart
+     * object links (both local files and CC Libraries assets).
+     *
+     * Returns:
+     *    JSON string: array of layer name strings
+     ***/
+    var doc = app.activeDocument;
+    var broken = [];
+    _collectBrokenSmartObjectLayers(doc.layers, broken);
+    return JSON.stringify(broken);
+}
+
+function fixBrokenSmartObjectLinks() {
+    /***
+     * Rasterize every smart object layer with a broken link, then convert it
+     * back to a fresh embedded smart object, severing the stale cloud/file
+     * reference.  Iterates backwards so layer indices stay stable.
+     *
+     * Returns:
+     *    JSON string: array of layer names that were repaired
+     ***/
+    var doc = app.activeDocument;
+    var fixed = [];
+
+    function repairLayer(layer) {
+        try {
+            doc.activeLayer = layer;
+            var layerName = layer.name;
+            layer.rasterize(RasterizeType.ENTIRELAYER);
+            var desc = new ActionDescriptor();
+            executeAction(
+                stringIDToTypeID("newPlacedLayer"), desc, DialogModes.NO
+            );
+            fixed.push(layerName);
+        } catch (e) {}
+    }
+
+    function inspectAndFix(layers) {
+        for (var i = layers.length - 1; i >= 0; i--) {
+            var layer = layers[i];
+            if (layer.typename === "LayerSet") {
+                inspectAndFix(layer.layers);
+            } else if (layer.kind === LayerKind.SMARTOBJECT) {
+                if (_isSmartObjectLinkBroken(layer)) {
+                    repairLayer(layer);
+                }
+            }
+        }
+    }
+
+    inspectAndFix(doc.layers);
+    return JSON.stringify(fixed);
+}
+
 // triggers when panel is opened, good for debugging 
 //log(getActiveDocumentName()); 
 // log.show();
