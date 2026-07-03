@@ -21,6 +21,13 @@ class CollectRefreshCreateContext(pyblish.api.ContextPlugin):
     CollectFromCreateContext instead, fixing this for every host, but the
     fix is kept Photoshop-only here to avoid touching shared ayon-core
     behavior.
+
+    Also stashes the workfile path that was active *before* this refresh
+    (i.e. as of the publisher's last full reset or previous publish
+    attempt) onto ``context.data["contextRefreshWorkfilePath"]``, so
+    ValidateActiveDocumentContext can detect that the active document
+    changed since then, even if the new document has valid context of its
+    own.
     """
 
     # Before CollectFromCreateContext
@@ -32,5 +39,9 @@ class CollectRefreshCreateContext(pyblish.api.ContextPlugin):
         create_context = context.data.get("create_context")
         if create_context is None:
             return
+
+        context.data["contextRefreshWorkfilePath"] = (
+            create_context.get_current_workfile_path()
+        )
 
         create_context.reset_current_context()

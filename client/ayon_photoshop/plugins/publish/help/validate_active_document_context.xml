@@ -32,4 +32,27 @@ would be filed under the wrong folder or task.
     (Context = combination of project, folder path and task name.)
 </description>
 </error>
+<error id="document_switched">
+<title>Active document changed since publisher was last refreshed</title>
+<description>
+## The active document changed after the publisher was opened or refreshed
+
+    {msg}
+
+**Previously active document:** {previous_doc_name}
+
+**Currently active document:** {doc_name}
+
+### Why does this happen?
+
+Photoshop can have multiple documents open at once. AYON automatically
+keeps its session context in sync with whichever document is active, but
+the instances and report you see in the publisher were collected for the
+document that was active when it was last opened or refreshed.
+
+### How to fix?
+
+    {repair_msg}
+</description>
+</error>
 </root>
