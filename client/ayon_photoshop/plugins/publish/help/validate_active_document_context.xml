@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Active document is outside the expected work directory</title>
+<description>
+## Active document does not match the current AYON context
+
+    {msg}
+
+**AYON context:** {folder_path} / {task_name}
+
+**Expected work root:**
+    {expected_work_root}
+
+**Active document directory:**
+    {current_dir}
+
+### Why does this happen?
+
+When you open a Photoshop document directly (not through the AYON Workfiles
+tool), the AYON session context is not updated. If you then publish, outputs
+would be filed under the wrong folder or task.
+
+### How to fix?
+
+    {repair_msg}
+
+    If you changed context via the Workfiles tool but are still seeing this
+    error, close and reopen the correct workfile from Workfiles to refresh
+    the session context.
+
+    (Context = combination of project, folder path and task name.)
+</description>
+</error>
+</root>

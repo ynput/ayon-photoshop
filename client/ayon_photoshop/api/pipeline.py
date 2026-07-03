@@ -8,6 +8,7 @@ from ayon_core.lib import register_event_callback, Logger
 from ayon_core.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
+    registered_host,
     AVALON_CONTAINER_ID,
     AYON_INSTANCE_ID,
     AVALON_INSTANCE_ID,
@@ -25,6 +26,7 @@ from ayon_core.tools.utils import get_ayon_qt_app
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
 
 from . import lib
+from .launch_logic import ConnectionNotEstablishedYet, DOC_CONTEXT_METADATA_ID
 
 log = Logger.get_logger(__name__)
 
@@ -59,11 +61,18 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def open_workfile(self, filepath):
         lib.stub().open(filepath)
 
+        # Stamp the freshly opened document with the current context so it can
+        # be restored later when switching between multiple open documents.
+        self._stamp_context_on_active_document()
+
         return True
 
     def save_workfile(self, filepath=None):
         _, ext = os.path.splitext(filepath)
         lib.stub().saveAs(filepath, ext.lstrip("."), False)
+
+        # Stamp the saved document with the current context.
+        self._stamp_context_on_active_document()
 
     def get_current_workfile(self):
         try:
@@ -87,21 +96,97 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_containers(self):
         return ls()
 
+    def _stamp_context_on_active_document(self):
+        """Persist the current session context into the active document.
+
+        Writes folder_path and task_name (from the current session /
+        environment) into the active document's own DOC_CONTEXT_METADATA_ID
+        File Info entry — kept separate from ayon-core's 'publish_context'
+        entry (see get_context_data/update_context_data below) — so that
+        later, when this document is re-activated among several open
+        documents, the correct AYON context can be restored from it by
+        launch_logic._update_context_from_active_document.
+
+        Called after a workfile is opened or saved, when the relevant document
+        is guaranteed to be the active one. Skipped when there is no active
+        document or when the stored value already matches.
+        """
+        stub = _get_stub()
+        if stub is None:
+            return
+
+        folder_path = self.get_current_folder_path()
+        task_name = self.get_current_task_name()
+
+        stored = None
+        other_meta = []
+        for item in stub.get_layers_metadata():
+            if item.get("id") == DOC_CONTEXT_METADATA_ID:
+                stored = item
+            else:
+                other_meta.append(item)
+
+        if (stored
+                and stored.get("folder_path") == folder_path
+                and stored.get("task_name") == task_name):
+            return
+
+        doc_context = {
+            "id": DOC_CONTEXT_METADATA_ID,
+            "folder_path": folder_path,
+            "task_name": task_name,
+        }
+        stub.imprint(doc_context["id"], doc_context, items_meta=other_meta)
+
     def get_context_data(self):
-        """Get stored values for context (validation enable/disable etc)"""
-        meta = _get_stub().get_layers_metadata()
-        for item in meta:
+        """Get stored values for context (validation enable/disable etc)
+
+        Merges every 'publish_context' entry found (later ones win) so that
+        the returned data is correct even if a document accidentally holds
+        more than one entry from older versions.
+
+        Must only ever hold the data ayon-core itself round-trips here
+        (currently 'publish_attributes') — never add extra keys, or
+        ayon-core's change-detection in CreateContext will always consider
+        the context "changed" and re-save (and re-imprint) on every publish
+        action. Document-specific context (folder_path/task_name) is stored
+        separately, see _stamp_context_on_active_document.
+        """
+        stub = _get_stub()
+        if stub is None:
+            return {}
+
+        data = {}
+        found = False
+        for item in stub.get_layers_metadata():
             if item.get("id") == "publish_context":
-                item.pop("id")
-                return item
+                found = True
+                data.update(item)
+        if not found:
+            return {}
+        data.pop("id", None)
+        return data
 
-        return {}
+    def update_context_data(self, data, changes=None):
+        """Store value needed for context.
 
-    def update_context_data(self, data, changes):
-        """Store value needed for context"""
-        item = data
-        item["id"] = "publish_context"
-        _get_stub().imprint(item["id"], item)
+        Args:
+            data (dict): Data to update.
+            changes (TrackChangesItem): Unused, kept for compatibility with
+                the HostBase interface signature.
+        """
+        stub = _get_stub()
+        if stub is None:
+            return
+
+        context_data = dict(data)
+        context_data["id"] = "publish_context"
+
+        items_meta = [
+            meta for meta in stub.get_layers_metadata()
+            if meta.get("id") != "publish_context"
+        ]
+        stub.imprint(context_data["id"], context_data, items_meta=items_meta)
 
     def list_instances(self):
         """List all created instances to publish from current workfile.
@@ -172,6 +257,17 @@ def check_inventory():
 def on_application_launch():
     check_inventory()
 
+    # The very first document at Photoshop startup is opened natively via a
+    # command-line argument (see pre_launch_args.py), before the CEP
+    # extension even connects. It never goes through PhotoshopHost's
+    # open_workfile()/set_context route, so it is otherwise never stamped
+    # with a doc-context entry. At this point the environment already
+    # holds the correct folder_path/task_name (set by AYON before Photoshop
+    # was launched), so stamp it now that the connection is established.
+    host = registered_host()
+    if hasattr(host, "_stamp_context_on_active_document"):
+        host._stamp_context_on_active_document()
+
 
 def ls():
     """Yields containers from active Photoshop document
@@ -186,7 +282,7 @@ def ls():
     """
     try:
         stub = lib.stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 
@@ -220,7 +316,7 @@ def _get_stub():
     """
     try:
         stub = lib.stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 
