@@ -17,16 +17,16 @@
 
 ### Why does this happen?
 
-When you open a Photoshop document directly (not through the AYON Workfiles
-tool), the AYON session context is not updated. If you then publish, outputs
+When you open a Photoshop document directly (not through the AYON
+tools), the AYON session context is not updated. If you then publish, outputs
 would be filed under the wrong folder or task.
 
 ### How to fix?
 
     {repair_msg}
 
-    If you changed context via the Workfiles tool but are still seeing this
-    error, close and reopen the correct workfile from Workfiles to refresh
+    If you changed context via the Ayon tools but are still seeing this
+    error, close and reopen the correct workfile from Ayon to refresh
     the session context.
 
     (Context = combination of project, folder path and task name.)
