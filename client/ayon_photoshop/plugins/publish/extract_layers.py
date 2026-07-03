@@ -1,14 +1,20 @@
+import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ayon_core.pipeline import publish
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_core.pipeline.publish import get_instance_staging_dir
 from ayon_photoshop import api as photoshop
 
+if TYPE_CHECKING:
+    from ayon_core.pipeline import CreateContext, CreatedInstance
+
 
 class ExtractLayers(
     publish.Extractor,
-    publish.ColormanagedPyblishPluginMixin
+    publish.ColormanagedPyblishPluginMixin,
+    publish.OptionalPyblishPluginMixin
 ):
     """Export layers within the instance layerset to a PSD file.
 
@@ -19,9 +25,17 @@ class ExtractLayers(
     order = publish.Extractor.order  # Must be after ExtractImage
     hosts = ["photoshop"]
     families = ["image"]
+    optional = False
     merge_layersets = False
+    extension = "psd"
 
     def process(self, instance):
+        if (
+            instance.data.get("productBaseType") != "image"
+            or instance.data.get("creatorIdentifier") == "auto_image"
+            or not self.is_active(instance.data)
+        ):
+            return
         ps_stub = photoshop.stub()
         native_colorspace = ps_stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
@@ -35,16 +49,20 @@ class ExtractLayers(
         )
         self.log.debug(f"ayon_colorspace: {ayon_colorspace}")
         # Duplicate the document to the staging directory
+        filename = ps_stub.get_active_document_name()
+        basename = os.path.splitext(filename)[0]
+        filename = f"{basename}.{self.extension}"
         filepath = Path(
             get_instance_staging_dir(instance),
-            ps_stub.get_active_document_name()
+            filename
         )
         self.log.info(f"Duplicating document to staging directory: {filepath}")
-        with ps_stub.duplicate_document(
-            filepath
-        ):
+        with ps_stub.duplicate_document(filepath):
             # Delete all layers except the instance layerset
             layer = instance.data.get("layer")
+            if not hasattr(layer, "id"):
+                self.log.warning("Instance layer does not have an id, skipping.")
+                return
             ps_stub.delete_all_layers(
                 exclude_layers=[layer],
                 exclude_recursive=True
@@ -64,8 +82,8 @@ class ExtractLayers(
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {
-            "name": "psd",
-            "ext": "psd",
+            "name": self.extension,
+            "ext": self.extension,
             "files": filepath.name,
             "stagingDir": filepath.parent,
         }
@@ -74,5 +92,16 @@ class ExtractLayers(
             representation, instance.context,
             colorspace=ayon_colorspace
         )
-        self.log.debug(f"Rrepresentation: {representation}")
+        self.log.debug(f"Representation: {representation}")
         representations.append(representation)
+
+    @classmethod
+    def get_attr_defs_for_instance(
+        cls, create_context: "CreateContext", instance: "CreatedInstance"
+    ):
+        if (
+            instance.product_base_type != "image"
+            or instance.creator_identifier == "auto_image"
+        ):
+            return []
+        return cls.get_attribute_defs()
