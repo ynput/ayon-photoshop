@@ -1,0 +1,2 @@
+ayon-api>=1.0.0
+PyInstaller>=5.0
