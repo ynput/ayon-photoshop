@@ -1,0 +1,55 @@
+name: Build Universal Plugin
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        architecture: [x86_64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Build for ${{ matrix.architecture }}
+        run: |
+          python scripts/build_single.py --arch ${{ matrix.architecture }} --output dist/${{ matrix.architecture }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-${{ matrix.architecture }}
+          path: dist/${{ matrix.architecture }}/
+  create_universal:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-x86_64
+          path: dist/x86_64
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-arm64
+          path: dist/arm64
+      - name: Create universal binary
+        run: |
+          bash scripts/lipo_universal.sh
+      - name: Upload universal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-universal
+          path: dist/universal/
