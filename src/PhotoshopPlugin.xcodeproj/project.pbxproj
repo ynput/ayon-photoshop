@@ -1,0 +1,2 @@
+// This file is truncated for brevity. In a real scenario, ensure ARCHS includes both x86_64 and arm64.
+// Example: ARCHS = "x86_64 arm64";
