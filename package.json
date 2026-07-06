@@ -1,0 +1,19 @@
+{
+  "name": "ayon-photoshop-plugin",
+  "version": "1.0.0",
+  "description": "AYON integration plugin for Adobe Photoshop (Universal Binary)",
+  "main": "index.js",
+  "scripts": {
+    "build": "bash build.sh",
+    "postinstall": "node scripts/install-native.js"
+  },
+  "dependencies": {
+    "node-module": "^1.0.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ynput/ayon-photoshop.git"
+  },
+  "license": "Apache-2.0"
+}

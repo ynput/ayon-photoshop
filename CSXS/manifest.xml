@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ExtensionBundleId="com.ayon.photoshop" ExtensionBundleVersion="1.0.0" Version="8.0">
+  <ExtensionList>
+    <Extension Id="com.ayon.photoshop.panel" Version="1.0.0" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <Host Name="PHSP" Version="[22.0,99.9]" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredArchitectures>
+      <Architecture>macintosh</Architecture>
+      <Architecture>macintel</Architecture>
+    </RequiredArchitectures>
+  </ExecutionEnvironment>
+  <DispatchInfo>
+    <Extension Id="com.ayon.photoshop.panel">
+      <DispatchInfoList>
+        <ExtensionInfo>
+          <Type>Panel</Type>
+          <UI>
+            <Type>Panel</Type>
+            <Menu>AYON</Menu>
+            <Geometry>
+              <Size>
+                <Width>400</Width>
+                <Height>600</Height>
+              </Size>
+            </Geometry>
+            <MinimumSize>
+              <Width>300</Width>
+              <Height>400</Height>
+            </MinimumSize>
+            <AppIdentity>
+              <MacOS>
+                <OperatingSystem>macOS</OperatingSystem>
+                <Architecture>universal</Architecture>
+              </MacOS>
+            </AppIdentity>
+          </UI>
+          <Lifecycle>
+            <AutoVisible>true</AutoVisible>
+            <Startup>
+              <Execution>
+                <Script>CSXS/index.html</Script>
+              </Execution>
+            </Startup>
+          </Lifecycle>
+        </ExtensionInfo>
+      </DispatchInfoList>
+    </Extension>
+  </DispatchInfo>
+</ExtensionManifest>
