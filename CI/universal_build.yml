@@ -1,0 +1,22 @@
+name: Universal Build macOS
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build universal binary
+        run: |
+          chmod +x build_mac.sh
+          ./build_mac.sh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ayon-photoshop-macos-universal
+          path: build/

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest ExtensionBundleId="com.ayon.photoshop.plugin" Version="1.0.0">
+    <ExtensionList>
+        <Extension Id="com.ayon.photoshop.plugin" Version="1.0.0">
+            <DispatchInfo>
+                <HostList>
+                    <Host Name="PHSP" Version="[22.0,99.0]" /> <!-- Adobe Photoshop -->
+                    <Host Name="PHXS" Version="[22.0,99.0]" /> <!-- Adobe Photoshop with extended features -->
+                </HostList>
+                <Resources>
+                    <MainPath>./index.html</MainPath>
+                    <ScriptPath>./js/main.jsx</ScriptPath>
+                </Resources>
+                <Lifecycle>
+                    <AutoVisible>false</AutoVisible>
+                    <StartOn>
+                        <Extension>Registration</Extension>
+                    </StartOn>
+                </Lifecycle>
+            </DispatchInfo>
+        </Extension>
+    </ExtensionList>
+</ExtensionManifest>
