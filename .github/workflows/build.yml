@@ -1,0 +1,30 @@
+name: Build Universal Plugin
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        # Install any required SDK or tools
+        # e.g., brew install cmake
+    
+    - name: Build universal binary
+      run: |
+        chmod +x build_universal.sh
+        ./build_universal.sh
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: universal-plugin
+        path: build/universal/
