@@ -1,0 +1,7 @@
+{
+  "pluginName": "AYON Photoshop Integration",
+  "version": "1.0.0",
+  "supportedArchitectures": ["x86_64", "arm64"],
+  "supportedOS": ["macOS 10.15+"],
+  "description": "Universal binary plugin for Photoshop on macOS (Intel and Apple Silicon)"
+}
