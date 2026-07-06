@@ -1,0 +1,22 @@
+name: Build Universal Plugin
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build x86_64
+        run: |
+          xcodebuild -project AyonPhotoshop.xcodeproj -scheme AyonPhotoshop -configuration Release -arch x86_64 -derivedDataPath build/x86_64
+      - name: Build arm64
+        run: |
+          xcodebuild -project AyonPhotoshop.xcodeproj -scheme AyonPhotoshop -configuration Release -arch arm64 -derivedDataPath build/arm64
+      - name: Create universal binary
+        run: |
+          lipo -create build/x86_64/Build/Products/Release/AyonPhotoshop.framework/Versions/A/AyonPhotoshop build/arm64/Build/Products/Release/AyonPhotoshop.framework/Versions/A/AyonPhotoshop -output ayon_photoshop.universal.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-plugin
+          path: ayon_photoshop.universal.dylib
