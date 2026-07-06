@@ -1,0 +1,24 @@
+name: Build Universal Plugin
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build for x86_64
+        run: |
+          # Replace with actual build commands for your plugin
+          mkdir -p build/x86_64
+          # Example: xcodebuild -arch x86_64 ...
+      - name: Build for arm64
+        run: |
+          mkdir -p build/arm64
+          # Example: xcodebuild -arch arm64 ...
+      - name: Create universal binary
+        run: |
+          python3 build_universal.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: universal-plugin
+          path: build/universal/
