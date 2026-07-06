@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.ynput.ayon.photoshop" ExtensionBundleVersion="1.0.0">
+  <ExtensionList>
+    <Extension Id="com.ynput.ayon.photoshop.panel" Version="1.0.0"/>
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <Host Name="PHSP" Version="[22.0,99.0]" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="11.0" />
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.ynput.ayon.photoshop.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./jsx/main.jsx</ScriptPath>
+          <CEFCommandLine>
+            <Parameter>--enable-nodejs</Parameter>
+            <Parameter>--force-device-scale-factor=1</Parameter>
+            <Parameter>--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Photoshop/22.0 Chrome/90.0.4430.212 Safari/537.36</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <Validate>
+            <Registration>
+              <MenuItem Id="com.ynput.ayon.photoshop.panel" />
+            </Registration>
+          </Validate>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>AYON</Menu>
+          <Geometry>
+            <Size>
+              <Width>300</Width>
+              <Height>400</Height>
+            </Size>
+            <MinSize>
+              <Width>200</Width>
+              <Height>200</Height>
+            </MinSize>
+            <MaxSize>
+              <Width>800</Width>
+              <Height>800</Height>
+            </MaxSize>
+          </Geometry>
+          <Icons>
+            <Icon Type="Normal">./icons/icon.png</Icon>
+            <Icon Type="RollOver">./icons/icon_rollover.png</Icon>
+            <Icon Type="DarkNormal">./icons/icon_dark.png</Icon>
+          </Icons>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
