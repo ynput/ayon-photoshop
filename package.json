@@ -1,0 +1,16 @@
+{
+  "name": "ayon-photoshop",
+  "version": "1.0.0",
+  "description": "AYON integration plugin for Adobe Photoshop",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Build process for arm64 support'",
+    "test": "echo 'No tests specified'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "author": "YNPUT",
+  "license": "MIT",
+  "platforms": ["darwin", "win32", "linux"],
+  "architectures": ["x64", "arm64"]
+}
