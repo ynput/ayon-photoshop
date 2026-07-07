@@ -23,25 +23,14 @@ class ValidateActiveDocumentContext(
 ):
     """Validate that the active document belongs to the current AYON context.
 
-    Two things are checked:
+    Checks that the active document lives inside the work directory expected
+    for the current project / folder / task. This catches documents opened
+    directly (not through the AYON Workfiles tool) that never had any AYON
+    context associated with them, or a mismatch after switching between open
+    documents without refreshing the publisher.
 
-    1. The active document did not change since the publisher was last
-       reset (window opened, Refresh clicked, or previous publish attempt —
-       see CollectRefreshCreateContext). AYON now silently re-syncs its
-       session context whenever the active document changes, so this would
-       otherwise go unnoticed even though the instances/report the artist
-       is looking at may no longer reflect the document about to be
-       published. Requires an explicit Refresh (or disabling the
-       validator) to acknowledge the switch before publishing.
-    2. The active document belongs to the current AYON context at all
-       (project / folder / task), which catches documents opened directly
-       (not through the AYON Workfiles tool) that never had any AYON
-       context associated with them.
-
-    Publishing in either state could file outputs under the wrong context
-    or leave the artist confused about what was actually published. This
-    validator catches both cases early and blocks the publish with a clear
-    explanation.
+    Publishing in that state could file outputs under the wrong context or
+    leave the artist confused about what was actually published.
     """
 
     label = "Validate Active Document Context"
@@ -59,52 +48,7 @@ class ValidateActiveDocumentContext(
             # Unsaved / no document open — let other validators handle this.
             return
 
-        self._validate_no_document_switch(context, current_file)
         self._validate_document_in_context(current_file)
-
-    def _validate_no_document_switch(
-        self, context: pyblish.api.Context, current_file: str
-    ):
-        """Raise if the active document changed since the last refresh.
-
-        Args:
-            context (pyblish.api.Context): The context object.
-            current_file (str): Path to the current active document.
-        """
-        reset_workfile_path = context.data.get("contextRefreshWorkfilePath")
-        if not reset_workfile_path:
-            return
-
-        current_path = Path(current_file)
-        reset_path = Path(reset_workfile_path)
-        if reset_path.resolve() == current_path.resolve():
-            return
-
-        doc_name = current_path.name
-        previous_doc_name = reset_path.name
-
-        msg = (
-            f"Active document changed from '{previous_doc_name}' to "
-            f"'{doc_name}' since the publisher was last refreshed."
-        )
-        repair_msg = (
-            "Click Refresh to acknowledge the new active document and its "
-            "context, then re-publish.\n"
-            "Alternatively, disable this validator if publishing right "
-            "after switching documents is intentional.\n"
-        )
-        formatting_data = {
-            "msg": msg,
-            "repair_msg": repair_msg,
-            "previous_doc_name": previous_doc_name,
-            "doc_name": doc_name,
-        }
-        raise PublishXmlValidationError(
-            self,
-            msg,
-            key="document_switched",
-            formatting_data=formatting_data,
-        )
 
     def _validate_document_in_context(self, current_file: str):
         """Raise if the active document isn't inside the current context's
