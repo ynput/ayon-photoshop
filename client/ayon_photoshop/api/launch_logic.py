@@ -38,13 +38,8 @@ class ConnectionNotEstablishedYet(Exception):
     pass
 
 
-# Metadata id used to persist project_name/folder_path/task_name on a
-# document. This is the source of truth read for active document by
-# PhotoshopHost.get_current_project_name/get_current_folder_path/
-# get_current_task_name/get_current_context.
-# Kept deliberately separate from ayon-core's own "publish_context" entry
-# (PhotoshopHost.get_context_data/update_context_data) so that our stamping
-# never interferes with ayon-core's change-detection for publish attributes.
+# Metadata id used to persist AYON context (project, folder and task)
+#     of a photoshop document.
 DOC_CONTEXT_METADATA_ID = "ayon_photoshop_doc_context"
 
 

@@ -123,39 +123,30 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return {}
 
     def get_current_project_name(self):
-        return (
-            self._get_doc_context_metadata().get("project_name")
-            or super().get_current_project_name()
-        )
+        context = self.get_current_context()
+        return context["project_name"]
 
     def get_current_folder_path(self):
-        return (
-            self._get_doc_context_metadata().get("folder_path")
-            or super().get_current_folder_path()
-        )
+        context = self.get_current_context()
+        return context["folder_path"]
 
     def get_current_task_name(self):
-        return (
-            self._get_doc_context_metadata().get("task_name")
-            or super().get_current_task_name()
-        )
+        context = self.get_current_context()
+        return context["task_name"]
 
     def get_current_context(self):
         doc_context = self._get_doc_context_metadata()
-        return {
-            "project_name": (
-                doc_context.get("project_name")
-                or super().get_current_project_name()
-            ),
-            "folder_path": (
-                doc_context.get("folder_path")
-                or super().get_current_folder_path()
-            ),
-            "task_name": (
-                doc_context.get("task_name")
-                or super().get_current_task_name()
-            ),
-        }
+        project_name = doc_context.get("project_name")
+        if project_name:
+            return {
+                "project_name": project_name,
+                "folder_path": doc_context["folder_path"],
+                "task_name": doc_context["task_name"],
+            }
+        # Older workfiles might not have stored the context
+        # - can happen if workfile was not opened using
+        #   AYON workfile api
+        return super().get_current_context()
 
     def _stamp_context_on_active_document(self, only_if_unstamped=False):
         """Persist the current session context into the active document.
