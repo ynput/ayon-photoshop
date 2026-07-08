@@ -79,17 +79,6 @@
 
       log.warn("connected");
 
-      // Notify the Python server when the active Photoshop document changes so
-      // the session context can be updated from the document metadata.
-      csInterface.addEventListener(
-        "documentAfterActivate",
-        function(event) {
-          RPC.call('Photoshop.document_changed').catch(function(err) {
-            log.warn("document_changed notification failed: " + err);
-          });
-        }
-      );
-
       function EscapeStringForJSX(str){
       // Replaces:
       //  \ with \\

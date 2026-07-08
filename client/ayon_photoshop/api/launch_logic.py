@@ -17,9 +17,6 @@ from ayon_core.lib.events import emit_event, register_event_callback
 from ayon_core.pipeline import (
     registered_host,
     Anatomy,
-    get_current_project_name,
-    get_current_folder_path,
-    get_current_task_name,
 )
 from ayon_core.pipeline.workfile import (
     get_workfile_template_key_from_context,
@@ -41,8 +38,10 @@ class ConnectionNotEstablishedYet(Exception):
     pass
 
 
-# Metadata id used to persist folder_path/task_name on a document so the
-# correct AYON context can be restored when the document is re-activated.
+# Metadata id used to persist project_name/folder_path/task_name on a
+# document. This is the source of truth read for active document by
+# PhotoshopHost.get_current_project_name/get_current_folder_path/
+# get_current_task_name/get_current_context.
 # Kept deliberately separate from ayon-core's own "publish_context" entry
 # (PhotoshopHost.get_context_data/update_context_data) so that our stamping
 # never interferes with ayon-core's change-detection for publish attributes.
@@ -342,47 +341,6 @@ def show_script_editor():
     console_window.activateWindow()
 
 
-def _update_context_from_active_document():
-    """Read the active document's doc-context metadata and update context.
-
-    Reads the dedicated DOC_CONTEXT_METADATA_ID entry written by
-    PhotoshopHost._stamp_context_on_active_document when the document was
-    last opened. Calls change_current_context() when the stored context
-    differs from the current session so that publisher and other tools 
-    reflect the correct task.
-    """
-    ps_stub = stub()
-    layers_meta = ps_stub.get_layers_metadata()
-
-    folder_path = None
-    task_name = None
-    for item in layers_meta:
-        if item.get("id") == DOC_CONTEXT_METADATA_ID:
-            folder_path = item.get("folder_path")
-            task_name = item.get("task_name")
-            break
-
-    if (get_current_folder_path() == folder_path
-            and get_current_task_name() == task_name):
-        log.debug(
-            "Active document context matches current session — "
-            "no context update needed"
-        )
-        return
-
-    project_name = get_current_project_name()
-    folder_entity = ayon_api.get_folder_by_path(project_name, folder_path)
-    task_entity = ayon_api.get_task_by_name(
-        project_name, folder_entity["id"], task_name
-    )
-
-    change_current_context(folder_entity, task_entity)
-    log.debug(
-        f"Session context updated to {folder_path} / {task_name} "
-        "from active document metadata"
-    )
-
-
 class PhotoshopRoute(WebSocketRoute):
     """
         One route, mimicking external application (like Harmony, etc).
@@ -429,20 +387,23 @@ class PhotoshopRoute(WebSocketRoute):
         task_entity = ayon_api.get_task_by_name(
             project, folder_entity["id"], task
         )
-        change_current_context(folder_entity, task_entity)
 
         last_workfile_path = self._get_last_workfile_path(project,
                                                           folder,
                                                           task)
-        if last_workfile_path and os.path.exists(last_workfile_path):
-            def _open_initial_workfile():
+
+        def _apply_context_change():
+            change_current_context(folder_entity, task_entity)
+
+            if last_workfile_path and os.path.exists(last_workfile_path):
                 stub().open(last_workfile_path)
                 # stub().open() bypasses PhotoshopHost.open_workfile(), so
                 # stamp doc-context metadata with the context set above.
                 host = registered_host()
                 if hasattr(host, "_stamp_context_on_active_document"):
                     host._stamp_context_on_active_document()
-            ProcessLauncher.execute_in_main_thread(_open_initial_workfile)
+
+        ProcessLauncher.execute_in_main_thread(_apply_context_change)
 
 
     async def read(self):
@@ -458,22 +419,7 @@ class PhotoshopRoute(WebSocketRoute):
         self._tool_route("loader")
 
     async def publish_route(self):
-        def _show_publisher_with_context():
-            _update_context_from_active_document()
-            show_tool_by_name("publisher")
-
-        ProcessLauncher.execute_in_main_thread(_show_publisher_with_context)
-
-    async def document_changed(self):
-        """Called by the CEP panel when the active Photoshop document changes.
-
-        Updates the AYON session context from the new document's stored
-        doc-context metadata so that the publisher and other tools reflect
-        the correct task.
-        """
-        log.debug("Active Photoshop document changed — updating session context")
-        ProcessLauncher.execute_in_main_thread(_update_context_from_active_document)
-        return "nothing"
+        self._tool_route("publisher")
 
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")

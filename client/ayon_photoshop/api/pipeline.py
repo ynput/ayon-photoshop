@@ -96,27 +96,87 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_containers(self):
         return ls()
 
-    def _stamp_context_on_active_document(self):
+    def _get_doc_context_metadata(self):
+        """Read project/folder/task stored in the active documen.
+
+        Returns:
+            dict: With keys 'project_name'/'folder_path'/'task_name' if the
+                active document was stamped with a context, empty dict
+                otherwise (no active document, or never stamped yet).
+        """
+        stub = _get_stub()
+        if stub is None:
+            return {}
+
+        try:
+            layers_meta = stub.get_layers_metadata()
+        except Exception:
+            log.warning(
+                "Failed to read doc-context metadata", exc_info=True
+            )
+            return {}
+
+        for item in layers_meta:
+            if item.get("id") == DOC_CONTEXT_METADATA_ID:
+                return item
+
+        return {}
+
+    def get_current_project_name(self):
+        return (
+            self._get_doc_context_metadata().get("project_name")
+            or super().get_current_project_name()
+        )
+
+    def get_current_folder_path(self):
+        return (
+            self._get_doc_context_metadata().get("folder_path")
+            or super().get_current_folder_path()
+        )
+
+    def get_current_task_name(self):
+        return (
+            self._get_doc_context_metadata().get("task_name")
+            or super().get_current_task_name()
+        )
+
+    def get_current_context(self):
+        doc_context = self._get_doc_context_metadata()
+        return {
+            "project_name": (
+                doc_context.get("project_name")
+                or super().get_current_project_name()
+            ),
+            "folder_path": (
+                doc_context.get("folder_path")
+                or super().get_current_folder_path()
+            ),
+            "task_name": (
+                doc_context.get("task_name")
+                or super().get_current_task_name()
+            ),
+        }
+
+    def _stamp_context_on_active_document(self, only_if_unstamped=False):
         """Persist the current session context into the active document.
 
-        Writes folder_path and task_name (from the current session /
-        environment) into the active document's own DOC_CONTEXT_METADATA_ID
-        File Info entry — kept separate from ayon-core's 'publish_context'
-        entry (see get_context_data/update_context_data below) — so that
-        later, when this document is re-activated among several open
-        documents, the correct AYON context can be restored from it by
-        launch_logic._update_context_from_active_document.
+        Writes project_name/folder_path/task_name into the active
+        document's own DOC_CONTEXT_METADATA_ID File Info entry — kept
+        separate from ayon-core's 'publish_context'.
 
-        Called after a workfile is opened or saved, when the relevant document
-        is guaranteed to be the active one. Skipped when there is no active
-        document or when the stored value already matches.
+        Called after a workfile is opened or saved, when the relevant
+        document is guaranteed to be the active one. Skipped when there is
+        no active document or when the stored value already matches.
+
+        Args:
+            only_if_unstamped (bool): When True, never overwrite an existing
+                stamp — only write one if the active document has none yet.
+                Meant to avoid overwriting a document's own context with the
+                wrong Environment variables values.
         """
         stub = _get_stub()
         if stub is None:
             return
-
-        folder_path = self.get_current_folder_path()
-        task_name = self.get_current_task_name()
 
         stored = None
         other_meta = []
@@ -126,67 +186,41 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             else:
                 other_meta.append(item)
 
+        if only_if_unstamped and stored:
+            return
+
+        project_name = super().get_current_project_name()
+        folder_path = super().get_current_folder_path()
+        task_name = super().get_current_task_name()
+
         if (stored
+                and stored.get("project_name") == project_name
                 and stored.get("folder_path") == folder_path
                 and stored.get("task_name") == task_name):
             return
 
         doc_context = {
             "id": DOC_CONTEXT_METADATA_ID,
+            "project_name": project_name,
             "folder_path": folder_path,
             "task_name": task_name,
         }
         stub.imprint(doc_context["id"], doc_context, items_meta=other_meta)
 
     def get_context_data(self):
-        """Get stored values for context (validation enable/disable etc)
-
-        Merges every 'publish_context' entry found (later ones win) so that
-        the returned data is correct even if a document accidentally holds
-        more than one entry from older versions.
-
-        Must only ever hold the data ayon-core itself round-trips here
-        (currently 'publish_attributes') — never add extra keys, or
-        ayon-core's change-detection in CreateContext will always consider
-        the context "changed" and re-save (and re-imprint) on every publish
-        action. Document-specific context (folder_path/task_name) is stored
-        separately, see _stamp_context_on_active_document.
-        """
-        stub = _get_stub()
-        if stub is None:
-            return {}
-
-        data = {}
-        found = False
-        for item in stub.get_layers_metadata():
+        """Get stored values for context (validation enable/disable etc)"""
+        meta = _get_stub().get_layers_metadata()
+        for item in meta:
             if item.get("id") == "publish_context":
-                found = True
-                data.update(item)
-        if not found:
-            return {}
-        data.pop("id", None)
-        return data
+                item.pop("id")
+                return item
+        return {}
 
-    def update_context_data(self, data, changes=None):
-        """Store value needed for context.
-
-        Args:
-            data (dict): Data to update.
-            changes (TrackChangesItem): Unused, kept for compatibility with
-                the HostBase interface signature.
-        """
-        stub = _get_stub()
-        if stub is None:
-            return
-
-        context_data = dict(data)
-        context_data["id"] = "publish_context"
-
-        items_meta = [
-            meta for meta in stub.get_layers_metadata()
-            if meta.get("id") != "publish_context"
-        ]
-        stub.imprint(context_data["id"], context_data, items_meta=items_meta)
+    def update_context_data(self, data, changes):
+        """Store value needed for context"""
+        item = data
+        item["id"] = "publish_context"
+        _get_stub().imprint(item["id"], item)
 
     def list_instances(self):
         """List all created instances to publish from current workfile.
@@ -266,7 +300,7 @@ def on_application_launch():
     # was launched), so stamp it now that the connection is established.
     host = registered_host()
     if hasattr(host, "_stamp_context_on_active_document"):
-        host._stamp_context_on_active_document()
+        host._stamp_context_on_active_document(only_if_unstamped=True)
 
 
 def ls():
