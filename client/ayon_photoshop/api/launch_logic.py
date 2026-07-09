@@ -395,8 +395,8 @@ class PhotoshopRoute(WebSocketRoute):
                 # stub().open() bypasses PhotoshopHost.open_workfile(), so
                 # stamp doc-context metadata with the context set above.
                 host = registered_host()
-                if hasattr(host, "_stamp_context_on_active_document"):
-                    host._stamp_context_on_active_document()
+                if hasattr(host, "set_active_document_context"):
+                    host.set_active_document_context(project, folder, task)
 
         ProcessLauncher.execute_in_main_thread(_apply_context_change)
 

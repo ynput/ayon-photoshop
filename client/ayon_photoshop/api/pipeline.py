@@ -60,19 +60,11 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def open_workfile(self, filepath):
         lib.stub().open(filepath)
-
-        # Stamp the freshly opened document with the current context so it can
-        # be restored later when switching between multiple open documents.
-        self._stamp_context_on_active_document()
-
         return True
 
     def save_workfile(self, filepath=None):
         _, ext = os.path.splitext(filepath)
         lib.stub().saveAs(filepath, ext.lstrip("."), False)
-
-        # Stamp the saved document with the current context.
-        self._stamp_context_on_active_document()
 
     def get_current_workfile(self):
         try:
@@ -148,22 +140,24 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         #   AYON workfile api
         return super().get_current_context()
 
-    def _stamp_context_on_active_document(self, only_if_unstamped=False):
-        """Persist the current session context into the active document.
+    def set_active_document_context(
+        self,
+        project_name,
+        folder_path,
+        task_name,
+        only_if_unstamped=False,
+    ):
+        """Persist project/folder/task into the active document's metadata.
 
-        Writes project_name/folder_path/task_name into the active
-        document's own DOC_CONTEXT_METADATA_ID File Info entry — kept
-        separate from ayon-core's 'publish_context'.
-
-        Called after a workfile is opened or saved, when the relevant
-        document is guaranteed to be the active one. Skipped when there is
-        no active document or when the stored value already matches.
+        This is the single place writing DOC_CONTEXT_METADATA_ID — the
+        source of truth read back by get_current_context() for whichever
+        document happens to be active — kept separate from ayon-core's
+        'publish_context'.
 
         Args:
-            only_if_unstamped (bool): When True, never overwrite an existing
-                stamp — only write one if the active document has none yet.
-                Meant to avoid overwriting a document's own context with the
-                wrong Environment variables values.
+            only_if_unstamped (bool): When True, never overwrite an
+                existing stamp — only write one if the active document
+                has none yet.
         """
         stub = _get_stub()
         if stub is None:
@@ -180,16 +174,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if only_if_unstamped and stored:
             return
 
-        project_name = super().get_current_project_name()
-        folder_path = super().get_current_folder_path()
-        task_name = super().get_current_task_name()
-
-        if (stored
-                and stored.get("project_name") == project_name
-                and stored.get("folder_path") == folder_path
-                and stored.get("task_name") == task_name):
-            return
-
         doc_context = {
             "id": DOC_CONTEXT_METADATA_ID,
             "project_name": project_name,
@@ -197,6 +181,35 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             "task_name": task_name,
         }
         stub.imprint(doc_context["id"], doc_context, items_meta=other_meta)
+
+    def _set_current_context(self, context_change_data):
+        """Store the new context directly on the active document.
+
+        Note: ayon-core calls this *before* the target workfile is
+        actually opened (see IWorkfileHost.open_workfile_with_context), so
+        when switching documents this stamps whatever is active right
+        now, not necessarily the document about to be opened..
+        """
+        super()._set_current_context(context_change_data)
+        self.set_active_document_context(
+            context_change_data.project_entity["name"],
+            context_change_data.folder_entity["path"],
+            context_change_data.task_entity["name"],
+        )
+
+    def store_global_context_to_active_document(self):
+        """Stamp the current global (env-based) context onto the active
+        document.
+
+        Used for the very first document opened at Photoshop startup..
+        """
+        context = super().get_current_context()
+        self.set_active_document_context(
+            context["project_name"],
+            context["folder_path"],
+            context["task_name"],
+            only_if_unstamped=True,
+        )
 
     def get_context_data(self):
         """Get stored values for context (validation enable/disable etc)"""
@@ -290,8 +303,8 @@ def on_application_launch():
     # holds the correct folder_path/task_name (set by AYON before Photoshop
     # was launched), so stamp it now that the connection is established.
     host = registered_host()
-    if hasattr(host, "_stamp_context_on_active_document"):
-        host._stamp_context_on_active_document(only_if_unstamped=True)
+    if hasattr(host, "store_global_context_to_active_document"):
+        host.store_global_context_to_active_document()
 
 
 def ls():
