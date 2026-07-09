@@ -190,7 +190,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         when switching documents this stamps whatever is active right
         now, not necessarily the document about to be opened..
         """
-        super()._set_current_context(context_change_data)
         self.set_active_document_context(
             context_change_data.project_entity["name"],
             context_change_data.folder_entity["path"],
@@ -303,8 +302,7 @@ def on_application_launch():
     # holds the correct folder_path/task_name (set by AYON before Photoshop
     # was launched), so stamp it now that the connection is established.
     host = registered_host()
-    if hasattr(host, "store_global_context_to_active_document"):
-        host.store_global_context_to_active_document()
+    host.store_global_context_to_active_document()
 
 
 def ls():
