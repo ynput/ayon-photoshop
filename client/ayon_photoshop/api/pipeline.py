@@ -314,8 +314,7 @@ def on_application_launch():
     # holds the correct folder_path/task_name (set by AYON before Photoshop
     # was launched), so stamp it now that the connection is established.
     host = registered_host()
-    if hasattr(host, "store_global_context_to_active_document"):
-        host.store_global_context_to_active_document()
+    host.store_global_context_to_active_document()
 
 
 def ls():
