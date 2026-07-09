@@ -18,7 +18,8 @@ from ayon_core.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
-    IPublishHost
+    IPublishHost,
+    ContextChangeReason,
 )
 
 from ayon_core.pipeline.load import any_outdated_containers
@@ -185,23 +186,33 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def _set_current_context(self, context_change_data):
         """Store the new context directly on the active document.
 
-        Note: ayon-core calls this *before* the target workfile is
-        actually opened (see IWorkfileHost.open_workfile_with_context), so
-        when switching documents this stamps whatever is active right
-        now, not necessarily the document about to be opened..
+        Skipped for workfile_open: at this point the target workfile has
+        not been opened yet, so the active document is still the
+        previous one — stamping here would corrupt it. _after_workfile_open
+        handles that case once the new document is actually active.
         """
-        super()._set_current_context(context_change_data)
+        if context_change_data.reason == ContextChangeReason.workfile_open:
+            return
+
         self.set_active_document_context(
             context_change_data.project_entity["name"],
             context_change_data.folder_entity["path"],
             context_change_data.task_entity["name"],
         )
 
+    def _after_workfile_open(self, open_workfile_context):
+        """Stamp context onto the document once it is actually active."""
+        self.set_active_document_context(
+            open_workfile_context.project_entity["name"],
+            open_workfile_context.folder_entity["path"],
+            open_workfile_context.task_entity["name"],
+        )
+
     def store_global_context_to_active_document(self):
         """Stamp the current global (env-based) context onto the active
         document.
 
-        Used for the very first document opened at Photoshop startup..
+        Used for the very first document opened at Photoshop startup.
         """
         context = super().get_current_context()
         self.set_active_document_context(
