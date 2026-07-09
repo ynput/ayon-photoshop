@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import os
+from pathlib import Path
 import platform
 import subprocess
 
@@ -279,10 +280,20 @@ class ProcessLauncher(QtCore.QObject):
             websocket_server.host_name,
             websocket_server.port
         ):
+            # Recover the workfile the source process actually intended to
+            # open (if any) from the launch args, so the already-running
+            # instance opens that file instead of guessing "last workfile".
+            workfile_path = None
+            for arg in self._subprocess_args:
+                if Path(arg).suffix in (".psb", ".psd"):
+                    workfile_path = arg
+
             self.log.info(
                 "Server already running, sending actual context and exit."
             )
-            asyncio.run(websocket_server.send_context_change(self.route_name))
+            asyncio.run(websocket_server.send_context_change(
+                self.route_name, workfile_path.as_posix()
+            ))
             self.exit()
             return
 
@@ -364,39 +375,51 @@ class PhotoshopRoute(WebSocketRoute):
 
     # This method calls function on the client side
     # client functions
-    async def set_context(self, project, folder, task):
+    async def set_context(self, project, folder, task, workfile=None):
         """
             Sets 'project' and 'folder' to envs, eg. setting context.
 
-        Opens last workile from that context if exists.
+        Opens 'workfile' if given and it exists, otherwise falls back to
+        the last workfile from that context, if any exists.
 
         Args:
             project (str)
             folder (str)
-            task (str
+            task (str)
+            workfile (Optional[str]): Specific workfile the source process
+                wants opened in this context, instead of guessing the last
+                workfile. May not exist (e.g. new context), in which case
+                the last-workfile fallback is used instead.
         """
         log.info("Setting context change")
-        log.info(f"project {project} folder {folder} task {task}")
+        log.info(
+            f"project {project} folder {folder} task {task} "
+            f"workfile {workfile}"
+        )
 
         folder_entity = ayon_api.get_folder_by_path(project, folder)
         task_entity = ayon_api.get_task_by_name(
             project, folder_entity["id"], task
         )
 
-        last_workfile_path = self._get_last_workfile_path(project,
-                                                          folder,
-                                                          task)
+        if not workfile or not os.path.exists(workfile):
+            workfile = self._get_last_workfile_path(project, folder, task)
 
         def _apply_context_change():
-            change_current_context(folder_entity, task_entity)
-
-            if last_workfile_path and os.path.exists(last_workfile_path):
-                stub().open(last_workfile_path)
-                # stub().open() bypasses PhotoshopHost.open_workfile(), so
-                # stamp doc-context metadata with the context set above.
+            if workfile and os.path.exists(workfile):
                 host = registered_host()
-                if hasattr(host, "set_active_document_context"):
-                    host.set_active_document_context(project, folder, task)
+                host.open_workfile_with_context(
+                    workfile, folder_entity, task_entity
+                )
+                return
+
+            # No specific workfile was requested and none exists yet for
+            # this context. There is currently no way to create a blank
+            # Photoshop document via the extension API, so - rather than
+            # guessing or overwriting whatever document happens to be
+            # active - just update the global context and leave the
+            # active document untouched.
+            change_current_context(folder_entity, task_entity)
 
         ProcessLauncher.execute_in_main_thread(_apply_context_change)
 
