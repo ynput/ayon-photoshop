@@ -143,11 +143,10 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def set_active_document_context(
         self,
-        project_name,
-        folder_path,
-        task_name,
-        only_if_unstamped=False,
-    ):
+        project_name: str,
+        folder_path: str,
+        task_name: str,
+    ) -> None:
         """Persist project/folder/task into the active document's metadata.
 
         This is the single place writing DOC_CONTEXT_METADATA_ID — the
@@ -164,24 +163,18 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if stub is None:
             return
 
-        stored = None
-        other_meta = []
-        for item in stub.get_layers_metadata():
-            if item.get("id") == DOC_CONTEXT_METADATA_ID:
-                stored = item
-            else:
-                other_meta.append(item)
-
-        if only_if_unstamped and stored:
-            return
-
+        items = [
+            item
+            for item in stub.get_layers_metadata()
+            if item.get("id") != DOC_CONTEXT_METADATA_ID
+        ]
         doc_context = {
             "id": DOC_CONTEXT_METADATA_ID,
             "project_name": project_name,
             "folder_path": folder_path,
             "task_name": task_name,
         }
-        stub.imprint(doc_context["id"], doc_context, items_meta=other_meta)
+        stub.imprint(doc_context["id"], doc_context, items_meta=items)
 
     def _set_current_context(self, context_change_data):
         """Store the new context directly on the active document.
@@ -219,7 +212,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             context["project_name"],
             context["folder_path"],
             context["task_name"],
-            only_if_unstamped=True,
         )
 
     def get_context_data(self):

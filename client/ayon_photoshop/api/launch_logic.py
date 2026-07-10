@@ -285,14 +285,14 @@ class ProcessLauncher(QtCore.QObject):
             # instance opens that file instead of guessing "last workfile".
             workfile_path = None
             for arg in self._subprocess_args:
-                if Path(arg).suffix in (".psb", ".psd"):
+                if Path(arg).suffix.lower() in (".psb", ".psd"):
                     workfile_path = arg
 
             self.log.info(
                 "Server already running, sending actual context and exit."
             )
             asyncio.run(websocket_server.send_context_change(
-                self.route_name, workfile_path.as_posix()
+                self.route_name, workfile_path
             ))
             self.exit()
             return
@@ -375,7 +375,7 @@ class PhotoshopRoute(WebSocketRoute):
 
     # This method calls function on the client side
     # client functions
-    async def set_context(self, project, folder, task, workfile=None):
+    async def set_context(self, project, folder, task, workfile):
         """
             Sets 'project' and 'folder' to envs, eg. setting context.
 
@@ -401,9 +401,6 @@ class PhotoshopRoute(WebSocketRoute):
         task_entity = ayon_api.get_task_by_name(
             project, folder_entity["id"], task
         )
-
-        if not workfile or not os.path.exists(workfile):
-            workfile = self._get_last_workfile_path(project, folder, task)
 
         def _apply_context_change():
             if workfile and os.path.exists(workfile):

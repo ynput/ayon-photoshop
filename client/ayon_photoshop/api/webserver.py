@@ -71,7 +71,7 @@ class WebServerTool:
     def stop_server(self):
         self.stop()
 
-    async def send_context_change(self, host, workfile_path=None):
+    async def send_context_change(self, host, workfile_path):
         """
             Calls running webserver to inform about context change
 
