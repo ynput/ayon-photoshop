@@ -201,6 +201,14 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             open_workfile_context.task_entity["name"],
         )
 
+    def _before_workfile_save(self, save_workfile_context):
+        """Stamp context onto the document before it is saved."""
+        self.set_active_document_context(
+            save_workfile_context.project_entity["name"],
+            save_workfile_context.folder_entity["path"],
+            save_workfile_context.task_entity["name"],
+        )
+
     def store_global_context_to_active_document(self):
         """Stamp the current global (env-based) context onto the active
         document.

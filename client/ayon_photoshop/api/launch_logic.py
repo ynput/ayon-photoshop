@@ -25,7 +25,6 @@ from ayon_core.pipeline.workfile import (
 )
 from ayon_core.pipeline.template_data import get_template_data_with_names
 from ayon_core.tools.utils import host_tools
-from ayon_core.pipeline.context_tools import change_current_context
 
 from .webserver import WebServerTool
 from .ws_stub import PhotoshopServerStub
@@ -379,8 +378,12 @@ class PhotoshopRoute(WebSocketRoute):
         """
             Sets 'project' and 'folder' to envs, eg. setting context.
 
-        Opens 'workfile' if given and it exists, otherwise falls back to
-        the last workfile from that context, if any exists.
+        Opens 'workfile' if given and it exists, otherwise opens the last
+        workfile from that context if one exists.
+
+        If neither exists, a new blank document is created (sized from the
+        target task's resolution attributes) and saved as under this
+        context's own workfile path.
 
         Args:
             project (str)
@@ -388,8 +391,7 @@ class PhotoshopRoute(WebSocketRoute):
             task (str)
             workfile (Optional[str]): Specific workfile the source process
                 wants opened in this context, instead of guessing the last
-                workfile. May not exist (e.g. new context), in which case
-                the last-workfile fallback is used instead.
+                workfile. May not exist (e.g. new context).
         """
         log.info("Setting context change")
         log.info(
@@ -403,20 +405,36 @@ class PhotoshopRoute(WebSocketRoute):
         )
 
         def _apply_context_change():
-            if workfile and os.path.exists(workfile):
-                host = registered_host()
+            host = registered_host()
+
+            target_workfile = workfile
+            if not target_workfile:
+                target_workfile = self._get_last_workfile_path(
+                    project, folder, task
+                )
+
+            if target_workfile and os.path.exists(target_workfile):
                 host.open_workfile_with_context(
-                    workfile, folder_entity, task_entity
+                    target_workfile, folder_entity, task_entity
                 )
                 return
 
-            # No specific workfile was requested and none exists yet for
-            # this context. There is currently no way to create a blank
-            # Photoshop document via the extension API, so - rather than
-            # guessing or overwriting whatever document happens to be
-            # active - just update the global context and leave the
-            # active document untouched.
-            change_current_context(folder_entity, task_entity)
+            # No workfile exists yet for this context. Create a blank
+            # document sized from the target task's own resolution
+            # attributes, then save it into this context's workfile path -
+            # the previously active document is never touched.
+            attribs = task_entity.get("attrib") or {}
+            width = attribs.get("resolutionWidth") or 1920
+            height = attribs.get("resolutionHeight") or 1080
+            stub().create_document(
+                name=Path(target_workfile).stem,
+                width=width,
+                height=height,
+            )
+            host.set_active_document_context(project, folder, task)
+            host.save_workfile_with_context(
+                target_workfile, folder_entity, task_entity
+            )
 
         ProcessLauncher.execute_in_main_thread(_apply_context_change)
 
