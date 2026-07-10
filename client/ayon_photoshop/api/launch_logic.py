@@ -423,9 +423,8 @@ class PhotoshopRoute(WebSocketRoute):
             # document sized from the target task's own resolution
             # attributes, then save it into this context's workfile path -
             # the previously active document is never touched.
-            attribs = task_entity.get("attrib") or {}
-            width = attribs.get("resolutionWidth") or 1920
-            height = attribs.get("resolutionHeight") or 1080
+            width = task_entity["attrib"]["resolutionWidth"]
+            height = task_entity["attrib"]["resolutionHeight"]
             stub().create_document(
                 name=Path(target_workfile).stem,
                 width=width,
