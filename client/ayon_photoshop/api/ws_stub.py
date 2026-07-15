@@ -650,6 +650,41 @@ class PhotoshopServerStub:
         except json.decoder.JSONDecodeError:
             raise ValueError("Received broken JSON {}".format(res))
 
+    def get_broken_smart_object_links(self):
+        """Return names of layers that have broken or missing Smart Object links.
+
+        Covers both locally linked files (link.status == missing/unresolved)
+        and CC Libraries assets (linkMissing flag).
+
+        Returns:
+            list[str]: Layer names with broken links.
+        """
+        res = self.websocketserver.call_on_client(
+            self, "Photoshop.get_broken_smart_object_links"
+        )
+        try:
+            return json.loads(res)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def fix_broken_smart_object_links(self):
+        """Rasterise and re-embed every Smart Object layer with a broken link.
+
+        Each affected layer is rasterised to cut its stale cloud or file
+        reference, then immediately converted back to a fresh embedded Smart
+        Object so it remains non-destructive for subsequent edits.
+
+        Returns:
+            list[str]: Names of the layers that were repaired.
+        """
+        res = self.websocketserver.call_on_client(
+            self, "Photoshop.fix_broken_smart_object_links"
+        )
+        try:
+            return json.loads(res)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
     def close(self):
         """Shutting down PS and process too.
 

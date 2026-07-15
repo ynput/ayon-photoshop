@@ -25,6 +25,11 @@ extract_image_ext_enum = [
     {"value": "exr", "label": "exr"},
 ]
 
+extract_layer_ext_enum = [
+    {"value": "psd", "label": "psd"},
+    {"value": "psb", "label": "psb"},
+]
+
 color_mode_enum = [
     {"value": "RGB", "label": "RGB"},
     {"value": "CMYK", "label": "CMYK"},
@@ -122,7 +127,8 @@ class ValidateNamingPlugin(BaseSettingsModel):
 
 class ExtractImagePlugin(BaseSettingsModel):
     """Extracts image products and representations per published instance"""
-
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(False, title="Optional")
     formats: list[str] = SettingsField(
         title="Extract Formats",
         default_factory=list,
@@ -140,11 +146,24 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
     enabled: bool = SettingsField(False, title="Enabled")
+    optional: bool = SettingsField(False, title="Optional")
     merge_layersets: bool = SettingsField(
         False,
         title="Merge Layersets",
         description="Merge all layersets within the instance set.",
     )
+    extension: str = SettingsField(
+        "psd",
+        title="Export extension",
+        enum_resolver=lambda: extract_layer_ext_enum,
+    )
+
+
+class ValidateSmartObjectLinksPlugin(BaseSettingsModel):
+    """Validate that no Smart Object layers have broken or missing links."""
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class ValidateDocumentSettingsPlugin(BaseSettingsModel):
@@ -202,6 +221,11 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         default_factory=ExtractLayersPlugin,
     )
 
+    ValidateSmartObjectLinks: ValidateSmartObjectLinksPlugin = SettingsField(
+        title="Validate Smart Object Links",
+        default_factory=ValidateSmartObjectLinksPlugin,
+    )
+
     ValidateDocumentSettings: ValidateDocumentSettingsPlugin = SettingsField(
         title="Validate Document Settings",
         default_factory=ValidateDocumentSettingsPlugin,
@@ -225,6 +249,8 @@ DEFAULT_PUBLISH_SETTINGS = {
         "replace_char": "_"
     },
     "ExtractImage": {
+        "enabled": True,
+        "optional": False,
         "formats": [
             "png",
             "jpg",
@@ -235,7 +261,14 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractLayers": {
         "enabled": False,
-        "merge_layersets": False
+        "optional": False,
+        "merge_layersets": False,
+        "extension": "psd",
+    },
+    "ValidateSmartObjectLinks": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ValidateDocumentSettings": {
         "enabled": False,
