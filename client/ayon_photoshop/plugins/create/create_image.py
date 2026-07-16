@@ -283,7 +283,7 @@ class ImageCreator(Creator):
         stub = api.stub()
 
         def _is_group_layer(layer) -> bool:
-            return bool(layer and getattr(layer, "group", False) is True)
+            return getattr(layer, "group", False) is True
 
         group_ids: set[int] = set()
         for instance in instances:
