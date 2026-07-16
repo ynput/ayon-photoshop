@@ -281,12 +281,6 @@ class ImageCreator(Creator):
             instances (list): List of instances to delete group layers for.
         """
         stub = api.stub()
-
-        def _is_group_layer(layer) -> bool:
-            if not layer:
-                return False
-            return getattr(layer, "group", False) is True
-
         group_ids: set[int] = set()
         for instance in instances:
             product_name = instance.data.get("productName", "")
@@ -306,11 +300,13 @@ class ImageCreator(Creator):
 
         # Ungroup first to preserve member layers.
         for group_id in group_ids:
-            if _is_group_layer(layers_by_id.get(group_id)):
+            layer = layers_by_id.get(group_id)
+            if layer is not None and layer.group:
                 stub.dissolve_layerset(str(group_id))
 
         # Refresh and remove any remaining group layers.
         layers_by_id = {layer.id: layer for layer in stub.get_layers()}
         for group_id in group_ids:
-            if _is_group_layer(layers_by_id.get(group_id)):
+            layer = layers_by_id.get(group_id)
+            if layer is not None and layer.group:
                 stub.delete_layer(group_id)
