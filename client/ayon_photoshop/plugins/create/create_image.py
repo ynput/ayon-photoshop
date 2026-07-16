@@ -278,36 +278,35 @@ class ImageCreator(Creator):
         Args:
             instances (list): List of instances to delete group layers for.
         """
-        group_ids = {
-            int(member) for instance in instances
-            for member in instance.data.get("members", [])
-            if member.isdigit() and
-            # if the group instance is not created by this creator,
-            # it will not have the layer_name attribute, this check ensures we only
-            # delete groups created by this creator
-            instance.data["productName"].startswith(instance.data.get("layer_name"))
-        }
+        stub = api.stub()
+
+        def _is_group_layer(layer) -> bool:
+            return bool(layer and getattr(layer, "group", False) is True)
+
+        group_ids: set[int] = set()
+        for instance in instances:
+            product_name = instance.data.get("productName", "")
+            layer_name = instance.data.get("layer_name")
+            # Only process instances created by this creator.
+            if not layer_name or not product_name.startswith(layer_name):
+                continue
+
+            for member in instance.data.get("members", []):
+                if member.isdigit():
+                    group_ids.add(int(member))
+
         if not group_ids:
             return
 
-        layers_by_id = {
-            layer.id: layer for layer in api.stub().get_layers()
-        }
+        layers_by_id = {layer.id: layer for layer in stub.get_layers()}
+
+        # Ungroup first to preserve member layers.
         for group_id in group_ids:
-            group_layer = layers_by_id.get(group_id)
-            if not group_layer and not getattr(group_layer, "group", False):
-                continue
+            if _is_group_layer(layers_by_id.get(group_id)):
+                stub.dissolve_layerset(str(group_id))
 
-            if group_layer.group is not True:
-                continue
-
-            # Ungroup to keep member layers in the document.
-            api.stub().dissolve_layerset(str(group_id))
-
-        # Refresh metadata about layers
-        layers_by_id = {
-            layer.id: layer for layer in api.stub().get_layers()
-        }
+        # Refresh and remove any remaining group layers.
+        layers_by_id = {layer.id: layer for layer in stub.get_layers()}
         for group_id in group_ids:
-            if layers_by_id.get(group_id):
-                api.stub().delete_layer(group_id)
+            if _is_group_layer(layers_by_id.get(group_id)):
+                stub.delete_layer(group_id)
