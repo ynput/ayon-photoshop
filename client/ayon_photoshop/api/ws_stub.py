@@ -481,40 +481,10 @@ class PhotoshopServerStub:
         exclude_ids = {layer.id for layer in exclude_layers}
         if exclude_recursive:
             exclude_ids |= {ll.id for ll in self.get_layers_in_layers(exclude_layers)}
-        
+
         for layer in self.get_layers():
             if layer.id not in exclude_ids:
                 self.delete_layer(layer.id)
-
-    def delete_group_instance(self, group_ids: set[int]) -> None:
-        """Delete group instance by only deleting the group layer.
-
-        Args:
-            group_ids (list): list of group ids
-        """
-        if not group_ids:
-            return
-        layers_by_id = {
-            int(layer.id): layer for layer in self.get_layers()
-        }
-        for group_id in group_ids:
-            group_layer = layers_by_id.get(group_id)
-            if not group_layer:
-                continue
-
-            if group_layer.group is not True:
-                continue
-
-            # Ungroup to keep member layers in the document.
-            self.dissolve_layerset(str(group_id))
-
-        # Refresh metadata about layers
-        layers_by_id = {
-            layer.id: layer for layer in self.get_layers()
-        }
-        for group_id in group_ids:
-            if layers_by_id.get(group_id):
-                self.delete_layer(group_id)
 
     def get_layers_metadata(self):
         """Reads layers metadata from Headline from active document in PS.

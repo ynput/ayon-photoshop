@@ -1,5 +1,6 @@
 import re
 
+import pyblish.api
 from ayon_core.lib import BoolDef
 from ayon_core.pipeline import (
     Creator,
@@ -163,11 +164,8 @@ class ImageCreator(Creator):
                                created_inst.data_to_store())
 
     def remove_instances(self, instances):
+        self._delete_group_instance(instances)
         for instance in instances:
-            members = instance.data.get("members")
-            if members:
-                members = {int(member) for member in members}
-                api.stub().delete_group_instance(members)
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
@@ -273,3 +271,29 @@ class ImageCreator(Creator):
             if layer_name:
                 return {"layer": layer_name}
         return {"layer": "{layer}"}
+
+    def _delete_group_instance(self, instances: list[pyblish.api.Instance]) -> None:
+        """Delete group instance by only deleting the group layer.
+
+        Args:
+            instances (list): List of instances to delete group layers for.
+        """
+        group_ids = {
+            int(member)
+            for instance in instances
+            for member in instance.data.get("members", [])
+        }
+        if not group_ids:
+            return
+
+        layers_by_id = {
+            layer.id: layer for layer in api.stub().get_layers()
+        }
+        for group_id in group_ids:
+            group_layer = layers_by_id.get(group_id)
+            if not group_layer:
+                continue
+
+            # Ungroup to keep member layers in the document.
+            api.stub().dissolve_layerset(str(group_id))
+            api.stub().delete_layer(group_id)
