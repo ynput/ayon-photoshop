@@ -1,14 +1,18 @@
 import os
+from typing import TYPE_CHECKING
 
 import pyblish.api
 from ayon_core.pipeline import publish
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
+if TYPE_CHECKING:
+    from ayon_core.pipeline import CreateContext, CreatedInstance
 
 
 class ExtractImage(
     pyblish.api.ContextPlugin,
-    publish.ColormanagedPyblishPluginMixin
+    publish.ColormanagedPyblishPluginMixin,
+    publish.OptionalPyblishPluginMixin
 ):
     """Extract all layers (groups) marked for publish.
 
@@ -23,20 +27,21 @@ class ExtractImage(
     order = publish.Extractor.order - 0.48
     label = "Extract Image"
     hosts = ["photoshop"]
-
-    families = ["image", "background"]
+    families = ["image"]
     formats = ["png", "jpg", "tga", "exr"]
     settings_category = "photoshop"
+    optional = False
 
     def process(self, context):
         # Filter instances
         filtered_instances = []
         for instance in context:
-            product_base_type = instance.data.get("productBaseType")
-            if not product_base_type:
-                product_base_type = instance.data["productType"]
-            if product_base_type in self.families:
-                filtered_instances.append(instance)
+            if (
+                instance.data["productBaseType"] != "image"
+                or not self.is_active(instance.data)
+            ):
+                continue
+            filtered_instances.append(instance)
 
         if not filtered_instances:
             return
@@ -55,25 +60,30 @@ class ExtractImage(
                 staging_dir = self.staging_dir(instance)
                 self.log.info(f"Outputting image to {staging_dir}")
 
-                # Get instance layer ID
-                members = instance.data("members")
-                if not members:
+                ids = set()
+
+                # real layers and groups
+                members = instance.data.get("members")
+                if members:
+                    ids.update(int(member) for member in members)
+
+                # virtual groups collected by color coding or auto_image
+                add_ids = instance.data.pop("ids", None)
+                if add_ids:
+                    ids.update(set(add_ids))
+
+                if not ids:
+                    self.log.debug(
+                        f"Instance {instance} has no publishable layers, "
+                        f"skipping."
+                    )
                     continue
-                instance_id = int(members[0])
 
                 # Context manager handles all visibility: show instance path,
                 # hide siblings, restore original state on exit
-                with photoshop.isolated_layers_visibility(stub, instance_id, all_layers):
+                with photoshop.isolated_layers_visibility(stub, ids, all_layers):
                     # Perform extraction
                     files = {}
-                    ids = set()
-                    # real layers and groups
-                    if members:
-                        ids.update(int(member) for member in members)
-                    # virtual groups collected by color coding or auto_image
-                    add_ids = instance.data.pop("ids", None)
-                    if add_ids:
-                        ids.update(set(add_ids))
 
                     file_basename, workfile_extension = os.path.splitext(
                         stub.get_active_document_name()
@@ -127,3 +137,15 @@ class ExtractImage(
         from ayon_core.pipeline.publish import get_instance_staging_dir
 
         return get_instance_staging_dir(instance)
+
+    @classmethod
+    def get_attr_defs_for_context(cls, create_context: "CreateContext"):
+        return []
+
+    @classmethod
+    def get_attr_defs_for_instance(
+        cls, create_context: "CreateContext", instance: "CreatedInstance"
+    ):
+        if instance.product_base_type != "image":
+            return []
+        return cls.get_attribute_defs()
