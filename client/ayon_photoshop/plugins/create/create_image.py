@@ -281,10 +281,11 @@ class ImageCreator(Creator):
         group_ids = {
             int(member) for instance in instances
             for member in instance.data.get("members", [])
+            if member.isdigit() and
             # if the group instance is not created by this creator,
             # it will not have the layer_name attribute, this check ensures we only
             # delete groups created by this creator
-            if instance.data["productName"].startswith(instance.data.get("layer_name"))
+            instance.data["productName"].startswith(instance.data.get("layer_name"))
         }
         if not group_ids:
             return
@@ -294,10 +295,10 @@ class ImageCreator(Creator):
         }
         for group_id in group_ids:
             group_layer = layers_by_id.get(group_id)
-            if not group_layer:
+            if not group_layer and not getattr(group_layer, "group", False):
                 continue
 
-            if not group_layer.group:
+            if group_layer.group is not True:
                 continue
 
             # Ungroup to keep member layers in the document.
