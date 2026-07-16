@@ -13,6 +13,7 @@ from ayon_core.pipeline import (
     AYON_INSTANCE_ID,
     AVALON_INSTANCE_ID,
 )
+from ayon_core.settings import get_project_settings
 
 from ayon_core.host import (
     HostBase,
@@ -40,6 +41,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "photoshop"
+    workfile_extensions = [".psd", ".psb"]
 
     def install(self):
         """Install Photoshop-specific functionality needed for integration.
@@ -55,6 +57,17 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_creator_plugin_path(CREATE_PATH)
 
         register_event_callback("application.launched", on_application_launch)
+        self._set_default_workfile_extension()
+
+    def _set_default_workfile_extension(self) -> None:
+        """Get the default workfile extension for the current project."""
+
+        project_name = self.get_current_project_name()
+        settings = get_project_settings(project_name)
+        default_workfile_extension = settings["photoshop"]["default_workfile_extension"]
+        if self.workfile_extensions[0] != default_workfile_extension:
+            self.workfile_extensions.remove(default_workfile_extension)
+            self.workfile_extensions.insert(0, default_workfile_extension)
 
     def work_root(self, session):
         return os.path.normpath(session["AYON_WORKDIR"]).replace("\\", "/")
@@ -84,7 +97,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return False
 
     def get_workfile_extensions(self):
-        return [".psd", ".psb"]
+        return self.workfile_extensions
 
     def get_containers(self):
         return ls()

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Broken Smart Object links detected</title>
+<description>
+### Affected layers
+{broken_layers}
+
+### How to repair?
+- **Automatic repair (Repair button):** Each broken layer is rasterised to a
+  pixel snapshot and then re-embedded as a fresh local Smart Object. This
+  severs the stale link and unblocks publishing, but the original source is
+  no longer editable through the layer.
+- **Manual repair:** Right-click the layer in Photoshop, choose
+  *Edit Contents* or *Relink to File / Library* and point it at the correct
+  source, then re-run publish.
+</description>
+</error>
+</root>

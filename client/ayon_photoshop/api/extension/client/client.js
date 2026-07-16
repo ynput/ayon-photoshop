@@ -391,6 +391,24 @@
         return runEvalScript("close()");
       });
 
+      RPC.addRoute('Photoshop.get_broken_smart_object_links', function (data) {
+        log.warn('Server called client route "get_broken_smart_object_links":', data);
+        return runEvalScript("getBrokenSmartObjectLinks()")
+            .then(function (result) {
+                log.warn("get_broken_smart_object_links: " + result);
+                return result;
+            });
+      });
+
+      RPC.addRoute('Photoshop.fix_broken_smart_object_links', function (data) {
+        log.warn('Server called client route "fix_broken_smart_object_links":', data);
+        return runEvalScript("fixBrokenSmartObjectLinks()")
+            .then(function (result) {
+                log.warn("fix_broken_smart_object_links: " + result);
+                return result;
+            });
+      });
+
       RPC.addRoute('Photoshop.eval_code', function (data) {
         log.warn('Server called client route "eval_code":', data);
         return runEvalScript(data.code).then(function(result){
