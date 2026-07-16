@@ -303,4 +303,11 @@ class ImageCreator(Creator):
 
             # Ungroup to keep member layers in the document.
             api.stub().dissolve_layerset(str(group_id))
-            api.stub().delete_layer(group_id)
+
+        # Refresh metadata about layers
+        layers_by_id = {
+            layer.id: layer for layer in self.get_layers()
+        }
+        for group_id in group_ids:
+            if layers_by_id.get(group_id):
+                self.delete_layer(group_id)
