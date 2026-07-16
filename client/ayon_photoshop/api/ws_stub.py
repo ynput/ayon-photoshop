@@ -486,7 +486,7 @@ class PhotoshopServerStub:
             if layer.id not in exclude_ids:
                 self.delete_layer(layer.id)
 
-    def delete_group_instance(self, group_ids: list) -> None:
+    def delete_group_instance(self, group_ids: set[int]) -> None:
         """Delete group instance by only deleting the group layer.
 
         Args:
