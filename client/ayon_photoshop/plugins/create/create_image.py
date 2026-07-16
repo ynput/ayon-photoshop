@@ -166,7 +166,7 @@ class ImageCreator(Creator):
         for instance in instances:
             members = instance.data.get("members")
             if members:
-                members = [int(member) for member in members]
+                members = {int(member) for member in members}
                 api.stub().delete_group_instance(members)
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
