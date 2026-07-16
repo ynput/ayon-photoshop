@@ -492,20 +492,28 @@ class PhotoshopServerStub:
         Args:
             group_ids (list): list of group ids
         """
+        if not group_ids:
+            return
+        layers_by_id = {
+            int(layer.id): layer for layer in self.get_layers()
+        }
         for group_id in group_ids:
-            group_layer = self.get_layer(group_id)
+            group_layer = layers_by_id.get(group_id)
             if not group_layer:
                 continue
 
-            is_group = group_layer.group is True
-            if not is_group:
+            if group_layer.group is not True:
                 continue
 
             # Ungroup to keep member layers in the document.
             self.dissolve_layerset(str(group_id))
 
-            empty_group = self.get_layer(group_id)
-            if empty_group:
+        # Refresh metadata about layers
+        layers_by_id = {
+            layer.id: layer for layer in self.get_layers()
+        }
+        for group_id in group_ids:
+            if layers_by_id.get(group_id):
                 self.delete_layer(group_id)
 
     def get_layers_metadata(self):
