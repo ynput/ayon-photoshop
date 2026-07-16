@@ -166,7 +166,7 @@ class ImageCreator(Creator):
                                created_inst.data_to_store())
 
     def remove_instances(self, instances):
-        self._delete_group_instance(instances)
+        self._delete_instances_groups(instances)
         for instance in instances:
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
@@ -274,7 +274,7 @@ class ImageCreator(Creator):
                 return {"layer": layer_name}
         return {"layer": "{layer}"}
 
-    def _delete_group_instance(self, instances: list[pyblish.api.Instance]) -> None:
+    def _delete_instances_groups(self, instances: list[pyblish.api.Instance]) -> None:
         """Delete group instance by only deleting the group layer.
 
         Args:
@@ -283,6 +283,8 @@ class ImageCreator(Creator):
         stub = api.stub()
 
         def _is_group_layer(layer) -> bool:
+            if not layer:
+                return False
             return getattr(layer, "group", False) is True
 
         group_ids: set[int] = set()
