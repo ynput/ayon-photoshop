@@ -283,10 +283,10 @@ class ImageCreator(Creator):
         stub = api.stub()
         group_ids: set[int] = set()
         for instance in instances:
-            product_name = instance.data.get("productName", "")
+            product_name = instance.data.get("productName")
             layer_name = instance.data.get("layer_name")
             # Only process instances created by this creator.
-            if not layer_name or not product_name.startswith(layer_name):
+            if not product_name.startswith(layer_name):
                 continue
 
             for member in instance.data.get("members", []):
