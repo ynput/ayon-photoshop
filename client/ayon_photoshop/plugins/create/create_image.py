@@ -281,6 +281,10 @@ class ImageCreator(Creator):
         group_ids = {
             int(member) for instance in instances
             for member in instance.data.get("members", [])
+            # if the group instance is not created by this creator,
+            # it will not have the layer_name attribute, this check ensures we only
+            # delete groups created by this creator
+            if instance.data["productName"].startswith(instance.data.get("layer_name"))
         }
         if not group_ids:
             return
