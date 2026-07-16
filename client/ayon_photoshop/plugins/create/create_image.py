@@ -306,7 +306,7 @@ class ImageCreator(Creator):
 
         # Refresh metadata about layers
         layers_by_id = {
-            layer.id: layer for layer in self.get_layers()
+            layer.id: layer for layer in api.stub().get_layers()
         }
         for group_id in group_ids:
             if layers_by_id.get(group_id):
