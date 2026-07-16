@@ -279,8 +279,7 @@ class ImageCreator(Creator):
             instances (list): List of instances to delete group layers for.
         """
         group_ids = {
-            int(member)
-            for instance in instances
+            int(member) for instance in instances
             for member in instance.data.get("members", [])
         }
         if not group_ids:
@@ -292,6 +291,9 @@ class ImageCreator(Creator):
         for group_id in group_ids:
             group_layer = layers_by_id.get(group_id)
             if not group_layer:
+                continue
+
+            if not group_layer.group:
                 continue
 
             # Ungroup to keep member layers in the document.
