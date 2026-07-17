@@ -52,12 +52,12 @@ class ImageCreator(Creator):
                     pre_create_data.get("create_multiple")):
                 for selected_item in top_level_selected_items:
                     if selected_item.group:
-                        groups_to_create.append(selected_item)
+                        groups_to_create.append((selected_item, True))
                     else:
                         top_layers_to_wrap.append(selected_item)
             else:
                 group = stub.group_selected_layers(product_name_from_ui)
-                groups_to_create.append(group)
+                groups_to_create.append((group, False))
         else:
             try:
                 stub.select_layers(stub.get_layers())
@@ -65,18 +65,19 @@ class ImageCreator(Creator):
             except ValueError:
                 raise CreatorError("Cannot group locked Background layer!")
 
-            groups_to_create.append(group)
+            groups_to_create.append((group, False))
 
         # create empty group if nothing selected
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(product_name_from_ui)
-            groups_to_create.append(group)
+            groups_to_create.append((group, False))
+            create_empty_group = True
 
         # wrap each top level layer into separate new group
         for layer in top_layers_to_wrap:
             stub.select_layers([layer])
             group = stub.group_selected_layers(product_name_from_ui)
-            groups_to_create.append(group)
+            groups_to_create.append((group, False))
 
         layer_name = ''
         # use artist chosen option OR force layer if more products are created
@@ -88,7 +89,7 @@ class ImageCreator(Creator):
         if not product_type:
             product_type = self.product_base_type
 
-        for group in groups_to_create:
+        for group, is_existing_group in groups_to_create:
             product_name = product_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
             created_group_name = self._clean_highlights(stub, group.name)
@@ -115,7 +116,8 @@ class ImageCreator(Creator):
                 "productName": product_name,
                 "members": [str(group.id)],
                 "layer_name": layer_name,
-                "long_name": "_".join(layer_names_in_hierarchy)
+                "long_name": "_".join(layer_names_in_hierarchy),
+                "is_existing_group": is_existing_group,
             }
             data.update(data_update)
 
@@ -283,10 +285,10 @@ class ImageCreator(Creator):
         stub = api.stub()
         group_ids: set[int] = set()
         for instance in instances:
-            product_name = instance.data.get("productName")
-            layer_name = instance.data.get("layer_name")
-            # Only process instances created by this creator.
-            if not product_name.startswith(layer_name):
+            is_existing_group = instance.data.get("is_existing_group", True)
+            # Existing groups were in the workfile before instance creation.
+            # Keep them intact and only clean up wrapper groups created by this creator.
+            if is_existing_group:
                 continue
 
             for member in instance.data.get("members", []):
