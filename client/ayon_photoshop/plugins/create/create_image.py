@@ -16,9 +16,13 @@ from ayon_photoshop.lib import clean_product_name
 
 
 @dataclass
-class ImageCreatorData:
+class ImageGroupData:
     """Dataclass to hold information about the group created by the ImageCreator."""
-    group: object | None = None
+    id: int
+    name: str
+    group: bool | None
+    long_name: list[str] | None
+    parents: list[int]
     group_created_by_creator: bool = False
 
 
@@ -41,7 +45,7 @@ class ImageCreator(Creator):
     active_on_create = True
 
     def create(self, product_name_from_ui, data, pre_create_data):
-        groups_to_create: list[ImageCreatorData] = []
+        groups_to_create: list[ImageGroupData] = []
         top_layers_to_wrap = []
         create_empty_group = False
 
@@ -58,16 +62,24 @@ class ImageCreator(Creator):
                     pre_create_data.get("create_multiple")):
                 for selected_item in top_level_selected_items:
                     if selected_item.group:
-                        groups_to_create.append(ImageCreatorData(
-                            group=selected_item,
+                        groups_to_create.append(ImageGroupData(
+                            id=selected_item.id,
+                            name=selected_item.name,
+                            group=selected_item.group,
+                            long_name=selected_item.long_name,
+                            parents=selected_item.parents,
                             group_created_by_creator=False,
                         ))
                     else:
                         top_layers_to_wrap.append(selected_item)
             else:
                 group = stub.group_selected_layers(product_name_from_ui)
-                groups_to_create.append(ImageCreatorData(
-                    group=group,
+                groups_to_create.append(ImageGroupData(
+                    id=group.id,
+                    name=group.name,
+                    group=group.group,
+                    long_name=group.long_name,
+                    parents=group.parents,
                     group_created_by_creator=True,
                 ))
         else:
@@ -77,16 +89,24 @@ class ImageCreator(Creator):
             except ValueError:
                 raise CreatorError("Cannot group locked Background layer!")
 
-            groups_to_create.append(ImageCreatorData(
-                group=group,
+            groups_to_create.append(ImageGroupData(
+                id=group.id,
+                name=group.name,
+                group=group.group,
+                long_name=group.long_name,
+                parents=group.parents,
                 group_created_by_creator=True,
             ))
 
         # create empty group if nothing selected
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(product_name_from_ui)
-            groups_to_create.append(ImageCreatorData(
-                group=group,
+            groups_to_create.append(ImageGroupData(
+                id=group.id,
+                name=group.name,
+                group=group.group,
+                long_name=group.long_name,
+                parents=group.parents,
                 group_created_by_creator=True,
             ))
             create_empty_group = True
@@ -95,8 +115,12 @@ class ImageCreator(Creator):
         for layer in top_layers_to_wrap:
             stub.select_layers([layer])
             group = stub.group_selected_layers(product_name_from_ui)
-            groups_to_create.append(ImageCreatorData(
-                group=group,
+            groups_to_create.append(ImageGroupData(
+                id=group.id,
+                name=group.name,
+                group=group.group,
+                long_name=group.long_name,
+                parents=group.parents,
                 group_created_by_creator=True,
             ))
 
@@ -111,16 +135,16 @@ class ImageCreator(Creator):
             product_type = self.product_base_type
 
         for created_group_data in groups_to_create:
-            group = created_group_data.group
+            name = created_group_data.name
             product_name = product_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
-            created_group_name = self._clean_highlights(stub, group.name)
+            created_group_name = self._clean_highlights(stub, name)
 
             if use_layer_name:
                 layer_name = re.sub(
                     "[^{}]+".format(PRODUCT_NAME_ALLOWED_SYMBOLS),
                     "",
-                    group.name
+                    name
                 )
                 if "{layer}" not in product_name.lower():
                     product_name += "{Layer}"
@@ -129,14 +153,14 @@ class ImageCreator(Creator):
             product_name = product_name.format(**layer_fill)
             product_name = clean_product_name(product_name)
 
-            if group.long_name:
-                for directory in group.long_name[::-1]:
+            if created_group_data.long_name:
+                for directory in created_group_data.long_name[::-1]:
                     name = self._clean_highlights(stub, directory)
                     layer_names_in_hierarchy.append(name)
 
             data_update = {
                 "productName": product_name,
-                "members": [str(group.id)],
+                "members": [str(created_group_data.id)],
                 "layer_name": layer_name,
                 "long_name": "_".join(layer_names_in_hierarchy),
                 "group_created_by_creator": (
@@ -166,7 +190,7 @@ class ImageCreator(Creator):
             self._add_instance_to_context(new_instance)
             # reusing existing group, need to rename afterwards
             if not create_empty_group:
-                stub.rename_layer(group.id,
+                stub.rename_layer(created_group_data.id,
                                   stub.PUBLISH_ICON + created_group_name)
 
     def collect_instances(self):
