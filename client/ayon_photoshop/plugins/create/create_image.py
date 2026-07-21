@@ -334,10 +334,3 @@ class ImageCreator(Creator):
             layer = layers_by_id.get(group_id)
             if layer is not None and layer.group:
                 stub.dissolve_layerset(str(group_id))
-
-        # Refresh and remove any remaining group layers.
-        layers_by_id = {layer.id: layer for layer in stub.get_layers()}
-        for group_id in group_ids:
-            layer = layers_by_id.get(group_id)
-            if layer is not None and layer.group:
-                stub.delete_layer(group_id)
