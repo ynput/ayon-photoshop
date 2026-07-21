@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import re
 
 import pyblish.api
+from dataclasses import dataclass
 from ayon_core.lib import BoolDef
 from ayon_core.pipeline import (
     Creator,
@@ -14,6 +13,13 @@ from ayon_core.pipeline.create import PRODUCT_NAME_ALLOWED_SYMBOLS
 from ayon_photoshop import api
 from ayon_photoshop.api.pipeline import cache_and_get_instances
 from ayon_photoshop.lib import clean_product_name
+
+
+@dataclass
+class ImageCreatorData:
+    """Dataclass to hold information about the group created by the ImageCreator."""
+    group: object | None = None
+    group_created_by_creator: bool = False
 
 
 class ImageCreator(Creator):
@@ -35,7 +41,7 @@ class ImageCreator(Creator):
     active_on_create = True
 
     def create(self, product_name_from_ui, data, pre_create_data):
-        groups_to_create = []
+        groups_to_create: list[ImageCreatorData] = []
         top_layers_to_wrap = []
         create_empty_group = False
 
@@ -52,12 +58,18 @@ class ImageCreator(Creator):
                     pre_create_data.get("create_multiple")):
                 for selected_item in top_level_selected_items:
                     if selected_item.group:
-                        groups_to_create.append((selected_item, True))
+                        groups_to_create.append(ImageCreatorData(
+                            group=selected_item,
+                            group_created_by_creator=False,
+                        ))
                     else:
                         top_layers_to_wrap.append(selected_item)
             else:
                 group = stub.group_selected_layers(product_name_from_ui)
-                groups_to_create.append((group, False))
+                groups_to_create.append(ImageCreatorData(
+                    group=group,
+                    group_created_by_creator=True,
+                ))
         else:
             try:
                 stub.select_layers(stub.get_layers())
@@ -65,19 +77,28 @@ class ImageCreator(Creator):
             except ValueError:
                 raise CreatorError("Cannot group locked Background layer!")
 
-            groups_to_create.append((group, False))
+            groups_to_create.append(ImageCreatorData(
+                group=group,
+                group_created_by_creator=True,
+            ))
 
         # create empty group if nothing selected
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(product_name_from_ui)
-            groups_to_create.append((group, False))
+            groups_to_create.append(ImageCreatorData(
+                group=group,
+                group_created_by_creator=True,
+            ))
             create_empty_group = True
 
         # wrap each top level layer into separate new group
         for layer in top_layers_to_wrap:
             stub.select_layers([layer])
             group = stub.group_selected_layers(product_name_from_ui)
-            groups_to_create.append((group, False))
+            groups_to_create.append(ImageCreatorData(
+                group=group,
+                group_created_by_creator=True,
+            ))
 
         layer_name = ''
         # use artist chosen option OR force layer if more products are created
@@ -89,7 +110,8 @@ class ImageCreator(Creator):
         if not product_type:
             product_type = self.product_base_type
 
-        for group, is_existing_group in groups_to_create:
+        for created_group_data in groups_to_create:
+            group = created_group_data.group
             product_name = product_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
             created_group_name = self._clean_highlights(stub, group.name)
@@ -117,7 +139,9 @@ class ImageCreator(Creator):
                 "members": [str(group.id)],
                 "layer_name": layer_name,
                 "long_name": "_".join(layer_names_in_hierarchy),
-                "is_existing_group": is_existing_group,
+                "group_created_by_creator": (
+                    created_group_data.group_created_by_creator
+                ),
             }
             data.update(data_update)
 
@@ -285,10 +309,15 @@ class ImageCreator(Creator):
         stub = api.stub()
         group_ids: set[int] = set()
         for instance in instances:
-            is_existing_group = instance.data.get("is_existing_group", True)
-            # Existing groups were in the workfile before instance creation.
-            # Keep them intact and only clean up wrapper groups created by this creator.
-            if is_existing_group:
+            group_created_by_creator = instance.data.get("group_created_by_creator")
+            if group_created_by_creator is None:
+                # Legacy fallback where metadata stored whether the group existed.
+                group_created_by_creator = not instance.data.get(
+                    "is_existing_group", True
+                )
+
+            # Keep original user groups intact and only clean up groups created by this creator.
+            if not group_created_by_creator:
                 continue
 
             for member in instance.data.get("members", []):
