@@ -595,7 +595,6 @@ function dissolveLayerSet (layerSetId) {
 
     // Move layers to the parent
     for (var i = 0; i < layers.length; i++) {
-        layers[i].move(app.activeDocument, ElementPlacement.PLACEATEND);
         // Now position it correctly relative to other layers
         // We want it at groupIndex + i position
         var targetIndex = groupIndex + i;
