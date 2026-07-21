@@ -584,7 +584,6 @@ function selectObject(id) {
 function dissolveLayerSet (layerSetId) {
     var desc = selectObject(layerSetId);
     var layerSet = app.activeDocument.activeLayer;
-
     // Get the group's position before moving anything
     var groupIndex = getLayerIndex(layerSet);
     // Clone layers list
@@ -593,14 +592,14 @@ function dissolveLayerSet (layerSetId) {
         layers.push(layerSet.layers[i]);
     }
 
+    var parentLayers = layerSet.parent.layers;
     // Move layers to the parent
     for (var i = 0; i < layers.length; i++) {
         // Now position it correctly relative to other layers
         // We want it at groupIndex + i position
         var targetIndex = groupIndex + i;
-        var allLayers = app.activeDocument.layers;
         // Move after the layer currently at targetIndex
-        layers[i].move(allLayers[targetIndex], ElementPlacement.PLACEAFTER);
+        layers[i].move(parentLayers[targetIndex], ElementPlacement.PLACEAFTER);
     }
 
     // Remove the empty layer set
