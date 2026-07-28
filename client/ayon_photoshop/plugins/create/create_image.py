@@ -1,5 +1,8 @@
 import re
 
+from typing import Protocol
+import pyblish.api
+from dataclasses import dataclass
 from ayon_core.lib import BoolDef
 from ayon_core.pipeline import (
     Creator,
@@ -11,6 +14,27 @@ from ayon_core.pipeline.create import PRODUCT_NAME_ALLOWED_SYMBOLS
 from ayon_photoshop import api
 from ayon_photoshop.api.pipeline import cache_and_get_instances
 from ayon_photoshop.lib import clean_product_name
+
+
+class PhotoshopItem(Protocol):
+    """Protocol for Photoshop item (layer or group)."""
+    # Layer id
+    id: int
+    # Whether this layer is a group
+    group: bool
+    # name of the layer
+    name: str
+    # Full path to layer
+    long_name: list[str]
+    # Parent layer ids
+    parents: list[int]
+
+
+@dataclass
+class ImageGroupData:
+    """Dataclass to hold information about the group created by the ImageCreator."""
+    group: PhotoshopItem
+    group_created_by_creator: bool = False
 
 
 class ImageCreator(Creator):
@@ -32,7 +56,7 @@ class ImageCreator(Creator):
     active_on_create = True
 
     def create(self, product_name_from_ui, data, pre_create_data):
-        groups_to_create = []
+        groups_to_create: list[ImageGroupData] = []
         top_layers_to_wrap = []
         create_empty_group = False
 
@@ -49,12 +73,18 @@ class ImageCreator(Creator):
                     pre_create_data.get("create_multiple")):
                 for selected_item in top_level_selected_items:
                     if selected_item.group:
-                        groups_to_create.append(selected_item)
+                        groups_to_create.append(ImageGroupData(
+                            group=selected_item,
+                            group_created_by_creator=False,
+                        ))
                     else:
                         top_layers_to_wrap.append(selected_item)
             else:
                 group = stub.group_selected_layers(product_name_from_ui)
-                groups_to_create.append(group)
+                groups_to_create.append(ImageGroupData(
+                    group=group,
+                    group_created_by_creator=True,
+                ))
         else:
             try:
                 stub.select_layers(stub.get_layers())
@@ -62,18 +92,28 @@ class ImageCreator(Creator):
             except ValueError:
                 raise CreatorError("Cannot group locked Background layer!")
 
-            groups_to_create.append(group)
+            groups_to_create.append(ImageGroupData(
+                group=group,
+                group_created_by_creator=True,
+            ))
 
         # create empty group if nothing selected
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(product_name_from_ui)
-            groups_to_create.append(group)
+            groups_to_create.append(ImageGroupData(
+                group=group,
+                group_created_by_creator=True,
+            ))
+            create_empty_group = True
 
         # wrap each top level layer into separate new group
         for layer in top_layers_to_wrap:
             stub.select_layers([layer])
             group = stub.group_selected_layers(product_name_from_ui)
-            groups_to_create.append(group)
+            groups_to_create.append(ImageGroupData(
+                group=group,
+                group_created_by_creator=True,
+            ))
 
         layer_name = ''
         # use artist chosen option OR force layer if more products are created
@@ -85,16 +125,17 @@ class ImageCreator(Creator):
         if not product_type:
             product_type = self.product_base_type
 
-        for group in groups_to_create:
+        for created_group_data in groups_to_create:
+            name = created_group_data.group.name
             product_name = product_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
-            created_group_name = self._clean_highlights(stub, group.name)
+            created_group_name = self._clean_highlights(stub, name)
 
             if use_layer_name:
                 layer_name = re.sub(
                     "[^{}]+".format(PRODUCT_NAME_ALLOWED_SYMBOLS),
                     "",
-                    group.name
+                    name
                 )
                 if "{layer}" not in product_name.lower():
                     product_name += "{Layer}"
@@ -103,16 +144,19 @@ class ImageCreator(Creator):
             product_name = product_name.format(**layer_fill)
             product_name = clean_product_name(product_name)
 
-            if group.long_name:
-                for directory in group.long_name[::-1]:
+            if created_group_data.group.long_name:
+                for directory in created_group_data.group.long_name[::-1]:
                     name = self._clean_highlights(stub, directory)
                     layer_names_in_hierarchy.append(name)
 
             data_update = {
                 "productName": product_name,
-                "members": [str(group.id)],
+                "members": [str(created_group_data.group.id)],
                 "layer_name": layer_name,
-                "long_name": "_".join(layer_names_in_hierarchy)
+                "long_name": "_".join(layer_names_in_hierarchy),
+                "group_created_by_creator": (
+                    created_group_data.group_created_by_creator
+                ),
             }
             data.update(data_update)
 
@@ -137,7 +181,7 @@ class ImageCreator(Creator):
             self._add_instance_to_context(new_instance)
             # reusing existing group, need to rename afterwards
             if not create_empty_group:
-                stub.rename_layer(group.id,
+                stub.rename_layer(created_group_data.group.id,
                                   stub.PUBLISH_ICON + created_group_name)
 
     def collect_instances(self):
@@ -163,6 +207,7 @@ class ImageCreator(Creator):
                                created_inst.data_to_store())
 
     def remove_instances(self, instances):
+        self._delete_instances_groups(instances)
         for instance in instances:
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
@@ -269,3 +314,39 @@ class ImageCreator(Creator):
             if layer_name:
                 return {"layer": layer_name}
         return {"layer": "{layer}"}
+
+    def _delete_instances_groups(self, instances: list[pyblish.api.Instance]) -> None:
+        """Delete group instance by only deleting the group layer.
+
+        Args:
+            instances (list): List of instances to delete group layers for.
+        """
+        stub = api.stub()
+        group_ids: set[int] = set()
+        for instance in instances:
+            group_created_by_creator = instance.data.get("group_created_by_creator")
+            if group_created_by_creator is None:
+                # Legacy fallback where metadata stored whether the group existed.
+                group_created_by_creator = not instance.data.get(
+                    "is_existing_group", True
+                )
+
+            # Keep original user groups intact and only clean up groups created by this creator.
+            if not group_created_by_creator:
+                continue
+
+            for member in instance.data.get("members", []):
+                member_str = str(member)
+                if member_str.isdigit():
+                    group_ids.add(int(member_str))
+
+        if not group_ids:
+            return
+
+        layers_by_id = {layer.id: layer for layer in stub.get_layers()}
+
+        # Ungroup first to preserve member layers.
+        for group_id in group_ids:
+            layer = layers_by_id.get(group_id)
+            if layer is not None and layer.group:
+                stub.dissolve_layerset(str(group_id))
