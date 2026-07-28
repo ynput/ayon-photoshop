@@ -584,13 +584,13 @@ function selectObject(id) {
 function dissolveLayerSet (layerSetId) {
     var desc = selectObject(layerSetId);
     var layerSet = app.activeDocument.activeLayer;
+
     // Clone layers list
     var layers = [];
     for (var i = 0; i < layerSet.layers.length; i++) {
         layers.push(layerSet.layers[i]);
     }
 
-    var parentLayers = layerSet.parent.layers;
      // Move layers to the parent layer at the position of the layer set
     for (var i = 0; i < layers.length; i++) {
         layers[i].move(layerSet, ElementPlacement.PLACEBEFORE);
