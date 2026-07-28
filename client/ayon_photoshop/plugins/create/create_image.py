@@ -1,6 +1,6 @@
 import re
 
-from typing import Optional, Protocol
+from typing import Protocol
 import pyblish.api
 from dataclasses import dataclass
 from ayon_core.lib import BoolDef
