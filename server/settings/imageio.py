@@ -1,6 +1,6 @@
+from pydantic import validator
 from ayon_server.settings import BaseSettingsModel, SettingsField
 from ayon_server.settings.validators import ensure_unique_names
-from pydantic import validator
 
 
 class ImageIOFileRuleModel(BaseSettingsModel):

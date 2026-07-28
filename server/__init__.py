@@ -3,9 +3,9 @@ from typing import Any
 from ayon_server.addons import BaseServerAddon
 
 from .settings import (
+    convert_settings_overrides,
     DEFAULT_PHOTOSHOP_SETTING,
     PhotoshopSettings,
-    convert_settings_overrides,
 )
 
 

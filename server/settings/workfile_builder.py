@@ -1,7 +1,7 @@
 from ayon_server.settings import (
     BaseSettingsModel,
-    MultiplatformPathModel,
     SettingsField,
+    MultiplatformPathModel,
     task_types_enum,
 )
 

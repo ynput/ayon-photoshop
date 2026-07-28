@@ -1,5 +1,6 @@
 from ayon_server.settings import BaseSettingsModel, SettingsField
 
+
 create_flatten_image_enum = [
     {"value": "flatten_with_images", "label": "Flatten with images"},
     {"value": "flatten_only", "label": "Flatten only"},
@@ -107,12 +108,12 @@ class CollectReviewPlugin(BaseSettingsModel):
 
 
 class CollectVersionPlugin(BaseSettingsModel):
-    """Synchronize version for image and review instances by workfile version"""
+    """Synchronize version for image and review instances by workfile version"""  # noqa
     enabled: bool = SettingsField(True, title="Enabled")
 
 
 class ValidateNamingPlugin(BaseSettingsModel):
-    """Validate naming of products and layers"""
+    """Validate naming of products and layers"""  # noqa
     invalid_chars: str = SettingsField(
         '',
         title="Regex pattern of invalid characters"

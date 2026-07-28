@@ -1,9 +1,10 @@
 from ayon_server.settings import BaseSettingsModel, SettingsField
 
-from .creator_plugins import DEFAULT_CREATE_SETTINGS, PhotoshopCreatorPlugins
 from .imageio import PhotoshopImageIOModel
-from .publish_plugins import DEFAULT_PUBLISH_SETTINGS, PhotoshopPublishPlugins
+from .creator_plugins import PhotoshopCreatorPlugins, DEFAULT_CREATE_SETTINGS
+from .publish_plugins import PhotoshopPublishPlugins, DEFAULT_PUBLISH_SETTINGS
 from .workfile_builder import WorkfileBuilderPlugin
+
 
 default_workfile_extensions_enum = [
     {"value": ".psd", "label": "psd"},

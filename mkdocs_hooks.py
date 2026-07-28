@@ -1,9 +1,9 @@
-import glob
-import json
-import logging
 import os
 from pathlib import Path
 from shutil import rmtree
+import json
+import glob
+import logging
 
 TMP_FILE = "./missing_init_files.json"
 NFILES = []
@@ -19,11 +19,11 @@ class ColorFormatter(logging.Formatter):
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
     fmt = (
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s "
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s "  # noqa
         "(%(filename)s:%(lineno)d)"
     )
 
-    FORMATS = {  # noqa: RUF012
+    FORMATS = {
         logging.DEBUG: grey + fmt + reset,
         logging.INFO: green + fmt + reset,
         logging.WARNING: yellow + fmt + reset,
@@ -50,11 +50,11 @@ logging.basicConfig(
 
 
 def create_init_file(dirpath, msg):
-    global NFILES  # noqa: PLW0602
+    global NFILES
     ini_file = f"{dirpath}/__init__.py"
     Path(ini_file).touch()
     NFILES.append(ini_file)
-    logging.info(f"{msg}: created '{ini_file}'")  # noqa: LOG015
+    logging.info(f"{msg}: created '{ini_file}'")
 
 
 def create_parent_init_files(dirpath: str, rootpath: str, msg: str):
@@ -127,7 +127,7 @@ def remove_missing_init_files(msg=""):
 
     for file in nfiles:
         Path(file).unlink()
-        logging.info(f"{msg}: removed {file}")  # noqa: LOG015
+        logging.info(f"{msg}: removed {file}")
 
     os.remove(TMP_FILE)
     NFILES = []
@@ -151,10 +151,10 @@ def remove_pychache_dirs(msg=""):
             pydir = Path(f"{dirpath}/__pycache__")
             rmtree(pydir)
             nremoved += 1
-            logging.info(f"{msg}: removed '{pydir}'")  # noqa: LOG015
+            logging.info(f"{msg}: removed '{pydir}'")
 
     if not nremoved:
-        logging.info(f"{msg}: no __pycache__ dirs found")  # noqa: LOG015
+        logging.info(f"{msg}: no __pycache__ dirs found")
 
 
 # mkdocs hooks ----------------------------------------------------------------
@@ -178,7 +178,7 @@ def on_pre_build(config):
             msg="HOOK    -  on_pre_build",
         )
     except BaseException as e:
-        logging.error(e)  # noqa: LOG015
+        logging.error(e)
         remove_missing_init_files(
             msg="HOOK    -  on_post_build: cleaning up on error !"
         )
