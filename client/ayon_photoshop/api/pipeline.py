@@ -152,7 +152,11 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         # Older workfiles might not have stored the context
         # - can happen if workfile was not opened using
         #   AYON workfile api
-        return super().get_current_context()
+        return {
+            "project_name": os.environ.get("AYON_PROJECT_NAME"),
+            "folder_path": os.environ.get("AYON_FOLDER_PATH"),
+            "task_name": os.environ.get("AYON_TASK_NAME"),
+        }
 
     def set_active_document_context(
         self,
