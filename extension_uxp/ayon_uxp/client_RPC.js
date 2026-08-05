@@ -59,6 +59,17 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    RPC.addRoute('Photoshop.set_layers_visibility', async (data) => {
+            console.log('Server called client route "set_layers_visibility":', data);
+            const vismap = JSON.parse(data.visibility_map)
+            for (const [layer_id, visibility] of Object.entries(vismap)) {
+              console.log("setting visibility of", `layer: ${layer_id} to ${visibility}`);
+              const result = await api.setVisible(parseInt(layer_id), visibility);
+              console.log("(set_layers_visibility) setVisible:", result);
+            }
+            return null;
+        }
+    );
 
     RPC.addRoute('Photoshop.get_active_document_name', async (data) => {
             console.log('Server called client route "get_active_document_name":', data);
