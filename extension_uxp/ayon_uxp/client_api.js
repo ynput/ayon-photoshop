@@ -1,4 +1,4 @@
-const {app, action, core, constants, LayerKind, Layer, Document} = require("photoshop")
+const {app, action, core, constants} = require("photoshop")
 const uxp_storage = require("uxp").storage
 const batchPlay = action.batchPlay;
 
@@ -202,7 +202,7 @@ async function revertToPrevious() {
  * @param {Layer} layer
 */
 async function isLayerGroup(layer) {
-    return (layer.kind == LayerKind.GROUP);
+    return (layer.kind == constants.LayerKind.GROUP);
 }
 
 async function getSelectedLayers() {
@@ -212,7 +212,7 @@ async function getSelectedLayers() {
     const result = selected.map(layer => ({
         id: layer.id,
         name: layer.name,
-        group: layer.kind == LayerKind.GROUP,
+        group: layer.kind == constants.LayerKind.GROUP,
         long_name: _get_parents_names(layer, layer.name)
     }));
 
@@ -315,7 +315,7 @@ function _get_parents_names(layer, itself_name) {
     let current = layer.parent;
 
     // Walk up while we're still inside a group
-    while (current && current.kind === LayerKind.GROUP) {
+    while (current && current.kind === constants.LayerKind.GROUP) {
         long_names.push(current.name);
         current = current.parent;
     }
