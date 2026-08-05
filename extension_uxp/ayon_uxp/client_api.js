@@ -330,13 +330,12 @@ async function selectLayers(selectedLayers) {
         selectedLayers = JSON.parse(selectedLayers);
     }
 
-    // Build list of currently existing IDs to filter against
     const existing = JSON.parse(await getLayers());
     const existingIds = new Set(existing.map(l => l.id));
 
     const refs = selectedLayers
-        .filter(id => existingIds.has(id))
-        .map(id => ({ _ref: "layer", _id: id }));
+        .filter(id => existingIds.has(Number(id)))       // ✅ cast to number
+        .map(id => ({ _ref: "layer", _id: Number(id) })); // ✅ cast to number
 
     if (refs.length === 0) return;
 
@@ -365,18 +364,16 @@ async function renameLayer(layer_id, new_name) {
     return true;
 }
 
-/**
- * Create a new empty group at the document root.
- * @returns {number} id of the new group
- */
+
 async function createGroup(name) {
     let group;
     await execAsModal(async () => {
         group = await app.activeDocument.createLayerGroup({ name });
+        // make sure that active layer is new group, replicating CEP behavior
+        app.activeDocument.activeLayers = [group];
     }, "Create Group");
     return group.id;
 }
-
 
 
 /**
@@ -397,11 +394,20 @@ async function groupSelectedLayers(doc, name) {
             }],
             { synchronousExecution: true }
         );
-
         group = doc.activeLayers[0];
         if (name) {
             group.name = name;
         }
+        // mimick CEP behavior
+        await batchPlay(
+            [{
+                _obj: "select",
+                _target: [{ _ref: "layer", _id: group.id }],
+                makeVisible: false,
+                _options: { dialogOptions: "dontDisplay" }
+            }],
+            { synchronousExecution: true }
+        );
     }, "Group Selected Layers");
 
     return JSON.stringify({
