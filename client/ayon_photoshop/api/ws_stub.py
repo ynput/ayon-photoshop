@@ -481,7 +481,7 @@ class PhotoshopServerStub:
         exclude_ids = {layer.id for layer in exclude_layers}
         if exclude_recursive:
             exclude_ids |= {ll.id for ll in self.get_layers_in_layers(exclude_layers)}
-        
+
         for layer in self.get_layers():
             if layer.id not in exclude_ids:
                 self.delete_layer(layer.id)
