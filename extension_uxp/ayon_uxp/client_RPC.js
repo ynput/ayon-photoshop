@@ -221,6 +221,14 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    RPC.addRoute('Photoshop.get_color_profile_name', async (data) => {
+        console.log('Server called client route "get_color_profile_name":', data);
+            const result = await api.getColorProfileName();
+            console.log("getColorProfileName:", result);
+            return result;
+        }
+    )
+
     RPC.addRoute('Photoshop.close', async (data) => {
             console.log('Server called client route "close":', data);
             const result = await api.closeApp();
