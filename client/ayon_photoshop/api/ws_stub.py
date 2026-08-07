@@ -90,6 +90,26 @@ class PhotoshopServerStub:
         """
         self.websocketserver.call_on_client(self, 'Photoshop.open', path=path)
 
+    def create_document(self, name, width, height, resolution=72):
+        """Create a new blank (RGB/8bit/white) document and make it active.
+
+        Args:
+            name (str): document name/title
+            width (int): pixel width
+            height (int): pixel height
+            resolution (int): dpi
+        Returns:
+            (str) id of the newly created document
+        """
+        return self.websocketserver.call_on_client(
+            self,
+            'Photoshop.create_document',
+            name=name,
+            width=width,
+            height=height,
+            resolution=resolution,
+        )
+
     def read(self, layer, layers_meta=None):
         """Parses layer metadata from Headline field of active document.
 
