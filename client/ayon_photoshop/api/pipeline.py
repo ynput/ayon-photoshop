@@ -8,6 +8,7 @@ from ayon_core.lib import register_event_callback, Logger
 from ayon_core.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
+    registered_host,
     AVALON_CONTAINER_ID,
     AYON_INSTANCE_ID,
     AVALON_INSTANCE_ID,
@@ -18,7 +19,8 @@ from ayon_core.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
-    IPublishHost
+    IPublishHost,
+    ContextChangeReason,
 )
 
 from ayon_core.pipeline.load import any_outdated_containers
@@ -26,6 +28,7 @@ from ayon_core.tools.utils import get_ayon_qt_app
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
 
 from . import lib
+from .launch_logic import ConnectionNotEstablishedYet, DOC_CONTEXT_METADATA_ID
 
 log = Logger.get_logger(__name__)
 
@@ -71,7 +74,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def open_workfile(self, filepath):
         lib.stub().open(filepath)
-
         return True
 
     def save_workfile(self, filepath=None):
@@ -100,6 +102,143 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_containers(self):
         return ls()
 
+    def _get_doc_context_metadata(self):
+        """Read project/folder/task stored in the active documen.
+
+        Returns:
+            dict: With keys 'project_name'/'folder_path'/'task_name' if the
+                active document was stamped with a context, empty dict
+                otherwise (no active document, or never stamped yet).
+        """
+        stub = _get_stub()
+        if stub is None:
+            return {}
+
+        try:
+            layers_meta = stub.get_layers_metadata()
+        except Exception:
+            log.warning(
+                "Failed to read doc-context metadata", exc_info=True
+            )
+            return {}
+
+        for item in layers_meta:
+            if item.get("id") == DOC_CONTEXT_METADATA_ID:
+                return item
+
+        return {}
+
+    def get_current_project_name(self):
+        context = self.get_current_context()
+        return context["project_name"]
+
+    def get_current_folder_path(self):
+        context = self.get_current_context()
+        return context["folder_path"]
+
+    def get_current_task_name(self):
+        context = self.get_current_context()
+        return context["task_name"]
+
+    def get_current_context(self):
+        doc_context = self._get_doc_context_metadata()
+        project_name = doc_context.get("project_name")
+        if project_name:
+            return {
+                "project_name": project_name,
+                "folder_path": doc_context["folder_path"],
+                "task_name": doc_context["task_name"],
+            }
+        # Older workfiles might not have stored the context
+        # - can happen if workfile was not opened using
+        #   AYON workfile api
+        return {
+            "project_name": os.environ.get("AYON_PROJECT_NAME"),
+            "folder_path": os.environ.get("AYON_FOLDER_PATH"),
+            "task_name": os.environ.get("AYON_TASK_NAME"),
+        }
+
+    def set_active_document_context(
+        self,
+        project_name: str,
+        folder_path: str,
+        task_name: str,
+    ) -> None:
+        """Persist project/folder/task into the active document's metadata.
+
+        This is the single place writing DOC_CONTEXT_METADATA_ID — the
+        source of truth read back by get_current_context() for whichever
+        document happens to be active — kept separate from ayon-core's
+        'publish_context'.
+
+        Args:
+            only_if_unstamped (bool): When True, never overwrite an
+                existing stamp — only write one if the active document
+                has none yet.
+        """
+        stub = _get_stub()
+        if stub is None:
+            return
+
+        items = [
+            item
+            for item in stub.get_layers_metadata()
+            if item.get("id") != DOC_CONTEXT_METADATA_ID
+        ]
+        doc_context = {
+            "id": DOC_CONTEXT_METADATA_ID,
+            "project_name": project_name,
+            "folder_path": folder_path,
+            "task_name": task_name,
+        }
+        stub.imprint(doc_context["id"], doc_context, items_meta=items)
+
+    def _set_current_context(self, context_change_data):
+        """Store the new context directly on the active document.
+
+        Skipped for workfile_open: at this point the target workfile has
+        not been opened yet, so the active document is still the
+        previous one — stamping here would corrupt it. _after_workfile_open
+        handles that case once the new document is actually active.
+        """
+        if context_change_data.reason == ContextChangeReason.workfile_open:
+            return
+
+        self.set_active_document_context(
+            context_change_data.project_entity["name"],
+            context_change_data.folder_entity["path"],
+            context_change_data.task_entity["name"],
+        )
+
+    def _after_workfile_open(self, open_workfile_context):
+        """Stamp context onto the document once it is actually active."""
+        self.set_active_document_context(
+            open_workfile_context.project_entity["name"],
+            open_workfile_context.folder_entity["path"],
+            open_workfile_context.task_entity["name"],
+        )
+
+    def _before_workfile_save(self, save_workfile_context):
+        """Stamp context onto the document before it is saved."""
+        self.set_active_document_context(
+            save_workfile_context.project_entity["name"],
+            save_workfile_context.folder_entity["path"],
+            save_workfile_context.task_entity["name"],
+        )
+
+    def store_global_context_to_active_document(self):
+        """Stamp the current global (env-based) context onto the active
+        document.
+
+        Used for the very first document opened at Photoshop startup.
+        """
+        context = super().get_current_context()
+        self.set_active_document_context(
+            context["project_name"],
+            context["folder_path"],
+            context["task_name"],
+        )
+
     def get_context_data(self):
         """Get stored values for context (validation enable/disable etc)"""
         meta = _get_stub().get_layers_metadata()
@@ -107,7 +246,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             if item.get("id") == "publish_context":
                 item.pop("id")
                 return item
-
         return {}
 
     def update_context_data(self, data, changes):
@@ -185,6 +323,16 @@ def check_inventory():
 def on_application_launch():
     check_inventory()
 
+    # The very first document at Photoshop startup is opened natively via a
+    # command-line argument (see pre_launch_args.py), before the CEP
+    # extension even connects. It never goes through PhotoshopHost's
+    # open_workfile()/set_context route, so it is otherwise never stamped
+    # with a doc-context entry. At this point the environment already
+    # holds the correct folder_path/task_name (set by AYON before Photoshop
+    # was launched), so stamp it now that the connection is established.
+    host = registered_host()
+    host.store_global_context_to_active_document()
+
 
 def ls():
     """Yields containers from active Photoshop document
@@ -199,7 +347,7 @@ def ls():
     """
     try:
         stub = lib.stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 
@@ -233,7 +381,7 @@ def _get_stub():
     """
     try:
         stub = lib.stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 

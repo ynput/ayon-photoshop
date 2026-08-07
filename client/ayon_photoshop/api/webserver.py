@@ -71,13 +71,17 @@ class WebServerTool:
     def stop_server(self):
         self.stop()
 
-    async def send_context_change(self, host):
+    async def send_context_change(self, host, workfile_path):
         """
             Calls running webserver to inform about context change
 
             Used when new PS/AE should be triggered,
             but one already running, without
             this publish would point to old context.
+
+        Args:
+            host (str): Route name to call 'set_context' on.
+            workfile_path (Optional[str]): Path to the workfile to open.
         """
         client = WSRPCClient(os.getenv("WEBSOCKET_URL"),
                              loop=asyncio.get_event_loop())
@@ -95,7 +99,8 @@ class WebServerTool:
             '{}.set_context'.format(host),
             project=project_name,
             folder=folder_path,
-            task=task_name
+            task=task_name,
+            workfile=workfile_path,
         )
         await client.close()
 
