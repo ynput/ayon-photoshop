@@ -613,9 +613,9 @@ function dissolveLayerSet (layerSetId) {
         layers.push(layerSet.layers[i]);
     }
 
-    // Move layers to the parent
+     // Move layers to the parent layer at the position of the layer set
     for (var i = 0; i < layers.length; i++) {
-        layers[i].move(app.activeDocument, ElementPlacement.PLACEATEND);
+        layers[i].move(layerSet, ElementPlacement.PLACEBEFORE);
     }
 
     // Remove the empty layer set
