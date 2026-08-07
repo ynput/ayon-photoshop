@@ -671,13 +671,14 @@ class PhotoshopServerStub:
             raise ValueError("Received broken JSON {}".format(res))
 
     def get_broken_smart_object_links(self):
-        """Return names of layers that have broken or missing Smart Object links.
+        """Return layers that have broken or missing Smart Object links.
 
         Covers both locally linked files (link.status == missing/unresolved)
         and CC Libraries assets (linkMissing flag).
 
         Returns:
-            list[str]: Layer names with broken links.
+            list[str]: Full paths of layers with broken links
+                (e.g. "GROUP/SUBGROUP/LAYER").
         """
         res = self.websocketserver.call_on_client(
             self, "Photoshop.get_broken_smart_object_links"
@@ -695,7 +696,8 @@ class PhotoshopServerStub:
         Object so it remains non-destructive for subsequent edits.
 
         Returns:
-            list[str]: Names of the layers that were repaired.
+            list[str]: Full paths of the layers that were repaired
+                (e.g. "GROUP/SUBGROUP/LAYER").
         """
         res = self.websocketserver.call_on_client(
             self, "Photoshop.fix_broken_smart_object_links"
