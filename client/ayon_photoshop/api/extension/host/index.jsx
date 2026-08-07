@@ -13,6 +13,28 @@ function fileOpen(path){
     return app.open(new File(path));
 }
 
+function createDocument(name, width, height, resolution){
+    /** Creates a new blank RGB/8bit document and makes it active.
+     *
+     * name - document name (also used as initial title in Photoshop UI)
+     * width, height - pixel dimensions
+     * resolution - dpi
+     *
+     * Returns the id of the newly created document.
+     * */
+    var prevUnits = app.preferences.rulerUnits;
+    app.preferences.rulerUnits = Units.PIXELS;
+    try {
+        var doc = app.documents.add(
+            width, height, resolution, name,
+            NewDocumentMode.RGB, DocumentFill.WHITE
+        );
+        return doc.id;
+    } finally {
+        app.preferences.rulerUnits = prevUnits;
+    }
+}
+
 function getLayerTypeWithName(layerName) {
     var type = 'NA';
     var nameParts = layerName.split('_');
