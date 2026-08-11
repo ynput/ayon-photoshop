@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Empty sub-folder in imagemain</title>
+<description>
+## Empty sub-folder(s) found
+
+Empty sub-folder(s) were found inside "{root_group_name}":
+    {empty_folders}
+
+Empty groups block the layer merge used to produce the render and must be removed before publishing.
+
+### How to repair?
+
+You can fix this with the "Repair" button on the right, which will delete the empty sub-folder(s), then press the Refresh publishing button at the bottom right.
+</description>
+</error>
+</root>
