@@ -617,6 +617,9 @@ function mergeAllLayerSets(parentSetId) {
 
     // Merge all layersets and keep visibility
     for (var i = layerSets.length - 1; i >= 0; i--) {
+        if (layerSets[i].layers.length === 0) {
+            continue;
+        }
         var visibility = layerSets[i].visible;
         newArtLayer = layerSets[i].merge();
         newArtLayer.visible = visibility;
