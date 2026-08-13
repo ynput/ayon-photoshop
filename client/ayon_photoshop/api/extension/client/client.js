@@ -332,6 +332,18 @@
                   });
       });
 
+      RPC.addRoute('Photoshop.create_document', function (data) {
+              log.warn('Server called client route "create_document":', data);
+              return runEvalScript("createDocument('" + data.name + "', " +
+                                   data.width + ", " +
+                                   data.height + ", " +
+                                   data.resolution + ")")
+                  .then(function(result){
+                      log.warn("create_document: " + result);
+                      return result;
+                  });
+      });
+
       RPC.addRoute('Photoshop.duplicate_document', function (data) {
               log.warn('Server called client route "duplicate_document":', data);
               return runEvalScript("duplicateDocument('" + data.newName + "')")

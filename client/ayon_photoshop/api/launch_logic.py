@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import os
+from pathlib import Path
 import platform
 import subprocess
 
@@ -24,7 +25,6 @@ from ayon_core.pipeline.workfile import (
 )
 from ayon_core.pipeline.template_data import get_template_data_with_names
 from ayon_core.tools.utils import host_tools
-from ayon_core.pipeline.context_tools import change_current_context
 
 from .webserver import WebServerTool
 from .ws_stub import PhotoshopServerStub
@@ -36,6 +36,11 @@ console_window = None
 
 class ConnectionNotEstablishedYet(Exception):
     pass
+
+
+# Metadata id used to persist AYON context (project, folder and task)
+#     of a photoshop document.
+DOC_CONTEXT_METADATA_ID = "ayon_photoshop_doc_context"
 
 
 class MainThreadItem:
@@ -274,10 +279,20 @@ class ProcessLauncher(QtCore.QObject):
             websocket_server.host_name,
             websocket_server.port
         ):
+            # Recover the workfile the source process actually intended to
+            # open (if any) from the launch args, so the already-running
+            # instance opens that file instead of guessing "last workfile".
+            workfile_path = None
+            for arg in self._subprocess_args:
+                if Path(arg).suffix.lower() in (".psb", ".psd"):
+                    workfile_path = arg
+
             self.log.info(
                 "Server already running, sending actual context and exit."
             )
-            asyncio.run(websocket_server.send_context_change(self.route_name))
+            asyncio.run(websocket_server.send_context_change(
+                self.route_name, workfile_path
+            ))
             self.exit()
             return
 
@@ -359,32 +374,68 @@ class PhotoshopRoute(WebSocketRoute):
 
     # This method calls function on the client side
     # client functions
-    async def set_context(self, project, folder, task):
+    async def set_context(self, project, folder, task, workfile):
         """
             Sets 'project' and 'folder' to envs, eg. setting context.
 
-        Opens last workile from that context if exists.
+        Opens 'workfile' if given and it exists, otherwise opens the last
+        workfile from that context if one exists.
+
+        If neither exists, a new blank document is created (sized from the
+        target task's resolution attributes) and saved as under this
+        context's own workfile path.
 
         Args:
             project (str)
             folder (str)
-            task (str
+            task (str)
+            workfile (Optional[str]): Specific workfile the source process
+                wants opened in this context, instead of guessing the last
+                workfile. May not exist (e.g. new context).
         """
         log.info("Setting context change")
-        log.info(f"project {project} folder {folder} task {task}")
+        log.info(
+            f"project {project} folder {folder} task {task} "
+            f"workfile {workfile}"
+        )
 
         folder_entity = ayon_api.get_folder_by_path(project, folder)
         task_entity = ayon_api.get_task_by_name(
             project, folder_entity["id"], task
         )
-        change_current_context(folder_entity, task_entity)
 
-        last_workfile_path = self._get_last_workfile_path(project,
-                                                          folder,
-                                                          task)
-        if last_workfile_path and os.path.exists(last_workfile_path):
-            ProcessLauncher.execute_in_main_thread(
-                lambda: stub().open(last_workfile_path))
+        def _apply_context_change():
+            host = registered_host()
+
+            target_workfile = workfile
+            if not target_workfile:
+                target_workfile = self._get_last_workfile_path(
+                    project, folder, task
+                )
+
+            if target_workfile and os.path.exists(target_workfile):
+                host.open_workfile_with_context(
+                    target_workfile, folder_entity, task_entity
+                )
+                return
+
+            # No workfile exists yet for this context. Create a blank
+            # document sized from the target task's own resolution
+            # attributes, then save it into this context's workfile path -
+            # the previously active document is never touched.
+            width = task_entity["attrib"]["resolutionWidth"]
+            height = task_entity["attrib"]["resolutionHeight"]
+            stub().create_document(
+                name=Path(target_workfile).stem,
+                width=width,
+                height=height,
+            )
+            host.set_active_document_context(project, folder, task)
+            host.save_workfile_with_context(
+                target_workfile, folder_entity, task_entity
+            )
+
+        ProcessLauncher.execute_in_main_thread(_apply_context_change)
 
 
     async def read(self):

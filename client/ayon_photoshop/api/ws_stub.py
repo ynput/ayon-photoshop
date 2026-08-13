@@ -90,6 +90,26 @@ class PhotoshopServerStub:
         """
         self.websocketserver.call_on_client(self, 'Photoshop.open', path=path)
 
+    def create_document(self, name, width, height, resolution=72):
+        """Create a new blank (RGB/8bit/white) document and make it active.
+
+        Args:
+            name (str): document name/title
+            width (int): pixel width
+            height (int): pixel height
+            resolution (int): dpi
+        Returns:
+            (str) id of the newly created document
+        """
+        return self.websocketserver.call_on_client(
+            self,
+            'Photoshop.create_document',
+            name=name,
+            width=width,
+            height=height,
+            resolution=resolution,
+        )
+
     def read(self, layer, layers_meta=None):
         """Parses layer metadata from Headline field of active document.
 
@@ -651,13 +671,14 @@ class PhotoshopServerStub:
             raise ValueError("Received broken JSON {}".format(res))
 
     def get_broken_smart_object_links(self):
-        """Return names of layers that have broken or missing Smart Object links.
+        """Return layers that have broken or missing Smart Object links.
 
         Covers both locally linked files (link.status == missing/unresolved)
         and CC Libraries assets (linkMissing flag).
 
         Returns:
-            list[str]: Layer names with broken links.
+            list[str]: Full paths of layers with broken links
+                (e.g. "GROUP/SUBGROUP/LAYER").
         """
         res = self.websocketserver.call_on_client(
             self, "Photoshop.get_broken_smart_object_links"
@@ -675,7 +696,8 @@ class PhotoshopServerStub:
         Object so it remains non-destructive for subsequent edits.
 
         Returns:
-            list[str]: Names of the layers that were repaired.
+            list[str]: Full paths of the layers that were repaired
+                (e.g. "GROUP/SUBGROUP/LAYER").
         """
         res = self.websocketserver.call_on_client(
             self, "Photoshop.fix_broken_smart_object_links"
