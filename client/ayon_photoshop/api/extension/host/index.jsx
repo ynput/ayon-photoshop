@@ -305,7 +305,7 @@ function getLayerBlendMode(layer_id) {
 function saveAs(output_path, ext, as_copy){
     /** Exports scene to various formats
      *
-     * Currently implemented: 'jpg', 'png', 'psd'
+     * Currently implemented: 'jpg', 'png', 'psd', 'tga', 'exr', 'psb', and 'tif'.
      *
      * output_path - escaped file path on local system
      * ext - extension for export
