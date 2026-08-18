@@ -373,8 +373,8 @@ function saveAs(output_path, ext, as_copy){
         if (ext === 'psb') {
             return savePSB(output_path);
         }
-        // For TIF, ensure saveOptions is properly initialized
-        if (ext === 'tif') {
+        // For TIF/TIFF, ensure saveOptions is properly initialized
+        if (ext === 'tif' || ext === 'tiff') {
             saveOptions = new TiffSaveOptions();
             saveOptions.alphaChannels = true;
             saveOptions.imageCompression = TIFFEncoding.TIFFLZW;
