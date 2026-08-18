@@ -28,7 +28,7 @@ class ExtractImage(
     label = "Extract Image"
     hosts = ["photoshop"]
     families = ["image"]
-    formats = ["png", "jpg", "tga", "exr", "tiff"]
+    formats = ["png", "jpg", "tga", "exr", "tif"]
     settings_category = "photoshop"
     optional = False
 
@@ -89,8 +89,9 @@ class ExtractImage(
                         stub.get_active_document_name()
                     )
                     workfile_extension = workfile_extension.strip(".")
-
+                    self.log.debug(f"Extracting formats {self.formats} for {instance}")
                     for extension in self.formats:
+                        self.log.debug(f"Extracting {extension} for {instance}")
                         repre_filename = f"{file_basename}_{suffix}.{extension}"
                         files[extension] = repre_filename
 
