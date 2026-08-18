@@ -359,6 +359,12 @@ function saveAs(output_path, ext, as_copy){
             saveOptions = new TargaSaveOptions();
             saveOptions.alphaChannels = true;
         }
+        if (ext === 'tiff'){
+            saveOptions = new TiffSaveOptions();
+            saveOptions.alphaChannels = true;
+            saveOptions.layers = true;
+            saveOptions.imageCompression = TIFFEncoding.TIFFLZW;
+        }
         if (ext === 'exr') {
             return saveEXR(output_path);
         }
