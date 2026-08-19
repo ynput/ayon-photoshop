@@ -22,6 +22,7 @@ extract_image_ext_enum = [
     {"value": "png", "label": "png"},
     {"value": "jpg", "label": "jpg"},
     {"value": "tga", "label": "tga"},
+    {"value": "tif", "label": "tif"},
     {"value": "exr", "label": "exr"},
 ]
 
