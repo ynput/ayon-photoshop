@@ -129,6 +129,7 @@ class ValidateNamingPlugin(BaseSettingsModel):
 class ExtractImagePlugin(BaseSettingsModel):
     """Extracts image products and representations per published instance"""
     enabled: bool = SettingsField(True, title="Enabled")
+    active: bool = SettingsField(True, title="Active")
     optional: bool = SettingsField(False, title="Optional")
     formats: list[str] = SettingsField(
         title="Extract Formats",
@@ -147,6 +148,7 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
     enabled: bool = SettingsField(False, title="Enabled")
+    active: bool = SettingsField(True, title="Active")
     optional: bool = SettingsField(False, title="Optional")
     merge_layersets: bool = SettingsField(
         False,
@@ -251,6 +253,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractImage": {
         "enabled": True,
+        "active": True,
         "optional": False,
         "formats": [
             "png",
@@ -262,6 +265,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractLayers": {
         "enabled": False,
+        "active": True,
         "optional": False,
         "merge_layersets": False,
         "extension": "psd",
