@@ -378,6 +378,7 @@ function saveAs(output_path, ext, as_copy){
             saveOptions = new TiffSaveOptions();
             saveOptions.alphaChannels = true;
             saveOptions.imageCompression = TIFFEncoding.TIFFLZW;
+            saveOptions.layers = false;
         }
         return doc.saveAs(new File(saveName), saveOptions, as_copy);
     }
