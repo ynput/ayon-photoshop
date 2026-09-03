@@ -148,8 +148,8 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
 class ExtractLayersPlugin(BaseSettingsModel):
     """Export layers within the instance layerset to a PSD file."""
     enabled: bool = SettingsField(False, title="Enabled")
-    active: bool = SettingsField(True, title="Active")
     optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
     merge_layersets: bool = SettingsField(
         False,
         title="Merge Layersets",
@@ -253,8 +253,8 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractImage": {
         "enabled": True,
-        "active": True,
         "optional": False,
+        "active": True,
         "formats": [
             "png",
             "jpg",
@@ -265,8 +265,8 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractLayers": {
         "enabled": False,
-        "active": True,
         "optional": False,
+        "active": True,
         "merge_layersets": False,
         "extension": "psd",
     },
