@@ -377,6 +377,7 @@ function saveAs(output_path, ext, as_copy){
         if (ext === 'tif' || ext === 'tiff') {
             saveOptions = new TiffSaveOptions();
             saveOptions.alphaChannels = true;
+            saveOptions.transparency = true;
             saveOptions.imageCompression = TIFFEncoding.TIFFLZW;
             saveOptions.layers = false;
         }
