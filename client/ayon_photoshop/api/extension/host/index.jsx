@@ -360,7 +360,7 @@ function saveAs(output_path, ext, as_copy){
             saveOptions.alphaChannels = true;
         }
         if (ext === 'exr') {
-            return saveEXR(output_path);
+            return saveEXR(output_path, doc);
         }
         if (ext === 'psd') {
             return doc.saveAs(
@@ -744,7 +744,7 @@ function _undo() {
     executeAction(charIDToTypeID("undo", undefined, DialogModes.NO));
 };
 
-function saveEXR(savePath) {
+function saveEXR(savePath, doc) {
 /**
  * @description saves EXR using Photoshop EXR Export
  * @param  {string} path    - a full path of exr to save as a string, ex /c/temp/myfile.exr
@@ -752,8 +752,8 @@ function saveEXR(savePath) {
  *
  * @return nothing
  */
-	try {
-
+    try {
+        doc.flatten();
 		var desc1 = new ActionDescriptor();
 		var desc2 = new ActionDescriptor();
         desc2.putInteger(charIDToTypeID('BtDp'), 32);
@@ -762,11 +762,12 @@ function saveEXR(savePath) {
         desc1.putObject(charIDToTypeID('As  '), charIDToTypeID('EXRf'), desc2);
         desc1.putPath(charIDToTypeID('In  '), new File(savePath));
         executeAction(charIDToTypeID('save'), desc1, DialogModes.NO);
-	} catch (e) {
-		alert("Error saving EXR file: " + e.message);
-		throw e;
+    }
+    catch (e) {
+        alert("Error saving EXR file: " + e.message);
+        throw e;
+        }
 	}
-}
 
 function savePSB(output_path){
     /***
