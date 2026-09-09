@@ -762,8 +762,7 @@ function saveEXR(savePath, doc) {
         desc1.putObject(charIDToTypeID('As  '), charIDToTypeID('EXRf'), desc2);
         desc1.putPath(charIDToTypeID('In  '), new File(savePath));
         executeAction(charIDToTypeID('save'), desc1, DialogModes.NO);
-    }
-    catch (e) {
+    } catch (e) {
         alert("Error saving EXR file: " + e.message);
         throw e;
         }
