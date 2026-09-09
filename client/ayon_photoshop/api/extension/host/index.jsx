@@ -339,6 +339,7 @@ function saveAs(output_path, ext, as_copy){
             doc = doc.duplicate();
             is_temp_doc = true;
             doc.bitsPerChannel = BitsPerChannelType.THIRTYTWO;
+            doc.flatten();
         }
         if (ext === 'jpg') {
             saveOptions = new JPEGSaveOptions();
@@ -360,7 +361,7 @@ function saveAs(output_path, ext, as_copy){
             saveOptions.alphaChannels = true;
         }
         if (ext === 'exr') {
-            return saveEXR(output_path, doc);
+            return saveEXR(output_path);
         }
         if (ext === 'psd') {
             return doc.saveAs(
@@ -744,7 +745,7 @@ function _undo() {
     executeAction(charIDToTypeID("undo", undefined, DialogModes.NO));
 };
 
-function saveEXR(savePath, doc) {
+function saveEXR(savePath) {
 /**
  * @description saves EXR using Photoshop EXR Export
  * @param  {string} path    - a full path of exr to save as a string, ex /c/temp/myfile.exr
@@ -752,8 +753,8 @@ function saveEXR(savePath, doc) {
  *
  * @return nothing
  */
-    try {
-        doc.flatten();
+	try {
+
 		var desc1 = new ActionDescriptor();
 		var desc2 = new ActionDescriptor();
         desc2.putInteger(charIDToTypeID('BtDp'), 32);
@@ -762,11 +763,11 @@ function saveEXR(savePath, doc) {
         desc1.putObject(charIDToTypeID('As  '), charIDToTypeID('EXRf'), desc2);
         desc1.putPath(charIDToTypeID('In  '), new File(savePath));
         executeAction(charIDToTypeID('save'), desc1, DialogModes.NO);
-    } catch (e) {
-        alert("Error saving EXR file: " + e.message);
-        throw e;
-        }
+	} catch (e) {
+		alert("Error saving EXR file: " + e.message);
+		throw e;
 	}
+}
 
 function savePSB(output_path){
     /***
