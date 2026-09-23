@@ -120,6 +120,7 @@
         for (var key in self.store) {
           if (!self.store.hasOwnProperty(key)) continue;
           deferred = self.store[key];
+          delete self.store[key];
 
           if (deferred && deferred.promise.isPending()) {
             deferred.reject('WebSocket error occurred');
@@ -127,17 +128,27 @@
         }
       };
 
+      var reconnectScheduled = false;
       function reconnect(callEvents) {
         setTimeout(function () {
           try {
             self.socket = createSocket();
             self.id = 1;
+
           } catch (exc) {
             callEvents('onerror', exc);
             delete self.socket;
             console.error(exc);
+            // try reconnecting after error occurs
+            reconnect(callEvents);
           }
         }, reconnectTimeout);
+      }
+
+      function scheduleReconnect(callEvents) {
+        if (reconnectScheduled) return;
+        reconnectScheduled = true;
+        reconnect(callEvents);
       }
 
       ws.onclose = function (err) {
@@ -155,7 +166,7 @@
         rejectQueue();
         callEvents('onclose', err);
         callEvents('onchange', err);
-        reconnect(callEvents);
+        scheduleReconnect(callEvents);
       };
 
       ws.onerror = function (err) {
@@ -165,6 +176,7 @@
         callEvents('onerror', err);
         callEvents('onchange', err);
         log('WebSocket has been closed by error: ', err);
+        scheduleReconnect(callEvents);
       };
 
       function tryCallEvent(func, event) {
@@ -277,7 +289,7 @@
 
           if (data.hasOwnProperty('method')) {
             return handleCall(self, data);
-          } else if (data.hasOwnProperty('error') && data.error === null) {
+          } else if (data.hasOwnProperty('error') && data.error !== null) {
             return handleError(self, data);
           } else {
             return handleResult(self, data);
