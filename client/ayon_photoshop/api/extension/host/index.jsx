@@ -329,16 +329,13 @@ function saveAs(output_path, ext, as_copy){
             is_temp_doc = true;
             doc.bitsPerChannel = BitsPerChannelType.EIGHT;
         }
-        if (
-          doc.bitsPerChannel === BitsPerChannelType.SIXTEEN ||
-          doc.bitsPerChannel === BitsPerChannelType.EIGHT
-          && (ext === 'exr')
-        ) {
+        if (ext === 'exr'){
             // Create a temp duplicate of the document to enforce 32 bit
             // document, because EXR save is only supported from 32 bit
             doc = doc.duplicate();
             is_temp_doc = true;
             doc.bitsPerChannel = BitsPerChannelType.THIRTYTWO;
+            doc.flatten();
         }
         if (ext === 'jpg') {
             saveOptions = new JPEGSaveOptions();
