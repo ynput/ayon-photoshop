@@ -139,17 +139,20 @@ class ImageCreator(Creator):
             created_group_name = self._clean_highlights(stub, name)
 
             if use_layer_name:
-                name = (
+                layer_name_source = (
                     created_group_data.source_layer_name
                     if created_group_data.source_layer_name is not None
-                    else name
+                    else created_group_data.group.name
                 )
                 layer_name = re.sub(
                     "[^{}]+".format(PRODUCT_NAME_ALLOWED_SYMBOLS),
                     "",
-                    name
+                    layer_name_source
                 )
-                if "{layer}" not in product_name.lower():
+                if (
+                    layer_name_source != product_name_from_ui
+                    and "{layer}" not in product_name.lower()
+                ):
                     product_name += "{Layer}"
 
             layer_fill = prepare_template_data({"layer": layer_name})
