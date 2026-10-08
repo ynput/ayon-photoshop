@@ -1,6 +1,6 @@
 import re
 
-from typing import Protocol
+from typing import Optional, Protocol
 import pyblish.api
 from dataclasses import dataclass
 from ayon_core.lib import BoolDef
@@ -35,6 +35,7 @@ class ImageGroupData:
     """Dataclass to hold information about the group created by the ImageCreator."""
     group: PhotoshopItem
     group_created_by_creator: bool = False
+    source_layer_name: Optional[str] = None
 
 
 class ImageCreator(Creator):
@@ -115,6 +116,7 @@ class ImageCreator(Creator):
             groups_to_create.append(ImageGroupData(
                 group=group,
                 group_created_by_creator=True,
+                source_layer_name=layer.name,
             ))
 
         layer_name = ''
@@ -137,6 +139,11 @@ class ImageCreator(Creator):
             created_group_name = self._clean_highlights(stub, name)
 
             if use_layer_name:
+                name = (
+                    created_group_data.source_layer_name
+                    if created_group_data.source_layer_name is not None
+                    else name
+                )
                 layer_name = re.sub(
                     "[^{}]+".format(PRODUCT_NAME_ALLOWED_SYMBOLS),
                     "",
