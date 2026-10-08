@@ -54,6 +54,8 @@ class ImageCreator(Creator):
     default_variants = ""
     mark_for_review = False
     active_on_create = True
+    use_layer_name = True
+    enforce_layer_name = False
 
     def create(self, product_name_from_ui, data, pre_create_data):
         groups_to_create: list[ImageGroupData] = []
@@ -118,8 +120,11 @@ class ImageCreator(Creator):
         layer_name = ''
         # use artist chosen option OR force layer if more products are created
         # to differentiate them
-        use_layer_name = (pre_create_data.get("use_layer_name") or
-                          len(groups_to_create) > 1)
+        use_layer_name = (
+            self.enforce_layer_name
+            or pre_create_data.get("use_layer_name", self.use_layer_name)
+            or len(groups_to_create) > 1
+        )
 
         product_type = data.get("productType")
         if not product_type:
@@ -220,8 +225,10 @@ class ImageCreator(Creator):
                     default=True,
                     label="Create separate instance for each selected"),
             BoolDef("use_layer_name",
-                    default=False,
-                    label="Use layer name in product"),
+                    default=self.use_layer_name or self.enforce_layer_name,
+                    label="Use layer name in product",
+                    visible=not self.enforce_layer_name
+            ),
             BoolDef(
                 "mark_for_review",
                 label="Create separate review",
