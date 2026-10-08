@@ -21,12 +21,20 @@ class CreateImagePluginModel(BaseSettingsModel):
     use_layer_name: bool = SettingsField(
         True,
         title="Use Layer Name",
-        description="Use the layer name for the product name"
+        description=(
+            "Include the layer name in the product name by default. "
+            "Artists can toggle this on or off in the publisher UI unless "
+            "'Enforce Layer Name' is enabled."
+        )
     )
     enforce_layer_name: bool = SettingsField(
         False,
         title="Enforce Layer Name",
-        description="Enforce the use of the layer name for the product name"
+        description=(
+            "Always include the layer name in the product name, regardless "
+            "of the 'Use Layer Name' setting above. The toggle is hidden "
+            "in the publisher UI, so artists cannot turn this off."
+        )
     )
     default_variants: list[str] = SettingsField(
         default_factory=list,
