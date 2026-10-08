@@ -18,6 +18,8 @@ class CreateImagePluginModel(BaseSettingsModel):
     enabled: bool = SettingsField(True, title="Enabled")
     active_on_create: bool = SettingsField(True, title="Active by default")
     mark_for_review: bool = SettingsField(False, title="Review by default")
+    use_layer_name: bool = SettingsField(True, title="Use Layer Name")
+    enforce_layer_name: bool = SettingsField(False, title="Enforce Layer Name")
     default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Variants"
@@ -81,6 +83,8 @@ DEFAULT_CREATE_SETTINGS = {
         "enabled": True,
         "active_on_create": True,
         "mark_for_review": False,
+        "use_layer_name": True,
+        "enforce_layer_name": False,
         "default_variants": [
             "Main"
         ]
