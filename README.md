@@ -1,5 +1,7 @@
 # Photoshop Integration
 
+## For information about this fork, Refer [Here](./client/ayon_photoshop/api/extension_uxp_develop/README.md)
+
 ### Implemented features
 
 - publishing workfile
