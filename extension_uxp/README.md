@@ -27,6 +27,28 @@ the expected version is `1.1.11`. The bundled .ccx package has a baked in manife
 Then you can adjust the manifest.json in `extension_uxp/manifest.json` to reflect
 this same version.
 
+### Automatic installation
+
+Enable the project setting **Install AYON UXP Plugin** (`install_uxp_plugin`,
+off by default). A pre-launch hook then installs the packaged
+`client/ayon_photoshop/api/com.ayon.photoshop_PS.ccx` with Adobe's own
+command line installer, `UnifiedPluginInstallerAgent`, which comes with the
+Creative Cloud desktop app. The hook is
+`hooks/pre_launch_install_ayon_uxp_plugin.py`, the logic is in
+`ayon_photoshop/uxp_installer.py` (standard library only).
+
+What it does, every launch:
+
+- same version already installed: nothing happens (a plugin the user disabled
+  stays disabled)
+- missing, older, newer or duplicated versions: every registered AYON version
+  is removed, the packaged one is installed, then the result is read back
+- installer not found or an install fails: a warning is logged and Photoshop
+  starts anyway
+
+To use a Creative Cloud in a non-standard place, set
+`AYON_PHOTOSHOP_UPIA_PATH` to the executable.
+
 Use the UXP developer tool (available in Adobe Creative Cloud desktop app) to develop or bundle this.
 [Docs on UXP Developer tools](https://developer.adobe.com/photoshop/uxp/2022/guides/devtool/)
 

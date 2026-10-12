@@ -20,6 +20,15 @@ class PhotoshopSettings(BaseSettingsModel):
         title="Install AYON Extension",
         description="Triggers pre-launch hook which installs extension."
     )
+    install_uxp_plugin: bool = SettingsField(
+        False,
+        title="Install AYON UXP Plugin",
+        description=(
+            "Triggers pre-launch hook which installs the UXP plugin with "
+            "Adobe's plugin installer (needs Creative Cloud and Photoshop "
+            "24+)."
+        ),
+    )
     default_workfile_extension: str = SettingsField(
         ".psd",
         title="Default workfile extension",
@@ -50,6 +59,7 @@ class PhotoshopSettings(BaseSettingsModel):
 
 DEFAULT_PHOTOSHOP_SETTING = {
     "auto_install_extension": True,
+    "install_uxp_plugin": False,
     "default_workfile_extension": ".psd",
     "create": DEFAULT_CREATE_SETTINGS,
     "publish": DEFAULT_PUBLISH_SETTINGS,
