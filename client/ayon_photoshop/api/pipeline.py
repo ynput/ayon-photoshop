@@ -419,7 +419,8 @@ def containerise(
         "namespace": namespace,
         "loader": str(loader),
         "representation": context["representation"]["id"],
-        "members": [str(layer.id)]
+        "members": [str(layer.id)],
+        "project_name": context["project"]["name"],
     }
     stub = lib.stub()
     stub.imprint(layer.id, data)
