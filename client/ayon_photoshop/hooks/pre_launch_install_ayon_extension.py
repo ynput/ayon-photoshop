@@ -6,6 +6,7 @@ from shutil import rmtree
 import platformdirs
 
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
+from ayon_photoshop.panel_type import PANEL_CEP, get_panel_type
 from ayon_applications import PreLaunchHook, LaunchTypes
 
 
@@ -15,6 +16,10 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
 
     Checks if Photoshop already has the extension in the relevant folder,
     will try to create that folder and unzip the extension if not.
+
+    Only for the 'cep' panel type. When the project uses the UXP plugin the
+    extension is removed instead, otherwise both panels would be active in
+    Photoshop and connect to the same server.
     """
 
     app_groups = {"photoshop"}
@@ -27,6 +32,9 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
             settings = self.data["project_settings"]["photoshop"]
             if not settings["auto_install_extension"]:
                 return
+            if get_panel_type(settings) != PANEL_CEP:
+                self.remove_extension()
+                return
             self.inner_execute()
 
         except Exception:
@@ -35,14 +43,34 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
                 exc_info=True,
             )
 
-    def inner_execute(self):
-        self.log.info("Installing AYON Photoshop extension.")
-
-        target_path = Path(
+    @staticmethod
+    def get_target_path() -> Path:
+        """Folder Photoshop loads the extension from."""
+        return Path(
             # roaming is applicable for windows
             platformdirs.user_data_dir(roaming=True),
             "Adobe/CEP/extensions/io.ynput.PS.panel"
         )
+
+    def remove_extension(self):
+        """Remove the CEP extension.
+
+        A running Photoshop keeps the panel it already loaded until it is
+        restarted.
+        """
+        target_path = self.get_target_path()
+        if not target_path.is_dir():
+            return
+
+        self.log.info(
+            f"Removing the CEP extension at: {target_path}"
+        )
+        rmtree(target_path)
+
+    def inner_execute(self):
+        self.log.info("Installing AYON Photoshop CEP extension.")
+
+        target_path = self.get_target_path()
 
         extension_path = Path(
             PHOTOSHOP_ADDON_ROOT,

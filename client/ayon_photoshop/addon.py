@@ -1,6 +1,7 @@
 import os
 from ayon_core.addon import AYONAddon, IHostAddon
 
+from .panel_type import DEFAULT_PANEL_TYPE, get_websocket_url
 from .version import __version__
 
 PHOTOSHOP_ADDON_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +16,10 @@ class PhotoshopAddon(AYONAddon, IHostAddon):
         """Modify environments to contain all required for implementation."""
         defaults = {
             "AYON_LOG_NO_COLORS": "1",
-            "WEBSOCKET_URL": "ws://localhost:8099/ws/"
+            # The panel type is project specific and not known here. This
+            #   is the CEP address, the 'pre_launch_panel_websocket' hook
+            #   replaces it when the project uses the UXP plugin.
+            "WEBSOCKET_URL": get_websocket_url(DEFAULT_PANEL_TYPE),
         }
         for key, value in defaults.items():
             if not env.get(key):
