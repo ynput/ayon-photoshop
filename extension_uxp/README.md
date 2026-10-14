@@ -27,10 +27,27 @@ the expected version is `1.1.11`. The bundled .ccx package has a baked in manife
 Then you can adjust the manifest.json in `extension_uxp/manifest.json` to reflect
 this same version.
 
-### Automatic installation
+### Choosing between CEP and UXP
 
-Enable the project setting **Install AYON UXP Plugin** (`install_uxp_plugin`,
-off by default). A pre-launch hook then installs the packaged
+The project setting **Plugin type** (`plugin_type` in the Photoshop settings,
+`cep` by default) selects the plugin Photoshop uses. Only one can be active:
+both would connect to the same server and requests would go to whichever
+answered first.
+
+With **Install plugin automatically** (`auto_install_extension`) on, a
+pre-launch hook installs the selected plugin **and removes the other one**:
+
+| Plugin type | CEP extension | UXP plugin |
+|---|---|---|
+| `cep` | installed | removed |
+| `uxp` | removed | installed |
+
+Plugins are only changed when Photoshop is launched from AYON. A Photoshop that
+is already running keeps the plugin it has until it is restarted. Existing
+projects that had the old `install_uxp_plugin` switch on are converted to
+`plugin_type: uxp`.
+
+The UXP plugin is installed from the packaged
 `client/ayon_photoshop/api/com.ayon.photoshop_PS.ccx` with Adobe's own
 command line installer, `UnifiedPluginInstallerAgent`, which comes with the
 Creative Cloud desktop app. The hook is
@@ -58,24 +75,25 @@ or you can `Load & Watch` it while you are running photoshop from Ayon or anywhe
 If you bundle a .ccx, you can usually double click it to add it to your bundles,
 and it will automatically load on startup.
 
-### Note: This plugin is hardcoded to use a specific websocket port/adress:
-The adress we use is: `ws://localhost:8101/ws/`
+### Websocket port
 
-Modify Line 45 in `client/ayon_photoshop/api/webserver.py`
+The UXP plugin can NOT read environment variables, so its address is written
+into the plugin: `ws://localhost:8101/ws/`. The CEP plugin reads
+`WEBSOCKET_URL`, default `ws://localhost:8099/ws/`.
 
-```py
-# in class WebServerTool, __init__(...
-websocket_url = "ws://localhost:8101/ws/" # Line 45 original: os.getenv("WEBSOCKET_URL")
-```
+The server has to listen where the selected plugin connects, so the hook
+`hooks/pre_launch_plugin_websocket.py` sets `WEBSOCKET_URL` from the plugin
+type: 8101 for `uxp`, 8099 for `cep` (a custom `WEBSOCKET_URL` is kept for
+`cep` only).
 
-This is to cause no collision with the existing CEP plugin, but also because<br>
-**UXP Plugins can NOT read environment variables.**
+The number lives in `ayon_photoshop/plugin_type.py` (`UXP_WEBSOCKET_PORT`) and
+**must match three places inside the plugin**, which is why changing it means
+rebuilding the `.ccx`:
 
-This, next to the need to EXPLICITLY allow `ws://localhost:8101` in the manifest allowed domains<br>
-('all' is not enough since that only counts for http / https connections),<br>
-makes it far less viable to dynamically inject a port number.
-
-When using the UXP plugin, this should be taken into account. 
+- `ayon_uxp/main.js` (`WS_URL`)
+- `ayon_uxp/client_RPC.js` (`default_url`)
+- `ayon_uxp/manifest.json`: `ws://localhost:8101` has to be listed explicitly
+  in the network domains, `"all"` only covers http and https
 
 ### Further setup documentation can be found in the NOTES: [Here!](./ayon_uxp/NOTES.MD)
 
