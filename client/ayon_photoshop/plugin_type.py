@@ -18,22 +18,20 @@ server and requests would go to whichever connected first.
 import socket
 from typing import List
 
+# Set by a launch hook, only while a Photoshop session is already open. It
+#   holds the plugin type that session was started with.
+RUNNING_PLUGIN_TYPE_ENV = "AYON_PHOTOSHOP_RUNNING_PLUGIN_TYPE"
+
 PANEL_CEP = "cep"
 PANEL_UXP = "uxp"
-PANEL_TYPES = (PANEL_CEP, PANEL_UXP)
-DEFAULT_PANEL_TYPE = PANEL_CEP
+PLUGIN_TYPES = (PANEL_CEP, PANEL_UXP)
+DEFAULT_PLUGIN_TYPE = PANEL_CEP
 
 # Port the server listens on for the CEP panel, used when the environment
 #   does not say otherwise.
 CEP_WEBSOCKET_PORT = 8099
 
-# Port the UXP plugin connects to. It is written into the plugin in three
-#   places that have to agree with this number and with each other:
-#   extension_uxp/ayon_uxp/main.js (WS_URL),
-#   extension_uxp/ayon_uxp/client_RPC.js (default_url) and
-#   extension_uxp/ayon_uxp/manifest.json (network permission, "ws://" needs
-#   its own entry, "all" only covers http and https).
-# Changing it means rebuilding the .ccx.
+# Port the UXP plugin connects to. Changing it means rebuilding the .ccx.
 UXP_WEBSOCKET_PORT = 8101
 
 _PORTS = {
@@ -42,8 +40,8 @@ _PORTS = {
 }
 
 
-def get_panel_type(photoshop_settings: dict) -> str:
-    """Get the panel type selected in the Photoshop project settings.
+def get_plugin_type(photoshop_settings: dict) -> str:
+    """Get the plugin type selected in the Photoshop project settings.
 
     Args:
         photoshop_settings (Optional[dict]): The 'photoshop' project
@@ -53,20 +51,20 @@ def get_panel_type(photoshop_settings: dict) -> str:
         str: 'cep' or 'uxp'. An unknown or missing value gives the default,
             so a typo in the settings never leaves Photoshop without a panel.
     """
-    value = (photoshop_settings or {}).get("panel_type")
-    return value if value in PANEL_TYPES else DEFAULT_PANEL_TYPE
+    value = (photoshop_settings or {}).get("plugin_type")
+    return value if value in PLUGIN_TYPES else DEFAULT_PLUGIN_TYPE
 
 
-def get_websocket_url(panel_type: str) -> str:
+def get_websocket_url(plugin_type: str) -> str:
     """Get the websocket address the server must listen on for a panel.
 
     Args:
-        panel_type (str): 'cep' or 'uxp'.
+        plugin_type (str): 'cep' or 'uxp'.
 
     Returns:
         str: Address like 'ws://localhost:8101/ws/'.
     """
-    return f"ws://localhost:{_PORTS[panel_type]}/ws/"
+    return f"ws://localhost:{_PORTS[plugin_type]}/ws/"
 
 
 def is_port_in_use(port: int, host="localhost", timeout=0.5) -> bool:
@@ -87,17 +85,17 @@ def is_port_in_use(port: int, host="localhost", timeout=0.5) -> bool:
         return False
 
 
-def get_running_panel_types() -> List[str]:
-    """Find the panel types of Photoshop sessions that are running now.
+def get_running_plugin_types() -> List[str]:
+    """Find the plugin types of Photoshop sessions that are running now.
 
     A running session holds the websocket port of its panel (the server is
     started by the launcher process before Photoshop starts), so an occupied
     port means a session with that panel is open.
 
     Returns:
-        list[str]: Panel types with an occupied port, usually zero or one.
+        list[str]: Plugin types with an occupied port, usually zero or one.
     """
     return [
-        panel_type for panel_type, port in _PORTS.items()
+        plugin_type for plugin_type, port in _PORTS.items()
         if is_port_in_use(port)
     ]

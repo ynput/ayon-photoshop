@@ -6,7 +6,7 @@ from shutil import rmtree
 import platformdirs
 
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
-from ayon_photoshop.panel_type import PANEL_CEP, get_panel_type
+from ayon_photoshop.plugin_type import PANEL_CEP, get_plugin_type
 from ayon_applications import PreLaunchHook, LaunchTypes
 
 
@@ -17,7 +17,7 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
     Checks if Photoshop already has the extension in the relevant folder,
     will try to create that folder and unzip the extension if not.
 
-    Only for the 'cep' panel type. When the project uses the UXP plugin the
+    Only for the 'cep' plugin type. When the project uses the UXP plugin the
     extension is removed instead, otherwise both panels would be active in
     Photoshop and connect to the same server.
     """
@@ -32,7 +32,7 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
             settings = self.data["project_settings"]["photoshop"]
             if not settings["auto_install_extension"]:
                 return
-            if get_panel_type(settings) != PANEL_CEP:
+            if get_plugin_type(settings) != PANEL_CEP:
                 self.remove_extension()
                 return
             self.inner_execute()

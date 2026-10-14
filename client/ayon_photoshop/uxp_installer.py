@@ -198,85 +198,84 @@ class Upia:
         """Remove a plugin by display name."""
         self._run("--remove", name)
 
+    def _photoshop_versions(
+        self, package: PluginPackage
+    ) -> List[InstalledPlugin]:
+        """Return the installed entries of this plugin for Photoshop.
+        
+        Args:
+            package (PluginPackage): Plugin that should end up installed.
 
-def _photoshop_versions(
-    upia: Upia, package: PluginPackage
-) -> List[InstalledPlugin]:
-    """Return the installed entries of this plugin for Photoshop."""
-    return [
-        plugin for plugin in upia.list_plugins()
-        if plugin.name == package.name and plugin.product.startswith("Photoshop")
-    ]
-
-
-def ensure_plugin_installed(
-    upia: Upia,
-    package: PluginPackage,
-) -> bool:
-    """Make exactly the packaged version of the plugin installed.
-
-    A plugin that was disabled by the user is left disabled: only versions
-    are compared. Any other state (missing, other version, duplicates) is
-    cleaned up by removing every registered version and installing the
-    packaged one, then the result is read back to verify it.
-
-    Args:
-        upia (Upia): Installer to use.
-        package (PluginPackage): Plugin that should end up installed.
-
-    Returns:
-        bool: Installed or up-to-date
-    """
-    present = _photoshop_versions(upia, package)
-    if present and {item.version for item in present} == {package.version}:
-        return True
-
-    # One call does not remove every registered version, so repeat.
-    for _ in range(len(present) + 2):
-        if not present:
-            break
-        upia.remove(package.name)
-        present = _photoshop_versions(upia, package)
-
-    upia.install(package.path)
-    return False
-
-
-def ensure_plugin_removed(upia: Upia, name: str) -> List[str]:
-    """Make sure no version of a plugin is installed for Photoshop.
-
-    Used when the project switches to the other panel type, so that only one
-    of the two is active. Plugins with other names are never touched.
-
-    Args:
-        upia (Upia): Installer to use.
-        name (str): Display name of the plugin, as listed by the installer.
-
-    Returns:
-        list[str]: Versions that were installed and are gone now, empty if
-            the plugin was not installed.
-
-    Raises:
-        RuntimeError: Some versions are still installed after the removal.
-    """
-    def _versions() -> List[str]:
+        Returns:
+            list[InstalledPlugin]: All currently installed plugins.
+        """
         return [
-            plugin.version for plugin in upia.list_plugins()
-            if plugin.name == name and plugin.product.startswith("Photoshop")
+            plugin for plugin in self.list_plugins()
+            if plugin.name == package.name and plugin.product.startswith("Photoshop")
         ]
 
-    found = _versions()
-    present = found
-    # One call does not remove every registered version, so repeat.
-    for _ in range(len(found) + 2):
-        if not present:
-            return found
-        upia.remove(name)
-        present = _versions()
+    def ensure_plugin_installed(self, package: PluginPackage) -> bool:
+        """Make exactly the packaged version of the plugin installed.
 
-    if present:
-        raise RuntimeError(
-            f"Could not remove UXP plugin '{name}', still installed: "
-            f"{', '.join(present)}"
-        )
-    return found
+        A plugin that was disabled by the user is left disabled: only versions
+        are compared. Any other state (missing, other version, duplicates) is
+        cleaned up by removing every registered version and installing the
+        packaged one, then the result is read back to verify it.
+
+        Args:
+            package (PluginPackage): Plugin that should end up installed.
+
+        Returns:
+            bool: Installed or up-to-date
+        """
+        present = self._photoshop_versions(package)
+        if present and {item.version for item in present} == {package.version}:
+            return True
+
+        # One call does not remove every registered version, so repeat.
+        for _ in range(len(present) + 2):
+            if not present:
+                break
+            self.remove(package.name)
+            present = self._photoshop_versions(package)
+
+        self.install(package.path)
+        return False
+
+    def ensure_plugin_removed(self, name: str) -> List[str]:
+        """Make sure no version of a plugin is installed for Photoshop.
+
+        Used when the project switches to the other plugin type, so that only one
+        of the two is active. Plugins with other names are never touched.
+
+        Args:
+            name (str): Display name of the plugin, as listed by the installer.
+
+        Returns:
+            list[str]: Versions that were installed and are gone now, empty if
+                the plugin was not installed.
+
+        Raises:
+            RuntimeError: Some versions are still installed after the removal.
+        """
+        def _versions() -> List[str]:
+            return [
+                plugin.version for plugin in self.list_plugins()
+                if plugin.name == name and plugin.product.startswith("Photoshop")
+            ]
+
+        found = _versions()
+        present = found
+        # One call does not remove every registered version, so repeat.
+        for _ in range(len(found) + 2):
+            if not present:
+                return found
+            self.remove(name)
+            present = _versions()
+
+        if present:
+            raise RuntimeError(
+                f"Could not remove UXP plugin '{name}', still installed: "
+                f"{', '.join(present)}"
+            )
+        return found

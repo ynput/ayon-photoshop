@@ -29,23 +29,23 @@ this same version.
 
 ### Choosing between CEP and UXP
 
-The project setting **Panel type** (`panel_type` in the Photoshop settings,
-`cep` by default) selects the panel Photoshop uses. Only one can be active:
+The project setting **Plugin type** (`plugin_type` in the Photoshop settings,
+`cep` by default) selects the plugin Photoshop uses. Only one can be active:
 both would connect to the same server and requests would go to whichever
 answered first.
 
-With **Install panel automatically** (`auto_install_extension`) on, a
-pre-launch hook installs the selected panel **and removes the other one**:
+With **Install plugin automatically** (`auto_install_extension`) on, a
+pre-launch hook installs the selected plugin **and removes the other one**:
 
-| Panel type | CEP extension | UXP plugin |
+| Plugin type | CEP extension | UXP plugin |
 |---|---|---|
 | `cep` | installed | removed |
 | `uxp` | removed | installed |
 
-Panels are only changed when Photoshop is launched from AYON. A Photoshop that
-is already running keeps the panel it has until it is restarted. Existing
+Plugins are only changed when Photoshop is launched from AYON. A Photoshop that
+is already running keeps the plugin it has until it is restarted. Existing
 projects that had the old `install_uxp_plugin` switch on are converted to
-`panel_type: uxp`.
+`plugin_type: uxp`.
 
 The UXP plugin is installed from the packaged
 `client/ayon_photoshop/api/com.ayon.photoshop_PS.ccx` with Adobe's own
@@ -78,15 +78,15 @@ and it will automatically load on startup.
 ### Websocket port
 
 The UXP plugin can NOT read environment variables, so its address is written
-into the plugin: `ws://localhost:8101/ws/`. The CEP panel reads
+into the plugin: `ws://localhost:8101/ws/`. The CEP plugin reads
 `WEBSOCKET_URL`, default `ws://localhost:8099/ws/`.
 
-The server has to listen where the selected panel connects, so the hook
-`hooks/pre_launch_panel_websocket.py` sets `WEBSOCKET_URL` from the panel
+The server has to listen where the selected plugin connects, so the hook
+`hooks/pre_launch_plugin_websocket.py` sets `WEBSOCKET_URL` from the plugin
 type: 8101 for `uxp`, 8099 for `cep` (a custom `WEBSOCKET_URL` is kept for
 `cep` only).
 
-The number lives in `ayon_photoshop/panel_type.py` (`UXP_WEBSOCKET_PORT`) and
+The number lives in `ayon_photoshop/plugin_type.py` (`UXP_WEBSOCKET_PORT`) and
 **must match three places inside the plugin**, which is why changing it means
 rebuilding the `.ccx`:
 

@@ -3,11 +3,9 @@ from pathlib import Path
 from ayon_applications import PreLaunchHook, LaunchTypes
 
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
-from ayon_photoshop.panel_type import PANEL_UXP, get_panel_type
+from ayon_photoshop.plugin_type import PANEL_UXP, get_plugin_type
 from ayon_photoshop.uxp_installer import (
     Upia,
-    ensure_plugin_installed,
-    ensure_plugin_removed,
     find_upia,
     read_package,
 )
@@ -17,7 +15,7 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
     """Install the AYON UXP plugin into Photoshop before it starts.
 
     Runs only when 'auto_install_extension' is enabled. The plugin is
-    installed when the project's 'panel_type' is 'uxp'. For 'cep' it is
+    installed when the project's 'plugin_type' is 'uxp'. For 'cep' it is
     removed instead, so that the CEP extension is the only panel.
 
     The plugin is installed with Adobe's own command line installer from the
@@ -38,7 +36,7 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
         if not settings.get("auto_install_extension", False):
             return
 
-        want_uxp = get_panel_type(settings) == PANEL_UXP
+        want_uxp = get_plugin_type(settings) == PANEL_UXP
         executable = find_upia()
         if executable is None:
             if want_uxp:
@@ -56,7 +54,7 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
             self.remove_plugin(upia, package.name)
             return
 
-        if ensure_plugin_installed(upia, package):
+        if upia.ensure_plugin_installed(package):
             self.log.info(
                 f"UXP plugin {package.name} {package.version} is up to date."
             )
@@ -72,7 +70,7 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
         A running Photoshop keeps the panel it already loaded until it is
         restarted.
         """
-        removed = ensure_plugin_removed(upia, name)
+        removed = upia.ensure_plugin_removed(name)
 
         if removed:
             self.log.info(
