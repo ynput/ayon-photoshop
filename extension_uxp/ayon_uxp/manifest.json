@@ -2,7 +2,7 @@
   "manifestVersion": 5,
   "id": "com.ayon.photoshop",
   "name": "AYON",
-  "version": "1.1.11",
+  "version": "1.1.13",
   "main": "index.html",
   "host": {
     "app": "PS",
@@ -35,7 +35,7 @@
         {
           "width": 24,
           "height": 24,
-          "path": "./icons/ayon_logo.png",
+          "path": "./icons/ayon_logo@1x.png",
           "scale": [1, 2]
         }
       ]
@@ -45,7 +45,7 @@
     {
       "width": 24,
       "height": 24,
-      "path": "./icons/ayon_logo.png",
+      "path": "./icons/ayon_logo@1x.png",
       "scale": [1, 2]
     }
   ],
