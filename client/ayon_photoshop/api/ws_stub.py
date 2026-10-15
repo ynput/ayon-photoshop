@@ -381,6 +381,16 @@ class PhotoshopServerStub:
 
         return res
 
+    def get_document_size(self):
+        """Returns the size of the active document.
+
+        Returns(dict):
+            Dictionary with 'width' and 'height' of the active document.
+        """
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.get_document_size'
+        )
+
     def get_active_document_name(self):
         """Returns just a name of active document via ws call
 
