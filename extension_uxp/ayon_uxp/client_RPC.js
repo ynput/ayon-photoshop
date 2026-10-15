@@ -1,5 +1,4 @@
 const api = require("./client_api");
-const logic = require("./client_logic");
 const WSRPC = require("./lib/wsrpc");
 
 let RPC = null;
@@ -31,6 +30,10 @@ async function setup_rpc(websocket_url) {
     /**
      * Register a route whose failures reach the server with their message.
      *
+     * The server reads an error payload as a dictionary: a thrown Error
+     * serialises to "{}", so it is rethrown as {type, message}. The error is
+     * also logged, to stay visible in the UXP console.
+     *
      * @param {string} name Route name, without the "Photoshop." prefix.
      * @param {function(object): Promise<*>} handler Receives the call's
      *     parameters and returns the value sent back to the server.
@@ -38,9 +41,10 @@ async function setup_rpc(websocket_url) {
     function registerRoute(name, handler) {
         RPC.addRoute(`Photoshop.${name}`, async (data) => {
             try {
-                return await handler(data || {});
+                return await handler(data);
             } catch (err) {
-                throw logic.toRpcError(err);
+                console.error(err);
+                throw {type: String(err.name || "Error"), message: String(err.message)};
             }
         });
     }
