@@ -190,6 +190,24 @@ function getColorProfileName() {
   return app.activeDocument.colorProfileName;
 }
 
+function getDocumentSize(){
+    /**
+     * Returns the size of the current document in pixels.
+     *
+     * Returns an object with width, height and unit, or null when no
+     * document is open.
+     **/
+    if (documents.length == 0){
+        return null;
+    }
+    var doc = app.activeDocument;
+    return {
+        width: Number(doc.width.as("px")),
+        height: Number(doc.height.as("px")),
+        unit: doc.width.type.toString()
+    };
+}
+
 function getDocumentSettings() {
     /**
      * Returns JSON with document settings:
@@ -363,12 +381,26 @@ function saveAs(output_path, ext, as_copy){
             return saveEXR(output_path);
         }
         if (ext === 'psd') {
-            return doc.saveAs(
-              new File(saveName),
-              new PhotoshopSaveOptions(),
-              as_copy,
-              Extension.LOWERCASE
-            );
+            var docSize = getDocumentSize();
+            if (docSize &&
+                (docSize.width >= 10000 || docSize.height >= 10000)) {
+                var psb_path = saveName.replace(/\.psd$/i, ".psb");
+                return savePSB(psb_path);
+            }
+            try {
+                return doc.saveAs(
+                  new File(saveName),
+                  new PhotoshopSaveOptions(),
+                  as_copy,
+                  Extension.LOWERCASE
+                );
+            } catch (e) {
+                // -25923: PSD refused (dimension or the 2 GB limit)
+                if (e.number === -25923) {
+                    return savePSB(saveName.replace(/\.psd$/i, ".psb"));
+                }
+                throw e;
+            }
         }
         if (ext === 'psb') {
             return savePSB(output_path);
