@@ -397,7 +397,8 @@ function saveAs(output_path, ext, as_copy){
             } catch (e) {
                 // -25923: PSD refused (dimension or the 2 GB limit)
                 if (e.number === -25923) {
-                    return savePSB(saveName.replace(/\.psd$/i, ".psb"));
+                    var psb_path = saveName.replace(/\.psd$/i, ".psb");
+                    return savePSB(psb_path);
                 }
                 throw e;
             }
