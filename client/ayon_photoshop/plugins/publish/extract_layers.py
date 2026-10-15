@@ -51,11 +51,26 @@ class ExtractLayers(
         # Duplicate the document to the staging directory
         filename = ps_stub.get_active_document_name()
         basename = os.path.splitext(filename)[0]
-        filename = f"{basename}.{self.extension}"
-        filepath = Path(
-            get_instance_staging_dir(instance),
-            filename
-        )
+        document = ps_stub.get_active_document()
+        # Check if the document is too large for a standard PSD
+        # and switch to PSB if necessary
+        if (
+            document.get("width") >= 10000
+            or document.get("height") >= 10000
+        ) and self.extension == "psd":
+            self.extension = "psb"
+            filename = f"{basename}.psb"
+            filepath = Path(
+                get_instance_staging_dir(instance),
+                filename
+            )
+        else:
+            filename = f"{basename}.{self.extension}"
+            filepath = Path(
+                get_instance_staging_dir(instance),
+                filename
+            )
+
         self.log.info(f"Duplicating document to staging directory: {filepath}")
         with ps_stub.duplicate_document(filepath):
             # Delete all layers except the instance layerset
