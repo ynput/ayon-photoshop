@@ -1,4 +1,5 @@
 const api = require("./client_api");
+const logic = require("./client_logic");
 const WSRPC = require("./lib/wsrpc");
 
 let RPC = null;
@@ -26,6 +27,23 @@ async function setup_rpc(websocket_url) {
     }
     // await RPC.onEvent("onconnect");
     console.log("Connected!");
+
+    /**
+     * Register a route whose failures reach the server with their message.
+     *
+     * @param {string} name Route name, without the "Photoshop." prefix.
+     * @param {function(object): Promise<*>} handler Receives the call's
+     *     parameters and returns the value sent back to the server.
+     */
+    function registerRoute(name, handler) {
+        RPC.addRoute(`Photoshop.${name}`, async (data) => {
+            try {
+                return await handler(data || {});
+            } catch (err) {
+                throw logic.toRpcError(err);
+            }
+        });
+    }
 
     RPC.addRoute('Photoshop.open', async (data) => {
             console.log('Server called client route "open":', data.path);
