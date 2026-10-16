@@ -333,6 +333,9 @@ function saveSmart(output_path, doc, as_copy){
             );
         if (!new File(output_path).exists) throw new Error("PSD not written");
     } catch (e) {
+        if (e.number === 8007) {
+            throw e;
+        }
         savePSB(output_path.replace(/\.psd$/i, ".psb"));
     }
 }
