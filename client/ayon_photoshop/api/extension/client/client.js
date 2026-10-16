@@ -123,7 +123,14 @@
                   return result;
                 });
       });
-
+      RPC.addRoute('Photoshop.get_document_size', function (data) {
+              log.warn('Server called client route "get_document_size":', data);
+              return runEvalScript("JSON.stringify(getDocumentSize())")
+                  .then(function(result){
+                      log.warn("getDocumentSize: " + result);
+                      return JSON.parse(result);
+                  });
+      });
       RPC.addRoute('Photoshop.get_document_settings', function (data) {
               log.warn('Server called client route "get_document_settings":', data);
               return runEvalScript("getDocumentSettings()")

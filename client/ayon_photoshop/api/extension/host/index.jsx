@@ -190,6 +190,24 @@ function getColorProfileName() {
   return app.activeDocument.colorProfileName;
 }
 
+function getDocumentSize(){
+    /**
+     * Returns the size of the current document in pixels.
+     *
+     * Returns an object with width, height and unit, or null when no
+     * document is open.
+     **/
+    if (documents.length == 0){
+        return null;
+    }
+    var doc = app.activeDocument;
+    return {
+        width: Number(doc.width.as("px")),
+        height: Number(doc.height.as("px")),
+        unit: "px"
+    };
+}
+
 function getDocumentSettings() {
     /**
      * Returns JSON with document settings:
@@ -302,6 +320,26 @@ function getLayerBlendMode(layer_id) {
     return typeIDToStringID(blendMode);
 }
 
+function saveSmart(output_path, doc, as_copy){
+
+    var w = doc.width.as("px"), h = doc.height.as("px");
+    if (w > 30000 || h > 30000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
+    try {
+        doc.saveAs(
+              new File(output_path),
+              new PhotoshopSaveOptions(),
+              as_copy,
+              Extension.LOWERCASE
+            );
+        if (!new File(output_path).exists) throw new Error("PSD not written");
+    } catch (e) {
+        if (e.number === 8007) {
+            throw e;
+        }
+        savePSB(output_path.replace(/\.psd$/i, ".psb"));
+    }
+}
+
 function saveAs(output_path, ext, as_copy){
     /** Exports scene to various formats
      *
@@ -363,12 +401,7 @@ function saveAs(output_path, ext, as_copy){
             return saveEXR(output_path);
         }
         if (ext === 'psd') {
-            return doc.saveAs(
-              new File(saveName),
-              new PhotoshopSaveOptions(),
-              as_copy,
-              Extension.LOWERCASE
-            );
+            return saveSmart(output_path, doc, as_copy);
         }
         if (ext === 'psb') {
             return savePSB(output_path);
