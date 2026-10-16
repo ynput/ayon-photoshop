@@ -320,6 +320,18 @@ function getLayerBlendMode(layer_id) {
     return typeIDToStringID(blendMode);
 }
 
+function saveSmart(output_path, doc){
+
+    var w = doc.width.as("px"), h = doc.height.as("px");
+    if (w > 30000 || h > 30000) return saveAsPSB(output_path.replace(/\.psd$/i, ".psb"));
+    try {
+        doc.saveAs(new File(output_path), new PhotoshopSaveOptions(), true);
+        if (!new File(output_path).exists) throw new Error("PSD not written");
+    } catch (e) {
+        saveAsPSB(output_path.replace(/\.psd$/i, ".psb"));
+    }
+}
+
 function saveAs(output_path, ext, as_copy){
     /** Exports scene to various formats
      *
@@ -381,27 +393,7 @@ function saveAs(output_path, ext, as_copy){
             return saveEXR(output_path);
         }
         if (ext === 'psd') {
-            var docSize = getDocumentSize();
-            if (docSize &&
-                (docSize.width >= 10000 || docSize.height >= 10000)) {
-                var psb_path = saveName.replace(/\.psd$/i, ".psb");
-                return savePSB(psb_path);
-            }
-            try {
-                return doc.saveAs(
-                  new File(saveName),
-                  new PhotoshopSaveOptions(),
-                  as_copy,
-                  Extension.LOWERCASE
-                );
-            } catch (e) {
-                // -25923: PSD refused (dimension or the 2 GB limit)
-                if (e.number === -25923) {
-                    var psb_path = saveName.replace(/\.psd$/i, ".psb");
-                    return savePSB(psb_path);
-                }
-                throw e;
-            }
+            return saveSmart(output_path, doc);
         }
         if (ext === 'psb') {
             return savePSB(output_path);
