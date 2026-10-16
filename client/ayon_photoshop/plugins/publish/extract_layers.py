@@ -55,8 +55,8 @@ class ExtractLayers(
         # Check if the document is too large for a standard PSD
         # and switch to PSB if necessary
         if (
-            doc_size.get("width") >= 10000
-            or doc_size.get("height") >= 10000
+            doc_size.get("width") > 30000
+            or doc_size.get("height") >= 30000
         ) and self.extension == "psd":
             self.extension = "psb"
             filename = f"{basename}.psb"
