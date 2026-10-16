@@ -323,12 +323,12 @@ function getLayerBlendMode(layer_id) {
 function saveSmart(output_path, doc){
 
     var w = doc.width.as("px"), h = doc.height.as("px");
-    if (w > 30000 || h > 30000) return saveAsPSB(output_path.replace(/\.psd$/i, ".psb"));
+    if (w > 30000 || h > 30000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
     try {
         doc.saveAs(new File(output_path), new PhotoshopSaveOptions(), true);
         if (!new File(output_path).exists) throw new Error("PSD not written");
     } catch (e) {
-        saveAsPSB(output_path.replace(/\.psd$/i, ".psb"));
+        savePSB(output_path.replace(/\.psd$/i, ".psb"));
     }
 }
 
