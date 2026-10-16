@@ -326,7 +326,7 @@ function saveSmart(output_path, doc, as_copy){
     if (w > 30000 || h > 30000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
     try {
         doc.saveAs(
-              new File(saveName),
+              new File(output_path),
               new PhotoshopSaveOptions(),
               as_copy,
               Extension.LOWERCASE
