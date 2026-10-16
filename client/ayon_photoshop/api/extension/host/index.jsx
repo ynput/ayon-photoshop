@@ -320,12 +320,17 @@ function getLayerBlendMode(layer_id) {
     return typeIDToStringID(blendMode);
 }
 
-function saveSmart(output_path, doc){
+function saveSmart(output_path, doc, as_copy){
 
     var w = doc.width.as("px"), h = doc.height.as("px");
     if (w > 30000 || h > 30000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
     try {
-        doc.saveAs(new File(output_path), new PhotoshopSaveOptions(), true);
+        doc.saveAs(
+              new File(saveName),
+              new PhotoshopSaveOptions(),
+              as_copy,
+              Extension.LOWERCASE
+            );
         if (!new File(output_path).exists) throw new Error("PSD not written");
     } catch (e) {
         savePSB(output_path.replace(/\.psd$/i, ".psb"));
@@ -393,7 +398,7 @@ function saveAs(output_path, ext, as_copy){
             return saveEXR(output_path);
         }
         if (ext === 'psd') {
-            return saveSmart(output_path, doc);
+            return saveSmart(output_path, doc, as_copy);
         }
         if (ext === 'psb') {
             return savePSB(output_path);
