@@ -204,7 +204,7 @@ function getDocumentSize(){
     return {
         width: Number(doc.width.as("px")),
         height: Number(doc.height.as("px")),
-        unit: doc.width.type.toString()
+        unit: "px"
     };
 }
 
