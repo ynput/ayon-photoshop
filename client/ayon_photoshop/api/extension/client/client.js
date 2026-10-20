@@ -339,6 +339,17 @@
                   });
       });
 
+      RPC.addRoute('Photoshop.save_review_jpg', function (data) {
+              log.warn('Server called client route "save_review_jpg":', data);
+              var escapedPath = EscapeStringForJSX(data.image_path);
+              return runEvalScript("saveReviewJpg('" + escapedPath + "', " +
+                                   data.max_dimension + ")")
+                  .then(function(result){
+                      log.warn("save review jpg: " + result);
+                      return result;
+                  });
+      });
+
       RPC.addRoute('Photoshop.create_document', function (data) {
               log.warn('Server called client route "create_document":', data);
               return runEvalScript("createDocument('" + data.name + "', " +

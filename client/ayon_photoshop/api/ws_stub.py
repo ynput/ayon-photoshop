@@ -432,6 +432,25 @@ class PhotoshopServerStub:
             as_copy=as_copy,
         )
 
+    def save_review_jpg(self, image_path, max_dimension=8192):
+        """Saves active document as JPEG downscaled to max_dimension.
+
+        The document itself is not modified; a resized duplicate is saved.
+        Used for review sources, which downstream tools (ffmpeg) cannot handle
+        above a certain pixel count.
+
+        Args:
+            image_path (string): full local path
+            max_dimension (int): longest side limit in pixels
+        Returns: None
+        """
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.save_review_jpg',
+            image_path=image_path,
+            max_dimension=max_dimension,
+        )
+
     @contextmanager
     def duplicate_document(self, path: str):
         """Duplicate active document and save it to path.

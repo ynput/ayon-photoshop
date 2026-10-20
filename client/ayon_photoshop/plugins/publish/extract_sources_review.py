@@ -37,6 +37,9 @@ class ExtractSourcesReview(
 
     # Extract Options
     make_image_sequence = None
+    # Review sources are downscaled to this longest-side size before saving.
+    # ffmpeg cannot decode images above roughly 268 megapixels.
+    max_dimension = 8192
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
@@ -182,10 +185,10 @@ class ExtractSourcesReview(
             layer_ids = [layer.id for layer in layers]
             # Show all specified layers and their ancestors, hide all others
             with photoshop.isolated_layers_visibility(stub, layer_ids, all_layers):
-                stub.saveAs(output_image_path, 'jpg', True)
+                stub.save_review_jpg(output_image_path, self.max_dimension)
         else:
             # No layers specified - save full flattened document as-is
-            stub.saveAs(output_image_path, 'jpg', True)
+            stub.save_review_jpg(output_image_path, self.max_dimension)
 
         return output_image_path
 
@@ -211,6 +214,6 @@ class ExtractSourcesReview(
 
             # Show only the layer and its ancestors, hide all others
             with photoshop.isolated_layers_visibility(stub, layer.id, all_layers):
-                stub.saveAs(output_image_path, 'jpg', True)
+                stub.save_review_jpg(output_image_path, self.max_dimension)
 
         return list_img_filename
