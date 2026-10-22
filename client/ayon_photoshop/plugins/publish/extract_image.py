@@ -48,7 +48,6 @@ class ExtractImage(
 
         stub = photoshop.stub()
         all_layers = stub.get_layers()  # Fetch once, reuse for all instances
-        doc_size = stub.get_document_size() or {}
         native_colorspace = stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
         host_name = context.data["hostName"]
@@ -92,14 +91,6 @@ class ExtractImage(
                     workfile_extension = workfile_extension.strip(".")
                     self.log.debug(f"Extracting formats {self.formats} for {instance}")
                     for extension in self.formats:
-                        if photoshop.document_requires_psb(doc_size):
-                            self.log.warning(
-                                f"Skipping '{extension}' extraction for {instance}: document "
-                                f"is {doc_size.get('width')}x{doc_size.get('height')} px, "
-                                f"above the {photoshop.PSD_MAX_DIMENSION} px export "
-                                "budget; the file would be huge and slow to write."
-                            )
-                            continue
                         self.log.debug(f"Extracting {extension} for {instance}")
                         repre_filename = f"{file_basename}_{suffix}.{extension}"
                         files[extension] = repre_filename
