@@ -3,6 +3,7 @@ import pyblish.api
 from ayon_core.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin,
+    PublishXmlValidationError
 )
 from ayon_photoshop import api as photoshop
 
@@ -29,30 +30,15 @@ class ValidateDocumentSize(
     optional = True
     active = True
 
-    # Above this pixel count review/thumbnail extraction and large format
-    # exports can fail or produce very large staging files.
-    max_pixels = 100_000_000
-
     def process(self, context):
         if not self.is_active(context.data):
             return
 
         info = photoshop.stub().get_document_size() or {}
-        width = info.get("width") or 0
-        height = info.get("height") or 0
-        if not width or not height:
-            return
-
-        pixels = width * height
-        if pixels > self.max_pixels:
-            self.log.warning(
-                "Document is %dx%d (%s px), above the %s px safe limit. "
-                "Review/preview extraction and very large representations "
-                "may fail or produce multi-GB staging files; consider "
-                "downscaling the document or disabling those "
-                "representations.",
-                width,
-                height,
-                f"{pixels:,}",
-                f"{self.max_pixels:,}",
+        if photoshop.stub().document_requires_psb(info):
+            msg = (
+                "Document excceeds 30000 pixels in either width or height."
+                "Please reformat the document to fit within the size limits."
             )
+            formatting_data = {"msg": msg}
+            raise PublishXmlValidationError(msg, formatting_data=formatting_data)
