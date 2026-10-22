@@ -92,12 +92,12 @@ class ExtractImage(
                     workfile_extension = workfile_extension.strip(".")
                     self.log.debug(f"Extracting formats {self.formats} for {instance}")
                     for extension in self.formats:
-                        if doc_size.get("width") >= 30000 or doc_size.get("height") >= 30000:
+                        if photoshop.document_requires_psb(doc_size):
                             self.log.warning(
                                 f"Skipping '{extension}' extraction for {instance}: document "
                                 f"is {doc_size.get('width')}x{doc_size.get('height')} px, "
-                                "above the 30000 px export budget; the file would "
-                                "be huge and slow to write."
+                                f"above the {photoshop.PSD_MAX_DIMENSION} px export "
+                                "budget; the file would be huge and slow to write."
                             )
                             continue
                         self.log.debug(f"Extracting {extension} for {instance}")

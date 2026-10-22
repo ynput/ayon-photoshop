@@ -57,10 +57,7 @@ class ExtractLayers(
         # are reused for every instance of a publish, so mutating
         # `self.extension` would turn all following instances into PSB too.
         extension = self.extension
-        if extension == "psd" and (
-            (doc_size.get("width") or 0) >= 30000
-            or (doc_size.get("height") or 0) >= 30000
-        ):
+        if extension == "psd" and photoshop.document_requires_psb(doc_size):
             extension = "psb"
             self.log.info(
                 "Document exceeds the PSD limits, extracting layers as PSB."

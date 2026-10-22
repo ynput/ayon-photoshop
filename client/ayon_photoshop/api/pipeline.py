@@ -76,9 +76,64 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         lib.stub().open(filepath)
         return True
 
+    @staticmethod
+    def _psb_workfile_path(filepath: str) -> str:
+        """Return the PSB variant of a workfile path."""
+        root, ext = os.path.splitext(filepath)
+        if ext.lower() == ".psd":
+            return f"{root}.psb"
+        return filepath
+
+    def _resolve_workfile_path(self, filepath: str) -> str:
+        """Resolve the path Photoshop will actually save the workfile to.
+
+        Photoshop converts the workfile to PSB when the document exceeds the
+        PSD limits. The requested path has to follow the conversion, otherwise
+        the written file and the workfile entity registered by the Workfiles
+        tool would point at different files (the entity would be greyed out
+        and the PSB file would not be registered at all).
+        """
+        if filepath and lib.document_requires_psb():
+            return self._psb_workfile_path(filepath)
+        return filepath
+
     def save_workfile(self, filepath=None):
+        filepath = self._resolve_workfile_path(filepath)
         _, ext = os.path.splitext(filepath)
         lib.stub().saveAs(filepath, ext.lstrip("."), False)
+
+    def save_workfile_with_context(
+        self,
+        filepath,
+        folder_entity,
+        task_entity,
+        *,
+        version=None,
+        comment=None,
+        description=None,
+        prepared_data=None,
+    ):
+        resolved_path = self._resolve_workfile_path(filepath)
+        if resolved_path != filepath:
+            log.info(
+                "Document exceeds the PSD limits, workfile is saved as "
+                "'%s' instead of '%s'.", resolved_path, filepath
+            )
+            filepath = resolved_path
+            if prepared_data is not None and prepared_data.rootless_path:
+                prepared_data.rootless_path = self._psb_workfile_path(
+                    prepared_data.rootless_path
+                )
+
+        super().save_workfile_with_context(
+            filepath,
+            folder_entity,
+            task_entity,
+            version=version,
+            comment=comment,
+            description=description,
+            prepared_data=prepared_data,
+        )
 
     def get_current_workfile(self):
         try:

@@ -18,6 +18,8 @@ from .plugin import (
 
 
 from .lib import (
+    PSD_MAX_DIMENSION,
+    document_requires_psb,
     maintained_selection,
     isolated_layers_visibility,
 )
@@ -36,6 +38,8 @@ __all__ = [
     "get_unique_layer_name",
 
     # lib
+    "PSD_MAX_DIMENSION",
+    "document_requires_psb",
     "maintained_selection",
     "isolated_layers_visibility",
 ]
