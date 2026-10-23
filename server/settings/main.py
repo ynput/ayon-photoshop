@@ -11,14 +11,34 @@ default_workfile_extensions_enum = [
     {"value": ".psb", "label": "psb"},
 ]
 
+plugin_type_enum = [
+    {"value": "cep", "label": "CEP extension"},
+    {"value": "uxp", "label": "UXP plugin"},
+]
+
 
 class PhotoshopSettings(BaseSettingsModel):
     """Photoshop Project Settings."""
 
+    plugin_type: str = SettingsField(
+        "cep",
+        title="Plugin type",
+        description=(
+            "Which AYON panel Photoshop uses, only one can be active. "
+            "CEP is the legacy extension. UXP is the new plugin, it needs "
+            "Photoshop 24+ and the Creative Cloud desktop app to be "
+            "installed automatically. The other panel is removed from "
+            "Photoshop at launch when 'Install panel automatically' is on."
+        ),
+        enum_resolver=lambda: plugin_type_enum,
+    )
     auto_install_extension: bool = SettingsField(
         False,
-        title="Install AYON Extension",
-        description="Triggers pre-launch hook which installs extension."
+        title="Install panel automatically",
+        description=(
+            "Triggers pre-launch hook which installs the panel selected "
+            "above and removes the other one."
+        ),
     )
     default_workfile_extension: str = SettingsField(
         ".psd",
@@ -49,6 +69,7 @@ class PhotoshopSettings(BaseSettingsModel):
 
 
 DEFAULT_PHOTOSHOP_SETTING = {
+    "plugin_type": "cep",
     "auto_install_extension": True,
     "default_workfile_extension": ".psd",
     "create": DEFAULT_CREATE_SETTINGS,
