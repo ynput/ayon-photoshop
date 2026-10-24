@@ -6,6 +6,7 @@ from ayon_core.pipeline.publish import (
     PublishXmlValidationError
 )
 from ayon_photoshop import api as photoshop
+from ayon_photoshop.api.lib import document_requires_psb
 
 
 class ValidateDocumentSize(
@@ -35,7 +36,7 @@ class ValidateDocumentSize(
             return
 
         info = photoshop.stub().get_document_size() or {}
-        if photoshop.stub().document_requires_psb(info):
+        if document_requires_psb(info):
             msg = (
                 "Document excceeds 30000 pixels in either width or height."
                 "Please reformat the document to fit within the size limits."
