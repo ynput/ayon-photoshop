@@ -40,7 +40,7 @@ class ValidateDocumentSize(
         info = photoshop.stub().get_document_size() or {}
         if document_requires_psb(info):
             msg = (
-                f"Document excceeds {PSD_MAX_DIMENSION} pixels in either width "
+                f"Document exceeds {PSD_MAX_DIMENSION} pixels in either width "
                 "or height. Please reformat the document to fit within the "
                 "size limits."
             )
