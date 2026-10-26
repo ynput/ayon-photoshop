@@ -44,5 +44,5 @@ class ValidateDocumentSize(
                 "or height. Please reformat the document to fit within the "
                 "size limits."
             )
-            formatting_data = {"msg": msg}
+            formatting_data = {"msg": msg, "width": info.get("width"), "height": info.get("height")}
             raise PublishXmlValidationError(self, msg, formatting_data=formatting_data)
