@@ -52,7 +52,7 @@ class ExtractImage(
         document_size = stub.get_document_size()
         if document_requires_psb(document_size):
             raise PublishError(
-                f"Document excceeds {PSD_MAX_DIMENSION} pixels in "
+                f"Document exceeds {PSD_MAX_DIMENSION} pixels in "
                 "either width or height."
             )
         all_layers = stub.get_layers()  # Fetch once, reuse for all instances
