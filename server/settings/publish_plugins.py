@@ -201,14 +201,6 @@ class ValidateDocumentSizePlugin(BaseSettingsModel):
     enabled: bool = SettingsField(True, title="Enabled")
     optional: bool = SettingsField(True, title="Optional")
     active: bool = SettingsField(True, title="Active")
-    max_pixels: int = SettingsField(
-        100000000,
-        title="Maximum Pixels",
-        description=(
-            "Documents above this pixel count can fail review/thumbnail "
-            "extraction (ffmpeg) and produce multi-GB staging files."
-        ),
-    )
 
 
 class PhotoshopPublishPlugins(BaseSettingsModel):
@@ -317,6 +309,5 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True,
-        "max_pixels": 100000000,
     }
 }
