@@ -143,6 +143,15 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
         False,
         title="Make an image sequence instead of flatten image"
     )
+    max_dimension: int = SettingsField(
+        8192,
+        title="Max Review Source Dimension",
+        description=(
+            "Review source images are downscaled in Photoshop to this longest "
+            "side length. ffmpeg cannot decode images above roughly "
+            "268 megapixels."
+        ),
+    )
 
 
 class ExtractLayersPlugin(BaseSettingsModel):
@@ -185,6 +194,13 @@ class ValidateDocumentSettingsPlugin(BaseSettingsModel):
         title="Expected Bit Depth",
         enum_resolver=lambda: bit_depth_enum,
     )
+
+
+class ValidateDocumentSizePlugin(BaseSettingsModel):
+    """Warn when the document is too large for some representations."""
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class PhotoshopPublishPlugins(BaseSettingsModel):
@@ -234,6 +250,11 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
         default_factory=ValidateDocumentSettingsPlugin,
     )
 
+    ValidateDocumentSize: ValidateDocumentSizePlugin = SettingsField(
+        title="Validate Document Size",
+        default_factory=ValidateDocumentSizePlugin,
+    )
+
 
 DEFAULT_PUBLISH_SETTINGS = {
     "CollectColorCodedInstances": {
@@ -262,6 +283,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractSourcesReview": {
         "make_image_sequence": False,
+        "max_dimension": 8192,
     },
     "ExtractLayers": {
         "enabled": False,
@@ -282,5 +304,10 @@ DEFAULT_PUBLISH_SETTINGS = {
         "expected_dpi": 72,
         "expected_mode": "RGB",
         "expected_bits": "8"
+    },
+    "ValidateDocumentSize": {
+        "enabled": True,
+        "optional": True,
+        "active": True,
     }
 }

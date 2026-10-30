@@ -51,11 +51,24 @@ class ExtractLayers(
         # Duplicate the document to the staging directory
         filename = ps_stub.get_active_document_name()
         basename = os.path.splitext(filename)[0]
-        filename = f"{basename}.{self.extension}"
+        doc_size = ps_stub.get_document_size() or {}
+        # Check if the document is too large for a standard PSD and switch
+        # to PSB if necessary. The extension is kept local: plugin instances
+        # are reused for every instance of a publish, so mutating
+        # `self.extension` would turn all following instances into PSB too.
+        extension = self.extension
+        if extension == "psd" and photoshop.document_requires_psb(doc_size):
+            extension = "psb"
+            self.log.info(
+                "Document exceeds the PSD limits, extracting layers as PSB."
+            )
+
+        filename = f"{basename}.{extension}"
         filepath = Path(
             get_instance_staging_dir(instance),
             filename
         )
+
         self.log.info(f"Duplicating document to staging directory: {filepath}")
         with ps_stub.duplicate_document(filepath):
             # Delete all layers except the instance layerset
@@ -82,8 +95,8 @@ class ExtractLayers(
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {
-            "name": self.extension,
-            "ext": self.extension,
+            "name": extension,
+            "ext": extension,
             "files": filepath.name,
             "stagingDir": filepath.parent,
         }

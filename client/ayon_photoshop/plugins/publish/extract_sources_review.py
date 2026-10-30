@@ -37,6 +37,9 @@ class ExtractSourcesReview(
 
     # Extract Options
     make_image_sequence = None
+    # Review sources are downscaled to this longest-side size before saving.
+    # ffmpeg cannot decode images above roughly 268 megapixels.
+    max_dimension = 8192
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
@@ -118,15 +121,25 @@ class ExtractSourcesReview(
 
         """
         jpg_source_repre = None
-        for repre in instance.data["representations"]:
+        representations = instance.data.get("representations") or []
+        if not representations:
+            # Image extraction can produce no representations, e.g. when the
+            # document is too large for the configured raster formats. Don't
+            # abort the publish; the separate review is just not created.
+            self.log.warning(
+                "No representations found for %s; skipping review tag.",
+                instance
+            )
+            return
+
+        for repre in representations:
             if repre["name"] == "jpg":
                 jpg_source_repre = repre
-                repre["tags"].append("review")
+                repre.setdefault("tags", []).append("review")
                 break
 
         if not jpg_source_repre:
-            repre = instance.data["representations"][0]
-            repre["tags"].append("review")
+            representations[0].setdefault("tags", []).append("review")
 
     def _get_review_layers_for_instance(self, instance):
         """Collect all layers from image instance(s)
@@ -182,10 +195,10 @@ class ExtractSourcesReview(
             layer_ids = [layer.id for layer in layers]
             # Show all specified layers and their ancestors, hide all others
             with photoshop.isolated_layers_visibility(stub, layer_ids, all_layers):
-                stub.saveAs(output_image_path, 'jpg', True)
+                stub.save_review_jpg(output_image_path, self.max_dimension)
         else:
             # No layers specified - save full flattened document as-is
-            stub.saveAs(output_image_path, 'jpg', True)
+            stub.save_review_jpg(output_image_path, self.max_dimension)
 
         return output_image_path
 
@@ -211,6 +224,6 @@ class ExtractSourcesReview(
 
             # Show only the layer and its ancestors, hide all others
             with photoshop.isolated_layers_visibility(stub, layer.id, all_layers):
-                stub.saveAs(output_image_path, 'jpg', True)
+                stub.save_review_jpg(output_image_path, self.max_dimension)
 
         return list_img_filename

@@ -381,6 +381,16 @@ class PhotoshopServerStub:
 
         return res
 
+    def get_document_size(self):
+        """Returns the size of the active document.
+
+        Returns(dict):
+            Dictionary with 'width' and 'height' of the active document.
+        """
+        return self.websocketserver.call_on_client(
+            self, 'Photoshop.get_document_size'
+        )
+
     def get_active_document_name(self):
         """Returns just a name of active document via ws call
 
@@ -420,6 +430,25 @@ class PhotoshopServerStub:
             image_path=image_path,
             ext=ext,
             as_copy=as_copy,
+        )
+
+    def save_review_jpg(self, image_path, max_dimension=8192):
+        """Saves active document as JPEG downscaled to max_dimension.
+
+        The document itself is not modified; a resized duplicate is saved.
+        Used for review sources, which downstream tools (ffmpeg) cannot handle
+        above a certain pixel count.
+
+        Args:
+            image_path (string): full local path
+            max_dimension (int): longest side limit in pixels
+        Returns: None
+        """
+        self.websocketserver.call_on_client(
+            self,
+            'Photoshop.save_review_jpg',
+            image_path=image_path,
+            max_dimension=max_dimension,
         )
 
     @contextmanager
