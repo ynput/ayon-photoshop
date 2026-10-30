@@ -323,7 +323,7 @@ function getLayerBlendMode(layer_id) {
 function saveSmart(output_path, doc, as_copy){
 
     var w = doc.width.as("px"), h = doc.height.as("px");
-    if (w >= 30000 || h >= 30000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
+    if (w >= 20000 || h >= 20000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
     try {
         doc.saveAs(
               new File(output_path),
@@ -570,7 +570,7 @@ function getSelectedLayers(doc) {
     if (doc == null){
         doc = app.activeDocument;
     }
-        
+
     var selLayers = [];
     _grp = groupSelectedLayers(doc);
 
@@ -582,8 +582,8 @@ function getSelectedLayers(doc) {
     // if (layers){
     //     itself_name = layers[0].name;
     // }
-    
-    
+
+
     for (var i = 0; i < layers.length; i++) {
         var layer = {};
         layer.id = layers[i].id;
@@ -597,7 +597,7 @@ function getSelectedLayers(doc) {
             layer.group = true;
         }
         layer.long_name = long_names;
-        
+
         selLayers.push(layer);
     }
 
@@ -1060,8 +1060,8 @@ function fixBrokenSmartObjectLinks() {
     return JSON.stringify(fixed);
 }
 
-// triggers when panel is opened, good for debugging 
-//log(getActiveDocumentName()); 
+// triggers when panel is opened, good for debugging
+//log(getActiveDocumentName());
 // log.show();
 // var a = app.activeDocument.activeLayer;
 // log(a);

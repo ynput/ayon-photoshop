@@ -17,7 +17,7 @@ log = Logger.get_logger(__name__)
 
 # Documents with a side of this many pixels or more cannot be saved as PSD,
 # Photoshop converts them to PSB instead.
-PSD_MAX_DIMENSION = 30000
+PSD_MAX_DIMENSION = 20000
 
 
 def document_requires_psb(doc_size=None):
