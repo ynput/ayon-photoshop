@@ -87,6 +87,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     @staticmethod
     def _is_same_path(dst_path, src_path) -> bool:
         """Compare paths the way Photoshop reports them back."""
+        if not dst_path or not src_path:
+            return dst_path == src_path
+
         def normalise(path):
             return os.path.normpath(path).replace("\\", "/").lower()
 
@@ -173,9 +176,10 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 filepath,
             )
             filepath = resolved_path
-            if prepared_data is not None and prepared_data.rootless_path:
+            rootless_path = getattr(prepared_data, "rootless_path", None)
+            if rootless_path:
                 prepared_data.rootless_path = self._psb_workfile_path(
-                    prepared_data.rootless_path
+                    rootless_path
                 )
 
         super().save_workfile_with_context(
