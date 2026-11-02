@@ -320,36 +320,55 @@ function getLayerBlendMode(layer_id) {
     return typeIDToStringID(blendMode);
 }
 
-// PSD stores documents up to 30000 x 30000 px and up to 2 GB. A larger
-// document has to be PSB, a smaller one may still have to be PSB if it
-// compresses to more than 2 GB - that can only be detected by trying.
-var PSD_MAX_DIMENSION = 30000;
+// Error ids/messages Photoshop uses when the document does not fit the PSD
+// format (a side above 30000 px, or a file above 2 GB). Only those mean "this
+// document needs PSB"; every other save error has to be reported as-is.
+var PSD_CAPACITY_ERROR_IDS = [-25923];
+var PSD_CAPACITY_ERROR_HINTS = [
+    "2 gb", "2000 mb", "too large", "can not be saved", "cannot be saved"
+];
+
+function isPsdCapacityError(error){
+    if (!error) {
+        return false;
+    }
+    for (var i = 0; i < PSD_CAPACITY_ERROR_IDS.length; i++) {
+        if (Number(error.number) === PSD_CAPACITY_ERROR_IDS[i]) {
+            return true;
+        }
+    }
+    // Photoshop does not document the id consistently across versions, so
+    // also look at the message. If neither matches the error is rethrown.
+    var message = String(error.message || error).toLowerCase();
+    for (var j = 0; j < PSD_CAPACITY_ERROR_HINTS.length; j++) {
+        if (message.indexOf(PSD_CAPACITY_ERROR_HINTS[j]) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function saveSmart(output_path, doc, as_copy){
     /***
      * Saves the document as PSD, falling back to PSB when PSD can not hold it.
      *
-     * Photoshop itself refuses a PSD save when the document exceeds the PSD
-     * limits (30000 px per side or 2 GB), so the resolution is only used to
-     * skip a save that is guaranteed to fail. The file size limit can be hit
-     * at any resolution, there is no way to predict it.
+     * Photoshop refuses the PSD save itself when the document exceeds the PSD
+     * limits (30000 px per side or 2 GB), so there is nothing to guess: save
+     * as PSD and only swap to PSB for that specific error. A missing folder,
+     * a write permission problem, a full disk or a cancelled prompt are
+     * raised as-is - they must never silently produce a PSB.
      *
      * Returns the path that was actually written, which differs from
      * 'output_path' when the document had to be saved as PSB.
      **/
     var psb_path = output_path.replace(/\.psd$/i, ".psb");
-
-    var w = Number(doc.width.as("px")), h = Number(doc.height.as("px"));
-    if (w > PSD_MAX_DIMENSION || h > PSD_MAX_DIMENSION) {
-        return savePSB(psb_path);
-    }
-
     var target = new File(output_path);
-    // Remember the previous file so a failed/ignored write can be detected
-    // instead of accepting a leftover file from an earlier save.
+    // Remember the previous file so a save that silently wrote nothing is
+    // detected instead of accepting a leftover file from an earlier save.
     var previous_modified = target.exists
         ? target.modified.getTime()
         : null;
+
     try {
         doc.saveAs(
               target,
@@ -357,20 +376,22 @@ function saveSmart(output_path, doc, as_copy){
               as_copy,
               Extension.LOWERCASE
             );
-        if (!target.exists) {
-            throw new Error("PSD not written");
-        }
-        if (previous_modified !== null
-            && target.modified.getTime() === previous_modified) {
-            throw new Error("PSD not overwritten");
-        }
-        return output_path;
     } catch (e) {
-        if (e.number === 8007) {
+        if (!isPsdCapacityError(e)) {
             throw e;
         }
         return savePSB(psb_path);
     }
+
+    var written = target.exists
+        && (previous_modified === null
+            || target.modified.getTime() !== previous_modified);
+    if (!written) {
+        // Photoshop reported success but no new PSD exists, which is what a
+        // document that does not fit the format looks like without an error.
+        return savePSB(psb_path);
+    }
+    return output_path;
 }
 
 function saveAs(output_path, ext, as_copy){
@@ -484,8 +505,10 @@ function saveReviewJpg(output_path, max_dimension){
      **/
     var duplicate = app.activeDocument.duplicate();
     try {
-        if (duplicate.bitsPerChannel === BitsPerChannelType.THIRTYTWO) {
-            // JPEG supports 8 bits per channel only
+        if (duplicate.bitsPerChannel !== BitsPerChannelType.EIGHT) {
+            // JPEG stores 8 bits per channel only: 16 and 32 bit documents
+            // have to be converted, otherwise Photoshop saves them with a
+            // prompt (or refuses for 32 bit).
             duplicate.bitsPerChannel = BitsPerChannelType.EIGHT;
         }
         var width = Number(duplicate.width.as("px"));
