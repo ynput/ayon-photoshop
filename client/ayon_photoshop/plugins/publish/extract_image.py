@@ -48,18 +48,6 @@ class ExtractImage(
             return
 
         stub = photoshop.stub()
-        document_size = stub.get_document_size() or {}
-        if document_requires_psb(document_size):
-            # Informational only: these raster formats can hold the
-            # dimensions, only their 2 GB file size limit may make the
-            # extraction fail, and that is reported where it happens.
-            self.log.debug(
-                "Document is %sx%s px, larger than the %s px PSD limit; PSD "
-                "extractions are written as PSB.",
-                document_size.get("width"),
-                document_size.get("height"),
-                PSD_MAX_DIMENSION,
-            )
         all_layers = stub.get_layers()  # Fetch once, reuse for all instances
         native_colorspace = stub.get_color_profile_name()
         self.log.info(f"Document colorspace profile: {native_colorspace}")
