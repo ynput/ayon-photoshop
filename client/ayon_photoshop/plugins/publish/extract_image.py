@@ -5,7 +5,6 @@ import pyblish.api
 from ayon_core.pipeline import publish
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
-from ayon_photoshop.api.lib import PSD_MAX_DIMENSION, document_requires_psb
 if TYPE_CHECKING:
     from ayon_core.pipeline import CreateContext, CreatedInstance
 
