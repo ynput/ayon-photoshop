@@ -123,12 +123,17 @@ class ExtractSourcesReview(
         jpg_source_repre = None
         representations = instance.data.get("representations") or []
         if not representations:
-            # Image extraction can produce no representations, e.g. when the
-            # document is too large for the configured raster formats. Don't
-            # abort the publish; the separate review is just not created.
+            # Without representations there is nothing to tag, so this
+            # instance will publish no review. Extractors abort the publish
+            # when they fail, so an empty list means the instance produced no
+            # output at all - say so, otherwise the missing review is silent.
             self.log.warning(
-                "No representations found for %s; skipping review tag.",
-                instance
+                "Instance '%s' has no representations, no review will be "
+                "published for it. Check that the image extraction produced "
+                "output for the enabled formats.",
+                instance.data.get("productName")
+                or instance.data.get("name")
+                or instance
             )
             return
 
