@@ -15,14 +15,16 @@ class ValidateDocumentSize(
     pyblish.api.ContextPlugin,
     OptionalPyblishPluginMixin
 ):
-    """Warn when the document is too large for PSD.
+    """Validate that the document can be published as PSD.
 
-    PSD stores up to 30000 x 30000 px and up to 2 GB; above that Photoshop
-    saves as PSB. That conversion is handled by the host itself (workfile,
-    PSD layer extractions), so this plugin only warns. The remaining limits
-    (ffmpeg above ~268 Mpx, 2 GB of the raster formats) are reported by the
-    extractors when they actually fail, they can not be validated reliably
-    up front.
+    PSD stores up to 30000 x 30000 px and up to 2 GB; above the dimension
+    limit Photoshop has to save as PSB. This validator blocks such documents
+    with an artist message and is optional, so a studio that deliberately
+    works in PSB can disable it.
+
+    The 2 GB file size limit can not be validated up front (it depends on the
+    compressed result), those failures are reported by the extractor that
+    actually hits them.
     """
 
     label = "Validate Document Size"
@@ -39,15 +41,21 @@ class ValidateDocumentSize(
 
         info = photoshop.stub().get_document_size() or {}
         if document_requires_psb(info):
-            # A document above the PSD dimension limit is not unpublishable:
-            # the workfile and PSD layer extractions are written as PSB by the
-            # host itself. Only warn, the extraction failures (2 GB limits of
-            # the raster formats) are reported where they actually happen.
+            # PSD stores up to 30000 px per side and 2 GB; above the dimension
+            # limit the document can only be PSB. Blocking here is the point
+            # of the validator - it is optional, so a studio that works in PSB
+            # can disable it instead of being unable to publish.
             raise PublishXmlValidationError(
-                "Document is %sx%s px, above the %s px PSD limit. PSB is "
-                "used for workfile/PSD extractions; raster representations "
-                "may fail when they exceed 2 GB.",
-                info.get("width"),
-                info.get("height"),
-                PSD_MAX_DIMENSION,
+                self,
+                "Document is {}x{} px, above the {} px PSD dimension limit."
+                .format(
+                    info.get("width"),
+                    info.get("height"),
+                    PSD_MAX_DIMENSION,
+                ),
+                formatting_data={
+                    "width": info.get("width"),
+                    "height": info.get("height"),
+                    "limit": PSD_MAX_DIMENSION,
+                },
             )
