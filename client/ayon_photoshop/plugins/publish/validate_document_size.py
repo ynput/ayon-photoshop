@@ -3,6 +3,7 @@ import pyblish.api
 from ayon_core.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin,
+    PublishXmlValidationError
 )
 from ayon_photoshop import api as photoshop
 from ayon_photoshop.api.lib import (
@@ -42,7 +43,7 @@ class ValidateDocumentSize(
             # the workfile and PSD layer extractions are written as PSB by the
             # host itself. Only warn, the extraction failures (2 GB limits of
             # the raster formats) are reported where they actually happen.
-            self.log.warning(
+            raise PublishXmlValidationError(
                 "Document is %sx%s px, above the %s px PSD limit. PSB is "
                 "used for workfile/PSD extractions; raster representations "
                 "may fail when they exceed 2 GB.",
