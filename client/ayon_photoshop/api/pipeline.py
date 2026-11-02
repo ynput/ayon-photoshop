@@ -142,8 +142,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         _, ext = os.path.splitext(resolved_path)
         saved_path = lib.stub().saveAs(resolved_path, ext.lstrip("."), False)
         if saved_path and not self._is_same_path(saved_path, filepath):
-            # Photoshop wrote another file than requested (-25923 / the 2 GB
-            # limit), this is the only place where that is known for sure.
+            # Photoshop wrote another file than requested (the document does
+            # not fit the PSD format), this is the only place where that is
+            # known for sure.
             log.warning(
                 "Document does not fit the PSD format, workfile was saved as "
                 "'%s' instead of the requested '%s'.",

@@ -25,8 +25,9 @@ PSD_MAX_DIMENSION = 30000
 def document_requires_psb(doc_size=None):
     """Whether the document dimensions require the PSB format.
 
-    Photoshop cannot save documents with a side of 'PSD_MAX_DIMENSION'
-    pixels or more as PSD, it converts them to PSB instead.
+    PSD stores documents with a side of up to 'PSD_MAX_DIMENSION' pixels, so
+    anything above that limit can only be PSB. Photoshop refuses such a save
+    instead of converting the document itself.
 
     Args:
         doc_size (Optional[dict]): Document size payload with 'width' and
@@ -49,7 +50,7 @@ def document_requires_psb(doc_size=None):
 
     width = doc_size.get("width") or 0
     height = doc_size.get("height") or 0
-    return width >= PSD_MAX_DIMENSION or height >= PSD_MAX_DIMENSION
+    return width > PSD_MAX_DIMENSION or height > PSD_MAX_DIMENSION
 
 
 def safe_excepthook(*args):

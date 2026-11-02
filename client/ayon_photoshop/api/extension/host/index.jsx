@@ -320,52 +320,57 @@ function getLayerBlendMode(layer_id) {
     return typeIDToStringID(blendMode);
 }
 
-// Error ids/messages Photoshop uses when the document does not fit the PSD
-// format (a side above 30000 px, or a file above 2 GB). Only those mean "this
-// document needs PSB"; every other save error has to be reported as-is.
-var PSD_CAPACITY_ERROR_IDS = [-25923];
-var PSD_CAPACITY_ERROR_HINTS = [
-    "2 gb", "2000 mb", "too large", "can not be saved", "cannot be saved"
-];
+// A PSD can not be larger than 30000 px on either side. Documents above that
+// limit can only be PSB, which is known up front - no error handling needed.
+var PSD_MAX_DIMENSION = 30000;
 
-function isPsdCapacityError(error){
-    if (!error) {
-        return false;
+function isSaveCancelled(error){
+    // 8007 is what Photoshop raises when the user cancels the save dialog.
+    // A cancelled save must be reported, never retried as another format.
+    return !!error && Number(error.number) === 8007;
+}
+
+function removePartialSave(target, existed_before){
+    // A failed PSD save can leave a truncated file behind. Only remove it when
+    // it did not exist before: a pre-existing file may still be intact and is
+    // not ours to delete.
+    if (existed_before || !target.exists) {
+        return;
     }
-    for (var i = 0; i < PSD_CAPACITY_ERROR_IDS.length; i++) {
-        if (Number(error.number) === PSD_CAPACITY_ERROR_IDS[i]) {
-            return true;
-        }
+    try {
+        target.remove();
+    } catch (e) {
+        // best effort only, the PSB save below is what matters
     }
-    // Photoshop does not document the id consistently across versions, so
-    // also look at the message. If neither matches the error is rethrown.
-    var message = String(error.message || error).toLowerCase();
-    for (var j = 0; j < PSD_CAPACITY_ERROR_HINTS.length; j++) {
-        if (message.indexOf(PSD_CAPACITY_ERROR_HINTS[j]) !== -1) {
-            return true;
-        }
-    }
-    return false;
 }
 
 function saveSmart(output_path, doc, as_copy){
     /***
      * Saves the document as PSD, falling back to PSB when PSD can not hold it.
      *
-     * Photoshop refuses the PSD save itself when the document exceeds the PSD
-     * limits (30000 px per side or 2 GB), so there is nothing to guess: save
-     * as PSD and only swap to PSB for that specific error. A missing folder,
-     * a write permission problem, a full disk or a cancelled prompt are
-     * raised as-is - they must never silently produce a PSB.
+     * A side above PSD_MAX_DIMENSION is a deterministic switch to PSB. The
+     * 2 GB limit can be hit at any resolution and can not be predicted, so
+     * there the save itself is the only reliable answer: attempt the PSD and,
+     * if it fails, try PSB once. When that also fails the original PSD error
+     * is reported - a full disk, a locked file or a missing folder must never
+     * turn into a silent format change.
      *
      * Returns the path that was actually written, which differs from
      * 'output_path' when the document had to be saved as PSB.
      **/
     var psb_path = output_path.replace(/\.psd$/i, ".psb");
+
+    var width = Number(doc.width.as("px"));
+    var height = Number(doc.height.as("px"));
+    if (width > PSD_MAX_DIMENSION || height > PSD_MAX_DIMENSION) {
+        return savePSB(psb_path);
+    }
+
     var target = new File(output_path);
     // Remember the previous file so a save that silently wrote nothing is
     // detected instead of accepting a leftover file from an earlier save.
-    var previous_modified = target.exists
+    var existed_before = target.exists;
+    var previous_modified = existed_before
         ? target.modified.getTime()
         : null;
 
@@ -377,10 +382,18 @@ function saveSmart(output_path, doc, as_copy){
               Extension.LOWERCASE
             );
     } catch (e) {
-        if (!isPsdCapacityError(e)) {
+        if (isSaveCancelled(e)) {
             throw e;
         }
-        return savePSB(psb_path);
+        // Photoshop refused the document. Most often that is the 2 GB limit,
+        // which can not be checked up front; anything else (permissions, full
+        // disk, ...) fails the PSB attempt too and is reported unchanged.
+        removePartialSave(target, existed_before);
+        try {
+            return savePSB(psb_path);
+        } catch (psb_error) {
+            throw e;
+        }
     }
 
     var written = target.exists
