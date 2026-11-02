@@ -196,13 +196,6 @@ class ValidateDocumentSettingsPlugin(BaseSettingsModel):
     )
 
 
-class ValidateDocumentSizePlugin(BaseSettingsModel):
-    """Warn when the document is too large for some representations."""
-    enabled: bool = SettingsField(True, title="Enabled")
-    optional: bool = SettingsField(True, title="Optional")
-    active: bool = SettingsField(True, title="Active")
-
-
 class PhotoshopPublishPlugins(BaseSettingsModel):
     CollectColorCodedInstances: CollectColorCodedInstancesPlugin = (
         SettingsField(
@@ -248,11 +241,6 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
     ValidateDocumentSettings: ValidateDocumentSettingsPlugin = SettingsField(
         title="Validate Document Settings",
         default_factory=ValidateDocumentSettingsPlugin,
-    )
-
-    ValidateDocumentSize: ValidateDocumentSizePlugin = SettingsField(
-        title="Validate Document Size",
-        default_factory=ValidateDocumentSizePlugin,
     )
 
 
@@ -305,9 +293,4 @@ DEFAULT_PUBLISH_SETTINGS = {
         "expected_mode": "RGB",
         "expected_bits": "8"
     },
-    "ValidateDocumentSize": {
-        "enabled": True,
-        "optional": True,
-        "active": True,
-    }
 }
