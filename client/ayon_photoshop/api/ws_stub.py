@@ -418,13 +418,18 @@ class PhotoshopServerStub:
     def saveAs(self, image_path, ext, as_copy):
         """Saves active document to psd (copy) or png or jpg
 
+        A 'psd' save is written as PSB by Photoshop when the document does
+        not fit the PSD format, so the returned path can differ from
+        'image_path' in its extension.
+
         Args:
             image_path(string): full local path
             ext: <string psd|jpg|png>
             as_copy: <boolean>
-        Returns: None
+        Returns:
+            str: Path that was actually written.
         """
-        self.websocketserver.call_on_client(
+        return self.websocketserver.call_on_client(
             self,
             'Photoshop.saveAs',
             image_path=image_path,

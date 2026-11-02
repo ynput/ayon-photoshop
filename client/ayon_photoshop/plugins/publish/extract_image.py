@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 import pyblish.api
 from ayon_core.pipeline import publish
-from ayon_core.pipeline.publish import PublishError
 from ayon_core.pipeline.colorspace import get_remapped_colorspace_from_native
 from ayon_photoshop import api as photoshop
 from ayon_photoshop.api.lib import PSD_MAX_DIMENSION, document_requires_psb
@@ -49,11 +48,18 @@ class ExtractImage(
             return
 
         stub = photoshop.stub()
-        document_size = stub.get_document_size()
+        document_size = stub.get_document_size() or {}
         if document_requires_psb(document_size):
-            raise PublishError(
-                f"Document exceeds {PSD_MAX_DIMENSION} pixels in "
-                "either width or height."
+            # Not an error: JPEG/TIFF/PNG can hold these dimensions, only their
+            # 2 GB file size limit may make the extraction fail. Do not block
+            # the publish on a resolution guess, only inform the artist.
+            self.log.warning(
+                "Document is %sx%s px, above the %s px PSD limit. Workfile "
+                "and PSD layer extractions are written as PSB; raster "
+                "representations may fail when they exceed 2 GB.",
+                document_size.get("width"),
+                document_size.get("height"),
+                PSD_MAX_DIMENSION,
             )
         all_layers = stub.get_layers()  # Fetch once, reuse for all instances
         native_colorspace = stub.get_color_profile_name()

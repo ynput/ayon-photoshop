@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
 <error id="main">
-<title>Document exceeds the PSD size limit</title>
+<title>Document exceeds the PSD size limits</title>
 <description>
-### Document is too large for PSD
-The document is **{width}x{height} px**. Photoshop cannot save a document
-with a side of **20000 px** or more as PSD; it has to be saved as
-**PSB** instead.
+### Document is larger than PSD supports
+The document is **{width}x{height} px**. PSD stores documents up to
+**30000 x 30000 px** and **2 GB**; a larger document has to be saved as
+**PSB**. Photoshop converts automatically, so the workfile and PSD layer
+extractions end up as PSB.
 
 ### How to continue
-- **Resize** the document so that both sides are smaller than
-  20000 px, or
-- **Disable** the optional **Validate Document Size** validator to publish
-  anyway. The workfile and layer extractions are already saved as PSB.
+- **Resize** the document below 30000 px per side, or
+- continue in PSB, or
+- **Disable** the **Validate Document Size** validator, it is informational
+  only. Raster representations (PNG/JPG/TIFF) may still fail above 2 GB.
 
 The validator can be disabled from the publisher's plugin list or in
 `ayon+settings://photoshop/publish/ValidateDocumentSize`.

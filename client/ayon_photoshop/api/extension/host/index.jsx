@@ -320,23 +320,56 @@ function getLayerBlendMode(layer_id) {
     return typeIDToStringID(blendMode);
 }
 
-function saveSmart(output_path, doc, as_copy){
+// PSD stores documents up to 30000 x 30000 px and up to 2 GB. A larger
+// document has to be PSB, a smaller one may still have to be PSB if it
+// compresses to more than 2 GB - that can only be detected by trying.
+var PSD_MAX_DIMENSION = 30000;
 
-    var w = doc.width.as("px"), h = doc.height.as("px");
-    if (w >= 20000 || h >= 20000) return savePSB(output_path.replace(/\.psd$/i, ".psb"));
+function saveSmart(output_path, doc, as_copy){
+    /***
+     * Saves the document as PSD, falling back to PSB when PSD can not hold it.
+     *
+     * Photoshop itself refuses a PSD save when the document exceeds the PSD
+     * limits (30000 px per side or 2 GB), so the resolution is only used to
+     * skip a save that is guaranteed to fail. The file size limit can be hit
+     * at any resolution, there is no way to predict it.
+     *
+     * Returns the path that was actually written, which differs from
+     * 'output_path' when the document had to be saved as PSB.
+     **/
+    var psb_path = output_path.replace(/\.psd$/i, ".psb");
+
+    var w = Number(doc.width.as("px")), h = Number(doc.height.as("px"));
+    if (w > PSD_MAX_DIMENSION || h > PSD_MAX_DIMENSION) {
+        return savePSB(psb_path);
+    }
+
+    var target = new File(output_path);
+    // Remember the previous file so a failed/ignored write can be detected
+    // instead of accepting a leftover file from an earlier save.
+    var previous_modified = target.exists
+        ? target.modified.getTime()
+        : null;
     try {
         doc.saveAs(
-              new File(output_path),
+              target,
               new PhotoshopSaveOptions(),
               as_copy,
               Extension.LOWERCASE
             );
-        if (!new File(output_path).exists) throw new Error("PSD not written");
+        if (!target.exists) {
+            throw new Error("PSD not written");
+        }
+        if (previous_modified !== null
+            && target.modified.getTime() === previous_modified) {
+            throw new Error("PSD not overwritten");
+        }
+        return output_path;
     } catch (e) {
         if (e.number === 8007) {
             throw e;
         }
-        savePSB(output_path.replace(/\.psd$/i, ".psb"));
+        return savePSB(psb_path);
     }
 }
 
@@ -414,7 +447,8 @@ function saveAs(output_path, ext, as_copy){
             saveOptions.imageCompression = TIFFEncoding.TIFFLZW;
             saveOptions.layers = false;
         }
-        return doc.saveAs(new File(saveName), saveOptions, as_copy);
+        doc.saveAs(new File(saveName), saveOptions, as_copy);
+        return saveName;
     }
     finally {
         // Close temporary duplicate doc
@@ -854,6 +888,8 @@ function savePSB(output_path){
     /***
      * Saves file as .psb to 'output_path'
      *
+     * Returns 'output_path' so callers know which file was written.
+     *
      * output_path (str)
      **/
     var desc1 = new ActionDescriptor();
@@ -863,6 +899,7 @@ function savePSB(output_path){
     desc1.putPath( charIDToTypeID('In  '), new File(output_path) );
     desc1.putBoolean( charIDToTypeID('LwCs'), true );
     executeAction( charIDToTypeID('save'), desc1, DialogModes.NO );
+    return output_path;
 }
 
 function close(){

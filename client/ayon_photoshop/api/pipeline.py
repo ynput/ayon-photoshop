@@ -100,7 +100,15 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def save_workfile(self, filepath=None):
         filepath = self._resolve_workfile_path(filepath)
         _, ext = os.path.splitext(filepath)
-        lib.stub().saveAs(filepath, ext.lstrip("."), False)
+        saved_path = lib.stub().saveAs(filepath, ext.lstrip("."), False)
+        if saved_path and saved_path != filepath:
+            # The document hit the 2 GB limit at a resolution that still
+            # allows PSD, so Photoshop wrote PSB instead of the requested path.
+            log.warning(
+                "Workfile was saved as '%s' instead of the requested '%s'.",
+                saved_path, filepath
+            )
+        return saved_path
 
     def save_workfile_with_context(
         self,
