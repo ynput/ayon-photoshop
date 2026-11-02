@@ -92,6 +92,23 @@ class ExtractLayers(
             self.log.info("Dissolving instance layerset...")
             ps_stub.dissolve_layerset(layer.id)
 
+        # Photoshop may have written PSB even though PSD was requested (the
+        # 2 GB limit can be hit at any resolution). Follow the file that
+        # actually exists, otherwise the representation points at nothing.
+        if not Path(filepath).is_file():
+            psb_filepath = Path(filepath).with_suffix(".psb")
+            if psb_filepath.is_file():
+                filepath = psb_filepath
+
+        extension = Path(filepath).suffix.lstrip(".")
+        if extension != self.extension:
+            self.log.warning(
+                "Document does not fit the PSD format, layers were extracted "
+                "as %s instead of %s.",
+                extension.upper(),
+                self.extension.upper(),
+            )
+
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {

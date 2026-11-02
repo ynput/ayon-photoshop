@@ -50,13 +50,12 @@ class ExtractImage(
         stub = photoshop.stub()
         document_size = stub.get_document_size() or {}
         if document_requires_psb(document_size):
-            # Not an error: JPEG/TIFF/PNG can hold these dimensions, only their
-            # 2 GB file size limit may make the extraction fail. Do not block
-            # the publish on a resolution guess, only inform the artist.
-            self.log.warning(
-                "Document is %sx%s px, above the %s px PSD limit. Workfile "
-                "and PSD layer extractions are written as PSB; raster "
-                "representations may fail when they exceed 2 GB.",
+            # Informational only: these raster formats can hold the
+            # dimensions, only their 2 GB file size limit may make the
+            # extraction fail, and that is reported where it happens.
+            self.log.debug(
+                "Document is %sx%s px, larger than the %s px PSD limit; PSD "
+                "extractions are written as PSB.",
                 document_size.get("width"),
                 document_size.get("height"),
                 PSD_MAX_DIMENSION,
