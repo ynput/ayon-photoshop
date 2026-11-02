@@ -84,29 +84,68 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             return f"{root}.psb"
         return filepath
 
-    def _resolve_workfile_path(self, filepath: str) -> str:
-        """Resolve the path Photoshop will actually save the workfile to.
+    @staticmethod
+    def _is_same_path(dst_path, src_path) -> bool:
+        """Compare paths the way Photoshop reports them back."""
+        def normalise(path):
+            return os.path.normpath(path).replace("\\", "/").lower()
 
-        Photoshop converts the workfile to PSB when the document exceeds the
-        PSD limits. The requested path has to follow the conversion, otherwise
-        the written file and the workfile entity registered by the Workfiles
-        tool would point at different files (the entity would be greyed out
-        and the PSB file would not be registered at all).
+        return normalise(dst_path) == normalise(src_path)
+
+    def _resolve_workfile_path(self, filepath):
+        """Resolve the path Photoshop will save the workfile to.
+
+        Photoshop converts the workfile to PSB when the document does not fit
+        the PSD format. The requested path has to follow the conversion,
+        otherwise the written file and the workfile entity registered by the
+        Workfiles tool point at different files (the entity would be greyed
+        out and the PSB file would not be registered at all).
+
+        Only the cases Photoshop is guaranteed to convert are resolved here
+        (a side above 'PSD_MAX_DIMENSION' px). The 2 GB limit can be hit at
+        any resolution, there the path reported back by Photoshop is used.
+
+        Args:
+            filepath (Optional[str]): Requested workfile path, may be None to
+                save in place.
+
+        Returns:
+            Optional[str]: Path the workfile should be saved to.
         """
-        if filepath and lib.document_requires_psb():
+        if not filepath:
+            return filepath
+
+        if lib.document_requires_psb():
             return self._psb_workfile_path(filepath)
+
         return filepath
 
     def save_workfile(self, filepath=None):
-        filepath = self._resolve_workfile_path(filepath)
-        _, ext = os.path.splitext(filepath)
-        saved_path = lib.stub().saveAs(filepath, ext.lstrip("."), False)
-        if saved_path and saved_path != filepath:
-            # The document hit the 2 GB limit at a resolution that still
-            # allows PSD, so Photoshop wrote PSB instead of the requested path.
+        """Save the active document, following a PSD -> PSB switch.
+
+        Args:
+            filepath (Optional[str]): Destination path. When not provided the
+                document is saved in place, to the path it already has.
+
+        Returns:
+            Optional[str]: Path that was actually written.
+        """
+        if not filepath:
+            # No destination: save in place, Photoshop keeps the current path.
+            lib.stub().save()
+            return self.get_current_workfile()
+
+        resolved_path = self._resolve_workfile_path(filepath)
+        _, ext = os.path.splitext(resolved_path)
+        saved_path = lib.stub().saveAs(resolved_path, ext.lstrip("."), False)
+        if saved_path and not self._is_same_path(saved_path, filepath):
+            # Photoshop wrote another file than requested (-25923 / the 2 GB
+            # limit), this is the only place where that is known for sure.
             log.warning(
-                "Workfile was saved as '%s' instead of the requested '%s'.",
-                saved_path, filepath
+                "Document does not fit the PSD format, workfile was saved as "
+                "'%s' instead of the requested '%s'.",
+                saved_path,
+                filepath,
             )
         return saved_path
 
@@ -123,9 +162,15 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     ):
         resolved_path = self._resolve_workfile_path(filepath)
         if resolved_path != filepath:
-            log.info(
-                "Document exceeds the PSD limits, workfile is saved as "
-                "'%s' instead of '%s'.", resolved_path, filepath
+            # Deliberately resolved up front so the workfile entity matches
+            # the file Photoshop will write; the artist still needs to know
+            # that the workfile is not the requested .psd.
+            log.warning(
+                "Document is larger than %s px, workfile is saved as '%s' "
+                "instead of '%s'.",
+                lib.PSD_MAX_DIMENSION,
+                resolved_path,
+                filepath,
             )
             filepath = resolved_path
             if prepared_data is not None and prepared_data.rootless_path:
