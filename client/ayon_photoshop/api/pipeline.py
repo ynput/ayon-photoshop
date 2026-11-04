@@ -76,9 +76,122 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         lib.stub().open(filepath)
         return True
 
+    @staticmethod
+    def _psb_workfile_path(filepath: str) -> str:
+        """Return the PSB variant of a workfile path."""
+        root, ext = os.path.splitext(filepath)
+        if ext.lower() == ".psd":
+            return f"{root}.psb"
+        return filepath
+
+    @staticmethod
+    def _is_same_path(dst_path, src_path) -> bool:
+        """Compare paths the way Photoshop reports them back."""
+        if not dst_path or not src_path:
+            return dst_path == src_path
+
+        def normalise(path):
+            return os.path.normpath(path).replace("\\", "/").lower()
+
+        return normalise(dst_path) == normalise(src_path)
+
+    def _resolve_workfile_path(self, filepath):
+        """Resolve the path Photoshop will save the workfile to.
+
+        Photoshop converts the workfile to PSB when the document does not fit
+        the PSD format. The requested path has to follow the conversion,
+        otherwise the written file and the workfile entity registered by the
+        Workfiles tool point at different files (the entity would be greyed
+        out and the PSB file would not be registered at all).
+
+        Only the cases Photoshop is guaranteed to convert are resolved here
+        (a side above 'PSD_MAX_DIMENSION' px). The 2 GB limit can be hit at
+        any resolution, there the path reported back by Photoshop is used.
+
+        Args:
+            filepath (Optional[str]): Requested workfile path, may be None to
+                save in place.
+
+        Returns:
+            Optional[str]: Path the workfile should be saved to.
+        """
+        if not filepath:
+            return filepath
+
+        if lib.document_requires_psb():
+            return self._psb_workfile_path(filepath)
+
+        return filepath
+
     def save_workfile(self, filepath=None):
-        _, ext = os.path.splitext(filepath)
-        lib.stub().saveAs(filepath, ext.lstrip("."), False)
+        """Save the active document, following a PSD -> PSB switch.
+
+        Args:
+            filepath (Optional[str]): Destination path. When not provided the
+                document is saved in place, to the path it already has.
+
+        Returns:
+            Optional[str]: Path that was actually written.
+        """
+        if not filepath:
+            # No destination: save in place, Photoshop keeps the current path.
+            lib.stub().save()
+            return self.get_current_workfile()
+
+        resolved_path = self._resolve_workfile_path(filepath)
+        _, ext = os.path.splitext(resolved_path)
+        saved_path = lib.stub().saveAs(resolved_path, ext.lstrip("."), False)
+        if saved_path and not self._is_same_path(saved_path, filepath):
+            # Photoshop wrote another file than requested (the document does
+            # not fit the PSD format), this is the only place where that is
+            # known for sure.
+            log.warning(
+                "Document does not fit the PSD format, workfile was saved as "
+                "'%s' instead of the requested '%s'.",
+                saved_path,
+                filepath,
+            )
+        return saved_path
+
+    def save_workfile_with_context(
+        self,
+        filepath,
+        folder_entity,
+        task_entity,
+        *,
+        version=None,
+        comment=None,
+        description=None,
+        prepared_data=None,
+    ):
+        resolved_path = self._resolve_workfile_path(filepath)
+        if resolved_path != filepath:
+            # Deliberately resolved up front so the workfile entity matches
+            # the file Photoshop will write; the artist still needs to know
+            # that the workfile is not the requested .psd.
+            log.warning(
+                "Document is larger than %s px, workfile is saved as '%s' "
+                "instead of '%s'.",
+                lib.PSD_MAX_DIMENSION,
+                resolved_path,
+                filepath,
+            )
+            filepath = resolved_path
+            rootless_path = getattr(prepared_data, "rootless_path", None)
+            if rootless_path:
+                prepared_data.rootless_path = self._psb_workfile_path(
+                    rootless_path
+                )
+
+        super().save_workfile_with_context(
+            filepath,
+            folder_entity,
+            task_entity,
+            version=version,
+            comment=comment,
+            description=description,
+            prepared_data=prepared_data,
+        )
 
     def get_current_workfile(self):
         try:
