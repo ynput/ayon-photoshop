@@ -44,7 +44,7 @@
             </MaxSize>
           </Geometry>
           <Icons>
-            <Icon Type="Normal">./icons/ayon_logo.png</Icon>
+            <Icon Type="Normal">./icons/ayon_logo@1x.png</Icon>
           </Icons>
         </UI>
       </DispatchInfo>
