@@ -66,6 +66,27 @@ async function getColorProfileName() {
     }
 }
 
+async function getDocumentSize() {
+    /**
+     * Returns the size of the current document in pixels.
+     *
+     * Returns an object with width, height and unit, or null when no
+     * document is open.
+     **/
+
+    if (app.documents.length === 0) {
+        return null;
+    }
+
+    const doc = app.activeDocument;
+
+    return {
+        width: doc.width,
+        height: doc.height,
+        unit: "px"
+    };
+}
+
 // TODO: once CEP support is dropped, report the raw UXP values ("RGBColorMode",
 // "bitDepth8") and let validate_document_settings.py compare those directly.
 // This lookup and that plugin's _normalize_mode/_normalize_bits helpers only
@@ -1047,6 +1068,7 @@ module.exports = {
     getActiveDocumentFullName,
     getActiveDocumentName,
     getColorProfileName,
+    getDocumentSize,
     getDocumentSettings,
     setDocumentSettings,
     getLayerTypeWithName,

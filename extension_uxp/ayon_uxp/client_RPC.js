@@ -286,6 +286,14 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    registerRoute('get_document_size', async (data) => {
+            console.log('Server called client route "get_document_size":', data);
+            const result = await api.getDocumentSize();
+            console.log("getDocumentSize:", result);
+            return result;
+        }
+    );
+
     registerRoute('get_color_profile_name', async (data) => {
             console.log('Server called client route "get_color_profile_name":', data);
             const result = await api.getColorProfileName();
