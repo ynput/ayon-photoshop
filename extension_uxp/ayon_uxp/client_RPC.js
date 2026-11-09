@@ -73,6 +73,10 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    registerRoute('get_layer_blend_mode', (data) =>
+        api.getLayerBlendMode(data.layer_id)
+    );
+
     RPC.addRoute('Photoshop.set_visible', async (data) => {
             console.log('Server called client route "set_visible":', data);
             const result = await api.setVisible(data.layer_id, data.visibility);

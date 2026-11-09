@@ -134,7 +134,8 @@ async function getLayers() {
             group: false,
             parents: parents.slice(),
             type: getLayerTypeWithName(desc.name),
-            visible: desc.visible
+            visible: desc.visible,
+            blend_mode: desc.mode?._value
         };
 
         if (layerSection === "layerSectionStart") {
@@ -156,7 +157,8 @@ async function getLayers() {
                 group: false,
                 parents: [],
                 type: "background",
-                visible: bg.visible
+                visible: bg.visible,
+                blend_mode: String(bg.blendMode)
             });
         }
     } catch (e) {
@@ -164,6 +166,23 @@ async function getLayers() {
     }
 
     return JSON.stringify(layers);
+}
+
+/**
+ * Blend mode of a layer.
+ *
+ * @param {number} layer_id Id of the layer.
+ * @returns {Promise<string>} Mode id such as "normal" or "multiply".
+ */
+async function getLayerBlendMode(layer_id) {
+    const [descriptor] = await batchPlay(
+        [{
+            _obj: "get",
+            _target: [{ _ref: "layer", _id: layer_id }]
+        }],
+        { synchronousExecution: true }
+    );
+    return descriptor.mode?._value;
 }
 
 /**
@@ -749,6 +768,7 @@ module.exports = {
     getColorProfileName,
     getLayerTypeWithName,
     getLayers,
+    getLayerBlendMode,
     deleteLayer,
     isSaved,
     revertToPrevious,
