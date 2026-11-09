@@ -2,8 +2,7 @@ import os
 import re
 
 import pyblish.api
-
-from ayon_core.lib import prepare_template_data, is_in_tests
+from ayon_core.lib import is_in_tests, prepare_template_data
 from ayon_photoshop import api as photoshop
 
 
@@ -44,12 +43,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CollectColorCodedInstances")
         batch_dir = os.environ.get("AYON_PUBLISH_DATA")
-        if (
-            is_in_tests()
-            and (
-                not batch_dir or not os.path.exists(batch_dir)
-            )
-        ):
+        if is_in_tests() and (not batch_dir or not os.path.exists(batch_dir)):
             self.log.debug("Automatic testing, no batch data, skipping")
             return
 
@@ -60,12 +54,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         task_name = context.data["task"]
         variant = context.data["variant"]
         project_settings = context.data["project_settings"]
-        naming_conventions = (
-            project_settings
-            ["photoshop"]
-            ["publish"]
-            ["ValidateNaming"]
-        )
+        naming_conventions = project_settings["photoshop"]["publish"][
+            "ValidateNaming"
+        ]
 
         stub = photoshop.stub()
         layers = stub.get_layers()
@@ -83,15 +74,11 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                 self.log.debug("Not visible, skip")
                 continue
 
-            (
-                resolved_product_base_type,
-                resolved_product_template
-            ) = self._resolve_mapping(layer)
+            (resolved_product_base_type, resolved_product_template) = (
+                self._resolve_mapping(layer)
+            )
 
-            if (
-                not resolved_product_template
-                or not resolved_product_base_type
-            ):
+            if not resolved_product_template or not resolved_product_base_type:
                 self.log.debug("!!! Not found product type or template, skip")
                 continue
 
@@ -106,11 +93,12 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                     "basetype": resolved_product_base_type,
                 },
                 "task": task_name,
-                "layer": layer.clean_name
+                "layer": layer.clean_name,
             }
 
             product_name = resolved_product_template.format(
-                **prepare_template_data(fill_pairs))
+                **prepare_template_data(fill_pairs)
+            )
 
             product_name = self._clean_product_name(
                 stub, naming_conventions, product_name, layer
@@ -129,7 +117,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                     resolved_product_base_type,
                     folder_path,
                     product_name,
-                    task_name
+                    task_name,
                 )
                 created_instances.append(instance)
 
@@ -144,7 +132,8 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             fill_pairs.pop("layer")
             product_name = self.flatten_product_name_template.format(
-                **prepare_template_data(fill_pairs))
+                **prepare_template_data(fill_pairs)
+            )
 
             first_layer = publishable_layers[0]  # dummy layer
             first_layer.name = product_name
@@ -156,7 +145,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                 product_base_type,
                 folder_path,
                 product_name,
-                task_name
+                task_name,
             )
             instance.data["ids"] = [layer.id for layer in publishable_layers]
             created_instances.append(instance)
@@ -164,21 +153,19 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         for instance in created_instances:
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
-            self.log.info("Found: \"%s\" " % instance.data["name"])
+            self.log.info('Found: "%s" ' % instance.data["name"])
             self.log.debug(f"instance: {instance.data} ")
 
     def _get_existing_product_names(self, context):
         """Collect manually created instances from workfile.
 
-        Shouldn't be any as Webpublisher bypass publishing via Openpype, but
+        Shouldn't be any as Webpublisher bypass publishing via AYON, but
         might be some if workfile published through OP is reused.
         """
         existing_product_names = []
         for instance in context:
             if instance.data.get("publish") is not False:
-                existing_product_names.append(
-                    instance.data.get("productName")
-                )
+                existing_product_names.append(instance.data.get("productName"))
 
         return existing_product_names
 
@@ -189,7 +176,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         product_base_type,
         folder_path,
         product_name,
-        task_name
+        task_name,
     ):
         instance = context.create_instance(layer.name)
         instance.data["publish"] = True
@@ -207,8 +194,8 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     def _resolve_mapping(self, layer):
         """Matches 'layer' color code and name to mapping.
 
-            If both color code AND name regex is configured, BOTH must be valid
-            If layer matches to multiple mappings, only first is used!
+        If both color code AND name regex is configured, BOTH must be valid
+        If layer matches to multiple mappings, only first is used!
         """
         product_base_type_list = []
         product_name_list = []
@@ -219,12 +206,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             ):
                 continue
 
-            if (
-                mapping["layer_name_regex"]
-                and not any(
-                    re.search(pattern, layer.name)
-                    for pattern in mapping["layer_name_regex"]
-                )
+            if mapping["layer_name_regex"] and not any(
+                re.search(pattern, layer.name)
+                for pattern in mapping["layer_name_regex"]
             ):
                 continue
 
@@ -267,12 +251,12 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             product_name = re.sub(
                 naming_conventions["invalid_chars"],
                 naming_conventions["replace_char"],
-                product_name
+                product_name,
             )
             layer_name = re.sub(
                 naming_conventions["invalid_chars"],
                 naming_conventions["replace_char"],
-                layer.clean_name
+                layer.clean_name,
             )
             layer.name = layer_name
             stub.rename_layer(layer.id, layer_name)

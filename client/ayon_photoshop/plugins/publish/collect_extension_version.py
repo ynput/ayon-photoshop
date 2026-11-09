@@ -1,23 +1,23 @@
 import os
 import re
+
 import pyblish.api
-
-from ayon_photoshop import api, PHOTOSHOP_ADDON_ROOT
-
 from ayon_core.pipeline import PublishError
+from ayon_photoshop import PHOTOSHOP_ADDON_ROOT, api
 
 
 class CollectExtensionVersion(pyblish.api.ContextPlugin):
-    """ Pulls and compares version of installed extension.
+    """Pulls and compares version of installed extension.
 
-        It is recommended to use same extension as in provided Openpype code.
+    It is recommended to use same extension as in provided AYON code.
 
-        Please use Anastasiy’s Extension Manager or ZXPInstaller to update
-        extension in case of an error.
+    Please use Anastasiy's Extension Manager or ZXPInstaller to update
+    extension in case of an error.
 
-        You can locate extension.zxp in your installed Openpype code in
-        `repos/avalon-core/avalon/photoshop`
+    You can locate extension.zxp in your installed AYON code in
+    `Ynput/AYON/addons/photoshop_x.x.x/ayon_photoshop/api/extension.zxp`
     """
+
     # This technically should be a validator, but other collectors might be
     # impacted with usage of obsolete extension, so collector that runs first
     # was chosen
@@ -44,10 +44,7 @@ class CollectExtensionVersion(pyblish.api.ContextPlugin):
         with open(manifest_url) as fp:
             content = fp.read()
 
-        found = re.findall(
-            r'(ExtensionBundleVersion=")([0-9\.]+)(")',
-            content
-        )
+        found = re.findall(r'(ExtensionBundleVersion=")([0-9\.]+)(")', content)
         expected_version = None
         if found:
             expected_version = found[0][1]

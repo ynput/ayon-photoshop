@@ -1,34 +1,31 @@
 import os
 
-from qtpy import QtWidgets
-
 import pyblish.api
-
-from ayon_core.lib import register_event_callback, Logger
-from ayon_core.pipeline import (
-    register_loader_plugin_path,
-    register_creator_plugin_path,
-    registered_host,
-    AVALON_CONTAINER_ID,
-    AYON_INSTANCE_ID,
-    AVALON_INSTANCE_ID,
-)
-from ayon_core.settings import get_project_settings
-
 from ayon_core.host import (
+    ContextChangeReason,
     HostBase,
-    IWorkfileHost,
     ILoadHost,
     IPublishHost,
-    ContextChangeReason,
+    IWorkfileHost,
 )
-
+from ayon_core.lib import Logger, register_event_callback
+from ayon_core.pipeline import (
+    AVALON_CONTAINER_ID,
+    AVALON_INSTANCE_ID,
+    AYON_INSTANCE_ID,
+    register_creator_plugin_path,
+    register_loader_plugin_path,
+    registered_host,
+)
 from ayon_core.pipeline.load import any_outdated_containers
+from ayon_core.settings import get_project_settings
 from ayon_core.tools.utils import get_ayon_qt_app
+from qtpy import QtWidgets
+
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
 
 from . import lib
-from .launch_logic import ConnectionNotEstablishedYet, DOC_CONTEXT_METADATA_ID
+from .launch_logic import DOC_CONTEXT_METADATA_ID, ConnectionNotEstablishedYet
 
 log = Logger.get_logger(__name__)
 
@@ -49,7 +46,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         This function is called automatically on calling
         `api.install(photoshop)`.
         """
-        log.info("Installing OpenPype Photoshop...")
+        log.info("Installing Ayon Photoshop...")
         pyblish.api.register_host("photoshop")
 
         pyblish.api.register_plugin_path(PUBLISH_PATH)
@@ -64,7 +61,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         project_name = self.get_current_project_name()
         settings = get_project_settings(project_name)
-        default_workfile_extension = settings["photoshop"]["default_workfile_extension"]
+        default_workfile_extension = settings["photoshop"][
+            "default_workfile_extension"
+        ]
         if self.workfile_extensions[0] != default_workfile_extension:
             self.workfile_extensions.remove(default_workfile_extension)
             self.workfile_extensions.insert(0, default_workfile_extension)
@@ -227,9 +226,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         try:
             layers_meta = stub.get_layers_metadata()
         except Exception:
-            log.warning(
-                "Failed to read doc-context metadata", exc_info=True
-            )
+            log.warning("Failed to read doc-context metadata", exc_info=True)
             return {}
 
         for item in layers_meta:
@@ -382,7 +379,8 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if layers_meta:
             for instance in layers_meta:
                 if instance.get("id") in {
-                    AYON_INSTANCE_ID, AVALON_INSTANCE_ID
+                    AYON_INSTANCE_ID,
+                    AVALON_INSTANCE_ID,
                 }:
                     instances.append(instance)
 
@@ -412,8 +410,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if instance.get("members"):
             item = stub.get_layer(instance["members"][0])
             if item:
-                stub.rename_layer(item.id,
-                                  item.name.replace(stub.PUBLISH_ICON, ''))
+                stub.rename_layer(
+                    item.id, item.name.replace(stub.PUBLISH_ICON, "")
+                )
 
 
 def check_inventory():
@@ -477,7 +476,7 @@ def ls():
             continue
 
         # Append transient data
-        data["objectName"] = layer.name.replace(stub.LOADED_ICON, '')
+        data["objectName"] = layer.name.replace(stub.LOADED_ICON, "")
         data["layer"] = layer
 
         yield data
@@ -501,9 +500,7 @@ def _get_stub():
     return stub
 
 
-def containerise(
-    name, namespace, layer, context, loader=None, suffix="_CON"
-):
+def containerise(name, namespace, layer, context, loader=None, suffix="_CON"):
     """Imprint layer with metadata
 
     Containerisation enables a tracking of version, author and origin
@@ -549,6 +546,7 @@ def cache_and_get_instances(creator):
     """
     shared_key = "openpype.photoshop.instances"
     if shared_key not in creator.collection_shared_data:
-        creator.collection_shared_data[shared_key] = \
+        creator.collection_shared_data[shared_key] = (
             creator.host.list_instances()
+        )
     return creator.collection_shared_data[shared_key]
