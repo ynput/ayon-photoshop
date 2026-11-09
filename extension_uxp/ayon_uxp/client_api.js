@@ -718,81 +718,236 @@ async function rasterizeSmartObject(smartObjects) {
     return JSON.stringify(fixed);
 }
 
+/**
+ * Convert the specified document to a bit depth without changing its color mode.
+ *
+ * This is an Action Manager operation because the UXP DOM does not provide a
+ * consistently available writable `bitsPerChannel` property.
+ */
+async function convertBitDepth(document, depth) {
+    await batchPlay(
+        [{
+            _obj: "convertMode",
+            _target: [
+                { _ref: "document", _id: document.id }
+            ],
+            depth,
+            flatten: false,
+            _isCommand: true
+        }],
+        {
+            synchronousExecution: true,
+            modalBehavior: "execute"
+        }
+    );
+}
+
+/**
+ * Save the active Photoshop document in a selected format.
+ *
+ * `imagePath` must be accessible under the manifest's localFileSystem
+ * permissions, e.g. `fullAccess`.
+ *
+ * @param {string} imagePath Native absolute path.
+ * @param {string} ext jpg, jpeg, png, psd, psb, tif, tiff, tga, or exr.
+ * @param {boolean} asCopy Whether to save as a copy.
+ * @returns {Promise<string>} The original imagePath.
+ */
 async function saveAs(imagePath, ext, asCopy) {
     asCopy = !!asCopy;
-    const format = (ext || "").toLowerCase();
+
+    // Supports ".png" as well as "png".
+    const format = (ext || "")
+        .toLowerCase()
+        .replace(/^\./, "");
+
+    // `file:/C:/...` on Windows and `file:/...` on macOS.
     const url = "file:" + imagePath.replace(/\\/g, "/");
 
     await execAsModal(async () => {
-        const doc = app.activeDocument;
+        let doc = app.activeDocument;
+        let isTempDocument = false;
 
-        switch (format) {
-            case "jpg":
-            case "jpeg": {
-                const entry = await uxp_storage.localFileSystem.createEntryWithUrl(url, { overwrite: true });
-                await doc.saveAs.jpg(entry, {
-                    quality: 12,
-                    embedColorProfile: true,
-                    formatOptions: "progressive",
-                    scans: 5,
-                    matte: "noMatte"
-                }, asCopy);
-                break;
+        try {
+            const bitDepth = doc.bitsPerChannel;
+
+            const is8Bit = bitDepth === 8;
+            const is16Bit = bitDepth === 16;
+            const is32Bit = bitDepth === 32;
+
+
+            // JPEG, PNG, and TGA require 8-bit output
+            if (
+                is32Bit &&
+                ["jpg", "jpeg", "png", "tga"].includes(format)
+            ) {
+                doc = await doc.duplicate();
+                isTempDocument = true;
+
+                await convertBitDepth(doc, 8);
             }
 
-            case "png": {
-                const entry = await uxp_storage.localFileSystem.createEntryWithUrl(url, { overwrite: true });
-                await doc.saveAs.png(entry, {
-                    compression: 6,
-                    interlaced: true
-                }, asCopy);
-                break;
+            // OpenEXR requires a 32-bit document
+            if (
+                format === "exr" &&
+                (is8Bit || is16Bit)
+            ) {
+                doc = await doc.duplicate();
+                isTempDocument = true;
+
+                await convertBitDepth(doc, 32);
             }
 
-            case "psd": {
-                const entry = await uxp_storage.localFileSystem.createEntryWithUrl(url, { overwrite: true });
-                await doc.saveAs.psd(entry, {
-                    embedColorProfile: true,
-                    alphaChannels: true,
-                    layers: true,
-                    annotations: true,
-                    spotColors: true,
-                    maximizeCompatibility: true
-                }, asCopy);
-                break;
-            }
+            switch (format) {
+                case "jpg":
+                case "jpeg": {
+                    const entry =
+                        await uxp_storage.localFileSystem.createEntryWithUrl(
+                            url,
+                            { overwrite: true }
+                        );
 
-            case "psb": {
-                const entry = await uxp_storage.localFileSystem.createEntryWithUrl(url, { overwrite: true });
-                await doc.saveAs.psb(entry, {
-                    embedColorProfile: true,
-                    alphaChannels: true,
-                    layers: true,
-                    annotations: true,
-                    spotColors: true,
-                    maximizeCompatibility: true   // required for PSB
-                }, asCopy);
-                break;
-            }
+                    await doc.saveAs.jpg(entry, {
+                        quality: 12,
+                        embedColorProfile: true,
+                        formatOptions: "progressive",
+                        scans: 5,
+                        matte: "noMatte"
+                    }, asCopy);
+                    break;
+                }
 
-            case "tga":
-                await batchPlay([{
-                    _obj: "save",
-                    as: {
-                        _obj: "targaFormat",
-                        depth: 32,
+                case "png": {
+                    const entry =
+                        await uxp_storage.localFileSystem.createEntryWithUrl(
+                            url,
+                            { overwrite: true }
+                        );
+
+                    await doc.saveAs.png(entry, {
+                        compression: 6,
+                        interlaced: true
+                    }, asCopy);
+                    break;
+                }
+
+                case "psd": {
+                    const entry =
+                        await uxp_storage.localFileSystem.createEntryWithUrl(
+                            url,
+                            { overwrite: true }
+                        );
+
+                    await doc.saveAs.psd(entry, {
+                        embedColorProfile: true,
                         alphaChannels: true,
-                        rleCompression: true
-                    },
-                    in: { _path: imagePath, _kind: "local" },
-                    copy: asCopy,
-                    lowerCase: true,
-                    _options: { dialogOptions: "dontDisplay" }
-                }], { synchronousExecution: true });
-                break;
+                        layers: true,
+                        annotations: true,
+                        spotColors: true,
+                        maximizeCompatibility: true
+                    }, asCopy);
+                    break;
+                }
 
-            default:
-                throw new Error("saveAs: unsupported extension '" + ext + "'");
+                case "psb": {
+                    const entry =
+                        await uxp_storage.localFileSystem.createEntryWithUrl(
+                            url,
+                            { overwrite: true }
+                        );
+
+                    await doc.saveAs.psb(entry, {
+                        embedColorProfile: true,
+                        alphaChannels: true,
+                        layers: true,
+                        annotations: true,
+                        spotColors: true,
+                        maximizeCompatibility: true
+                    }, asCopy);
+                    break;
+                }
+
+                case "tif":
+                case "tiff": {
+                    const entry =
+                        await uxp_storage.localFileSystem.createEntryWithUrl(
+                            url,
+                            { overwrite: true }
+                        );
+
+                    await doc.saveAs.tiff(entry, {
+                        alphaChannels: true,
+                        transparency: true,
+                        imageCompression: "TIFFLZW",
+                        layers: false
+                    }, asCopy);
+                    break;
+                }
+
+                case "tga":
+                    await batchPlay([{
+                        _obj: "save",
+                        _target: [
+                            { _ref: "document", _id: doc.id }
+                        ],
+                        as: {
+                            _obj: "targaFormat",
+                            depth: 32,
+                            alphaChannels: true,
+                            rleCompression: true
+                        },
+                        in: {
+                            _path: imagePath,
+                            _kind: "local"
+                        },
+                        copy: asCopy,
+                        lowerCase: true,
+                        _options: {
+                            dialogOptions: "dontDisplay"
+                        }
+                    }], {
+                        synchronousExecution: true,
+                        modalBehavior: "execute"
+                    });
+                    break;
+
+                case "exr":
+                    /*
+                     * EXR is generally Action Manager-only in UXP.
+                     */
+                    await batchPlay([{
+                        _obj: "save",
+                        _target: [
+                            { _ref: "document", _id: doc.id }
+                        ],
+                        as: {
+                            _obj: "OpenEXR"
+                        },
+                        in: {
+                            _path: imagePath,
+                            _kind: "local"
+                        },
+                        copy: asCopy,
+                        lowerCase: true,
+                        _options: {
+                            dialogOptions: "dontDisplay"
+                        }
+                    }], {
+                        synchronousExecution: true,
+                        modalBehavior: "execute"
+                    });
+                    break;
+
+                default:
+                    throw new Error(
+                        "saveAs: unsupported extension '" + ext + "'"
+                    );
+            }
+        } finally {
+            // Never leave conversion duplicates open, including on save errors.
+            if (isTempDocument) {
+                await doc.closeWithoutSaving();
+            }
         }
     }, "Save As");
 
