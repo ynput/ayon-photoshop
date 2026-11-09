@@ -49,7 +49,7 @@ async function setup_rpc(websocket_url) {
         });
     }
 
-    RPC.addRoute('Photoshop.open', async (data) => {
+    registerRoute('open', async (data) => {
             console.log('Server called client route "open":', data.path);
             const result = await api.fileOpen(data.path);
             console.log("open:", result);
@@ -57,7 +57,7 @@ async function setup_rpc(websocket_url) {
         }
     )
 
-    RPC.addRoute('Photoshop.read', async (data) => {
+    registerRoute('read', async (data) => {
             console.log('Server called client route "read":', data);
             const result = await api.getHeadline();
             console.log("read:", result.replace("\n",""));
@@ -65,7 +65,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.get_layers', async (data) => {
+    registerRoute('get_layers', async (data) => {
             console.log('Server called client route "get_layers":', data);
             const result = await api.getLayers();
             console.log("getLayers:", result);
@@ -81,7 +81,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.set_visible', async (data) => {
+    registerRoute('set_visible', async (data) => {
             console.log('Server called client route "set_visible":', data);
             const result = await api.setVisible(data.layer_id, data.visibility);
             console.log("setVisible:", result);
@@ -89,7 +89,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.set_layers_visibility', async (data) => {
+    registerRoute('set_layers_visibility', async (data) => {
             console.log('Server called client route "set_layers_visibility":', data);
             const vismap = JSON.parse(data.visibility_map)
             for (const [layer_id, visibility] of Object.entries(vismap)) {
@@ -101,7 +101,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.get_active_document_name', async (data) => {
+    registerRoute('get_active_document_name', async (data) => {
             console.log('Server called client route "get_active_document_name":', data);
             const result = await api.getActiveDocumentName();
             console.log("getActiveDocumentName:", result);
@@ -109,7 +109,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.get_active_document_full_name', async (data) => {
+    registerRoute('get_active_document_full_name', async (data) => {
             console.log('Server called client route "get_active_document_full_name":', data);
             const result = await api.getActiveDocumentFullName();
             console.log("getActiveDocumentFullName:", result);
@@ -117,7 +117,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.save', async (data) => {
+    registerRoute('save', async (data) => {
             console.log('Server called client route "save":', data);
             const result = await api.save();
             console.log("save:", result);
@@ -125,7 +125,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.get_selected_layers', async (data) => {
+    registerRoute('get_selected_layers', async (data) => {
             console.log('Server called client route "get_selected_layers":', data);
             const result = await api.getSelectedLayers();
             console.log("getSelectedLayers:", result);
@@ -133,7 +133,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.create_group', async (data) => {
+    registerRoute('create_group', async (data) => {
             console.log('Server called client route "create_group":', data);
             const result = await api.createGroup(data.name);
             console.log("createGroup:", result);
@@ -141,7 +141,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.group_selected_layers', async (data) => {
+    registerRoute('group_selected_layers', async (data) => {
             console.log('Server called client route "group_selected_layers":', data);
             const result = await api.groupSelectedLayers(null, data.name);
             console.log("groupSelectedLayers:", result);
@@ -149,7 +149,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.merge_all_layersets', async (data) => {
+    registerRoute('merge_all_layersets', async (data) => {
             console.log('Server called client route "merge_all_layersets":', data);
             const result = await api.mergeAllLayerSets(data.parent_set);
             console.log("mergeAllLayerSets:", result);
@@ -157,7 +157,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.dissolve_layerset', async (data) => {
+    registerRoute('dissolve_layerset', async (data) => {
             console.log('Server called client route "dissolve_layerset":', data);
             const result = await api.dissolveLayerSet(data.layerset_id);
             console.log("dissolveLayerSet:", result);
@@ -165,7 +165,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.import_smart_object', async (data) => {
+    registerRoute('import_smart_object', async (data) => {
             console.log('Server called client route "import_smart_object":', data);
             const result = await api.importSmartObject(data.path, data.name, data.as_reference);
             console.log("importSmartObject:", result);
@@ -173,7 +173,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.replace_smart_object', async (data) => {
+    registerRoute('replace_smart_object', async (data) => {
             console.log('Server called client route "replace_smart_object":', data);
             const result = await api.replaceSmartObjects(data.layer_id, data.path, data.name);
             console.log("replaceSmartObjects:", result);
@@ -197,7 +197,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.delete_layer', async (data) => {
+    registerRoute('delete_layer', async (data) => {
             console.log('Server called client route "delete_layer":', data);
             const result = await api.deleteLayer(data.layer_id);
             console.log("deleteLayer:", result);
@@ -205,7 +205,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.rename_layer', async (data) => {
+    registerRoute('rename_layer', async (data) => {
             console.log('Server called client route "rename_layer":', data);
             const result = await api.renameLayer(data.layer_id, data.name);
             console.log("renameLayer:", result);
@@ -213,7 +213,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.select_layers', async (data) => {
+    registerRoute('select_layers', async (data) => {
             console.log('Server called client route "select_layers":', data);
             const result = await api.selectLayers(data.layers);
             console.log("selectLayers:", result);
@@ -221,7 +221,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.is_saved', async (data) => {
+    registerRoute('is_saved', async (data) => {
             console.log('Server called client route "is_saved":', data);
             const result = await api.isSaved();
             console.log("isSaved:", result);
@@ -229,7 +229,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.saveAs', async (data) => {
+    registerRoute('saveAs', async (data) => {
             console.log('Server called client route "saveAs":', data);
             const result = await api.saveAs(data.image_path, data.ext, data.as_copy);
             console.log("saveAs:", result);
@@ -245,7 +245,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.duplicate_document', async (data) => {
+    registerRoute('duplicate_document', async (data) => {
             console.log('Server called client route "duplicate_document":', data);
             const result = await api.duplicateDocument(data.newName);
             console.log("duplicateDocument:", result);
@@ -253,7 +253,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.close_document', async (data) => {
+    registerRoute('close_document', async (data) => {
             console.log('Server called client route "close_document":', data);
             const result = await api.closeDocument(data.id);
             console.log("closed:", result);
@@ -261,7 +261,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.revert_to_previous', async (data) => {
+    registerRoute('revert_to_previous', async (data) => {
             console.log('Server called client route "revert_to_previous":', data);
             const result = await api.revertToPrevious();
             console.log("revertToPrevious:", result);
@@ -269,7 +269,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.imprint', async (data) => {
+    registerRoute('imprint', async (data) => {
             console.log('Server called client route "imprint":', data);
             // preserve newlines
             const result = await api.imprint(data.payload);
@@ -278,7 +278,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.get_extension_version', async (data) => {
+    registerRoute('get_extension_version', async (data) => {
             console.log('Server called client route "get_extension_version":', data);
             const result = await api.getExtensionVersion();
             console.log("getExtensionVersion:", result);
@@ -286,7 +286,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.get_color_profile_name', async (data) => {
+    registerRoute('get_color_profile_name', async (data) => {
             console.log('Server called client route "get_color_profile_name":', data);
             const result = await api.getColorProfileName();
             console.log("getColorProfileName:", result);
@@ -301,6 +301,7 @@ async function setup_rpc(websocket_url) {
             return result;
         }
     );
+
     registerRoute('set_document_settings', async (data) => {
         console.log('Server called client route "get_color_profile_name":', data);
             const result = await api.setDocumentSettings(data.resolution, data.mode, data.bits);
@@ -309,7 +310,7 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    RPC.addRoute('Photoshop.close', async (data) => {
+    registerRoute('close', async (data) => {
             console.log('Server called client route "close":', data);
             const result = await api.closeApp();
             // probably dead before this
