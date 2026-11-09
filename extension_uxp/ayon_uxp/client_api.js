@@ -89,9 +89,6 @@ async function getDocumentSettings() {
     });
 }
 
-// Bit depths the validator can ask for, as keys of constants.BitsPerChannelType.
-const BITS_KEYS = {"8": "EIGHT", "16": "SIXTEEN", "32": "THIRTYTWO"};
-
 /**
  * Change resolution, color mode and bit depth of the active document.
  *
@@ -103,6 +100,9 @@ const BITS_KEYS = {"8": "EIGHT", "16": "SIXTEEN", "32": "THIRTYTWO"};
  */
 async function setDocumentSettings(resolution, mode, bits) {
     const doc = app.activeDocument;
+    if (typeof bits == "string") {
+        bits = parseInt(bits)
+    }
     const steps = [
         ["resolution", () => doc.resizeImage(
             undefined, undefined, resolution, constants.ResampleMethod.NONE
@@ -110,9 +110,7 @@ async function setDocumentSettings(resolution, mode, bits) {
         ["color mode", () => doc.changeMode(
             constants.ChangeMode[String(mode).toUpperCase()]
         )],
-        ["bit depth", () => {
-            doc.bitsPerChannel = constants.BitsPerChannelType[BITS_KEYS[bits]];
-        }],
+        ["bit depth", async () => {await convertBitDepth(doc, bits)}],
     ];
 
     const errors = [];
