@@ -1,5 +1,4 @@
-from ayon_core.pipeline import publish
-from ayon_photoshop import api as photoshop
+from ayon_core.pipeline import publish, registered_host
 
 
 class ExtractSaveScene(publish.Extractor):
@@ -11,4 +10,6 @@ class ExtractSaveScene(publish.Extractor):
     families = ["workfile"]
 
     def process(self, instance):
-        photoshop.stub().save()
+        host = registered_host()
+        path = host.get_current_workfile()
+        host.save_workfile(path)

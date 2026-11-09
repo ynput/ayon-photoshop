@@ -123,7 +123,14 @@
                   return result;
                 });
       });
-
+      RPC.addRoute('Photoshop.get_document_size', function (data) {
+              log.warn('Server called client route "get_document_size":', data);
+              return runEvalScript("JSON.stringify(getDocumentSize())")
+                  .then(function(result){
+                      log.warn("getDocumentSize: " + result);
+                      return JSON.parse(result);
+                  });
+      });
       RPC.addRoute('Photoshop.get_document_settings', function (data) {
               log.warn('Server called client route "get_document_settings":', data);
               return runEvalScript("getDocumentSettings()")
@@ -328,6 +335,17 @@
                                            data.as_copy + ")")
                   .then(function(result){
                       log.warn("save: " + result);
+                      return result;
+                  });
+      });
+
+      RPC.addRoute('Photoshop.save_review_jpg', function (data) {
+              log.warn('Server called client route "save_review_jpg":', data);
+              var escapedPath = EscapeStringForJSX(data.image_path);
+              return runEvalScript("saveReviewJpg('" + escapedPath + "', " +
+                                   data.max_dimension + ")")
+                  .then(function(result){
+                      log.warn("save review jpg: " + result);
                       return result;
                   });
       });
