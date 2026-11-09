@@ -270,6 +270,11 @@ async function setup_rpc(websocket_url) {
         }
     )
 
+    registerRoute('get_document_settings', () => api.getDocumentSettings());
+    registerRoute('set_document_settings', (data) =>
+        api.setDocumentSettings(data.resolution, data.mode, data.bits)
+    );
+
     RPC.addRoute('Photoshop.close', async (data) => {
             console.log('Server called client route "close":', data);
             const result = await api.closeApp();

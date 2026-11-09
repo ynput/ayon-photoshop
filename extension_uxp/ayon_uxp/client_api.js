@@ -66,6 +66,69 @@ async function getColorProfileName() {
     }
 }
 
+// TODO: once CEP support is dropped, report the raw UXP values ("RGBColorMode",
+// "bitDepth8") and let validate_document_settings.py compare those directly.
+// This lookup and that plugin's _normalize_mode/_normalize_bits helpers only
+// exist to keep one validator working for both clients.
+/**
+ * Resolution, color mode and bit depth of the active document.
+ *
+ * mode and bitsPerChannel are the names of the enumeration values, e.g. "RGB"
+ * and "EIGHT", which is what the publish validator compares against. UXP
+ * constants are objects like {RGB: "<value>", CMYK: "<value>"} and a document
+ * reports the value, not the name.
+ *
+ * @returns {Promise<string>} JSON with resolution, mode and bitsPerChannel.
+ */
+async function getDocumentSettings() {
+    const doc = app.activeDocument;
+    return JSON.stringify({
+        resolution: doc.resolution,
+        mode: Object.keys(constants.DocumentMode).find((key) => constants.DocumentMode[key] === doc.mode),
+        bitsPerChannel: Object.keys(constants.BitsPerChannelType).find((key) => constants.BitsPerChannelType[key] === doc.bitsPerChannel),
+    });
+}
+
+// Bit depths the validator can ask for, as keys of constants.BitsPerChannelType.
+const BITS_KEYS = {"8": "EIGHT", "16": "SIXTEEN", "32": "THIRTYTWO"};
+
+/**
+ * Change resolution, color mode and bit depth of the active document.
+ *
+ * @param {number} resolution Resolution in dpi, pixels are not resampled.
+ * @param {string} mode Key of constants.ChangeMode, e.g. "RGB".
+ * @param {number|string} bits Bit depth: 8, 16 or 32.
+ * @returns {Promise<string>} JSON {success: true}, or {success: false, errors}
+ *     with one message per failed setting.
+ */
+async function setDocumentSettings(resolution, mode, bits) {
+    const doc = app.activeDocument;
+    const steps = [
+        ["resolution", () => doc.resizeImage(
+            undefined, undefined, resolution, constants.ResampleMethod.NONE
+        )],
+        ["color mode", () => doc.changeMode(
+            constants.ChangeMode[String(mode).toUpperCase()]
+        )],
+        ["bit depth", () => {
+            doc.bitsPerChannel = constants.BitsPerChannelType[BITS_KEYS[bits]];
+        }],
+    ];
+
+    const errors = [];
+    await execAsModal(async () => {
+        for (const [setting, apply] of steps) {
+            try {
+                await apply();
+            } catch (err) {
+                errors.push(`Failed to change ${setting}: ${err.message}`);
+            }
+        }
+    }, "Set Document Settings");
+
+    return JSON.stringify(errors.length ? {success: false, errors} : {success: true});
+}
+
 function getLayerTypeWithName(layerName) {
     const namePrefix = layerName.split('_')[0].toLowerCase();
     switch (namePrefix) {
@@ -766,6 +829,8 @@ module.exports = {
     getActiveDocumentFullName,
     getActiveDocumentName,
     getColorProfileName,
+    getDocumentSettings,
+    setDocumentSettings,
     getLayerTypeWithName,
     getLayers,
     getLayerBlendMode,
