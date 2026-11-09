@@ -237,6 +237,14 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    registerRoute('save_review_jpg', async (data) => {
+            console.log('Server called client route "save_review_jpg":', data);
+            const result = await api.saveReviewJpg(data.image_path, data.max_dimension);
+            console.log("save review jpg:", result);
+            return result;
+        }
+    );
+
     registerRoute('create_document', async (data) => {
             console.log('Server called client route "create_document":', data);
             const result = api.createDocument(data.name, data.width, data.height, data.resolution);

@@ -1012,6 +1012,86 @@ async function duplicateDocument(newName) {
 }
 
 /**
+ * Save a JPEG review image.
+ *
+ * @param {string} imagePath Absolute native output path.
+ * @param {number} maxDimension Maximum width or height in pixels.
+ *                              Use 0 or a negative value to disable resizing.
+ * @returns {Promise<string>} The saved image path.
+ */
+async function saveReviewJpg(imagePath, maxDimension) {
+    if (app.documents.length === 0) {
+        throw new Error("saveReviewJpg: no document is open");
+    }
+
+    const maxSize = Number(maxDimension);
+    const url = "file:" + imagePath.replace(/\\/g, "/");
+
+    await execAsModal(async () => {
+        const outputFile =
+            await uxp_storage.localFileSystem.createEntryWithUrl(url, {
+                overwrite: true
+            });
+
+        let duplicate = null;
+
+        try {
+            duplicate = await app.activeDocument.duplicate();
+
+            // JPEG requires 8 bits/channel. Convert only the duplicate, so
+            // the original 16-bit or 32-bit source remains untouched.
+            if (
+                duplicate.bitsPerChannel !==
+                constants.BitsPerChannelType.EIGHT
+            ) {
+                await convertBitDepth(duplicate, 8);
+            }
+
+            // In UXP, Document.width and Document.height are pixels.
+            const width = duplicate.width;
+            const height = duplicate.height;
+            const longestSide = Math.max(width, height);
+
+            if (
+                Number.isFinite(maxSize) &&
+                maxSize > 0 &&
+                longestSide > maxSize
+            ) {
+                const scale = maxSize / longestSide;
+
+                // Preserve aspect ratio. Both values are provided explicitly,
+                // unlike CEP's UnitValue-based resizeImage call.
+                const newWidth = Math.max(1, Math.round(width * scale));
+                const newHeight = Math.max(1, Math.round(height * scale));
+
+                await duplicate.resizeImage(
+                    newWidth,
+                    newHeight,
+                    undefined, // Keep current resolution.
+                    constants.ResampleMethod.BICUBIC
+                );
+            }
+
+            await duplicate.saveAs.jpg(outputFile, {
+                quality: 12,
+                embedColorProfile: true,
+                formatOptions: "progressive",
+                scans: 5,
+                matte: "noMatte"
+            }, true); // Always save as a copy, as in the CEP version.
+        } finally {
+            // Ensure that the temporary document is removed even if conversion,
+            // resize, or saving fails.
+            if (duplicate) {
+                await duplicate.closeWithoutSaving();
+            }
+        }
+    }, "Save Review JPEG");
+
+    return imagePath;
+}
+
+/**
  * Close document with given ID. If no ID, closes the active document.
  * @param {number} [documentId]
  * @throws if a documentId is given but not found
@@ -1095,6 +1175,7 @@ module.exports = {
     getBrokenSmartObjectLinks,
     rasterizeSmartObject,
     saveAs,
+    saveReviewJpg,
     createDocument,
     duplicateDocument,
     closeDocument,
