@@ -13,16 +13,16 @@ async function setup_rpc(websocket_url) {
     
     const default_url = 'ws://localhost:8101/ws/';
     
-    if  (websocket_url == ''){
-         websocket_url = default_url;
+    if (websocket_url == ''){
+        websocket_url = default_url;
     }
     
     RPC = new WSRPC(websocket_url); // spin connection
     console.log("connecting to:", websocket_url, RPC);
     try{
-    RPC.connect();
+        RPC.connect();
     } catch (err) {
-      console.log(err)
+        console.log(err)
     }
     // await RPC.onEvent("onconnect");
     console.log("Connected!");
@@ -73,8 +73,12 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    registerRoute('get_layer_blend_mode', (data) =>
-        api.getLayerBlendMode(data.layer_id)
+    registerRoute('get_layer_blend_mode', async (data) => {
+            console.log('Server called client route "get_layer_blend_mode":', data);
+            const result = api.getLayerBlendMode(data.layer_id)
+            console.log("getLayerBlendMode:", result);
+            return result
+        }
     );
 
     RPC.addRoute('Photoshop.set_visible', async (data) => {
@@ -177,13 +181,20 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    registerRoute('get_broken_smart_object_links', async () => {
+    registerRoute('get_broken_smart_object_links', async (data) => {
+        console.log('Server called client route "get_broken_smart_object_links":', data);
         const broken = await api.getBrokenSmartObjectLinks();
-        return JSON.stringify(broken.map(({path}) => path));
+        const result = broken.map(({path}) => path);
+        console.log("getBrokenSmartObjectLinks:", result);
+        return JSON.stringify(result);
     });
 
-    registerRoute('fix_broken_smart_object_links', async () =>
-        api.rasterizeSmartObject(await api.getBrokenSmartObjectLinks())
+    registerRoute('fix_broken_smart_object_links', async (data) => {
+            console.log('Server called client route "fix_broken_smart_object_links":', data);
+            const result = api.rasterizeSmartObject(await api.getBrokenSmartObjectLinks());
+            console.log("getBrokenSmartObjectLinks -> rasterizeSmartObject:", result);
+            return result
+        }
     );
 
     RPC.addRoute('Photoshop.delete_layer', async (data) => {
@@ -226,8 +237,12 @@ async function setup_rpc(websocket_url) {
         }
     );
 
-    registerRoute('create_document', (data) =>
-        api.createDocument(data.name, data.width, data.height, data.resolution)
+    registerRoute('create_document', async (data) => {
+            console.log('Server called client route "create_document":', data);
+            const result = api.createDocument(data.name, data.width, data.height, data.resolution);
+            console.log("createDocument:", result);
+            return result;
+        }
     );
 
     RPC.addRoute('Photoshop.duplicate_document', async (data) => {
@@ -272,16 +287,26 @@ async function setup_rpc(websocket_url) {
     );
 
     RPC.addRoute('Photoshop.get_color_profile_name', async (data) => {
-        console.log('Server called client route "get_color_profile_name":', data);
+            console.log('Server called client route "get_color_profile_name":', data);
             const result = await api.getColorProfileName();
             console.log("getColorProfileName:", result);
             return result;
         }
     )
 
-    registerRoute('get_document_settings', () => api.getDocumentSettings());
-    registerRoute('set_document_settings', (data) =>
-        api.setDocumentSettings(data.resolution, data.mode, data.bits)
+    registerRoute('get_document_settings', async (data) => {
+            console.log('Server called client route "get_color_profile_name":', data);
+            const result = await api.getDocumentSettings();
+            console.log("getDocumentSettings:", result);
+            return result;
+        }
+    );
+    registerRoute('set_document_settings', async (data) => {
+        console.log('Server called client route "get_color_profile_name":', data);
+            const result = await api.setDocumentSettings(data.resolution, data.mode, data.bits);
+            console.log("setDocumentSettings:", result);
+            return result
+        }
     );
 
     RPC.addRoute('Photoshop.close', async (data) => {
