@@ -653,6 +653,31 @@ async function saveAs(imagePath, ext, asCopy) {
 }
 
 /**
+ * Create a new blank RGB, 8 bit, white document and make it active.
+ *
+ * @param {string} name Document name.
+ * @param {number} width Width in pixels.
+ * @param {number} height Height in pixels.
+ * @param {number} resolution Resolution in dpi.
+ * @returns {Promise<number>} Id of the new document.
+ */
+async function createDocument(name, width, height, resolution) {
+    let doc;
+    await execAsModal(async () => {
+        doc = await app.createDocument({
+            name,
+            width,
+            height,
+            resolution,
+            mode: constants.NewDocumentMode.RGB,
+            fill: constants.DocumentFill.WHITE,
+            depth: 8,
+        });
+    }, "Create Document");
+    return doc.id;
+}
+
+/**
  * Duplicate the active document.
  * @param {string} newName - name for the duplicated document
  * @returns {number} - id of the duplicated document
@@ -743,6 +768,7 @@ module.exports = {
     importSmartObject,
     replaceSmartObjects,
     saveAs,
+    createDocument,
     duplicateDocument,
     closeDocument,
     getExtensionVersion,

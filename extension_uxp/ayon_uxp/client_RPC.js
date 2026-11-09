@@ -213,6 +213,10 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    registerRoute('create_document', (data) =>
+        api.createDocument(data.name, data.width, data.height, data.resolution)
+    );
+
     RPC.addRoute('Photoshop.duplicate_document', async (data) => {
             console.log('Server called client route "duplicate_document":', data);
             const result = await api.duplicateDocument(data.newName);
