@@ -653,6 +653,71 @@ async function replaceSmartObjects(layer_id, path, name) {
     }, "Replace Smart Object");
 }
 
+/**
+ * Smart Object layers of the active document whose link is broken, with their
+ * full paths.
+ *
+ * @returns {Promise<{layer: object, path: string}[]>} Broken layers in
+ *     document order, path like "GROUP/SUBGROUP/LAYER".
+ */
+async function getBrokenSmartObjectLinks() {
+    const smartObjects = [];
+    const walk = (layers, parents) => {
+        for (const layer of layers) {
+            if (layer.kind === constants.LayerKind.GROUP) {
+                walk(layer.layers, [...parents, layer.name]);
+            } else if (layer.kind === constants.LayerKind.SMARTOBJECT) {
+                smartObjects.push({
+                    layer, path: [...parents, layer.name].join("/")
+                });
+            }
+        }
+    };
+    walk(app.activeDocument.layers, []);
+
+    const descriptors = await batchPlay(
+        smartObjects.map(({layer}) => ({
+            _obj: "get",
+            _target: [{ _ref: "layer", _id: layer.id }]
+        })),
+        { synchronousExecution: true }
+    );
+    return smartObjects.filter(
+        (_, index) => descriptors[index].smartObject?.linkMissing
+    );
+}
+
+/**
+ * Rasterize every given Smart Object layer, then convert it back into an
+ * embedded Smart Object, which drops the stale link.
+ *
+ * @param {{layer: object, path: string}[]} smartObjects Layers to repair.
+ * @returns {Promise<string>} JSON array of the paths of the repaired layers.
+ */
+async function rasterizeSmartObject(smartObjects) {
+    const fixed = [];
+    await execAsModal(async () => {
+        for (const {layer, path} of smartObjects) {
+            await batchPlay([{
+                _obj: "select",
+                _target: [{ _ref: "layer", _id: layer.id }],
+                makeVisible: false,
+                _options: { dialogOptions: "dontDisplay" }
+            }], { synchronousExecution: true });
+
+            await layer.rasterize(constants.RasterizeType.ENTIRELAYER);
+
+            await batchPlay([{
+                _obj: "newPlacedLayer",
+                _options: { dialogOptions: "dontDisplay" }
+            }], { synchronousExecution: true });
+
+            fixed.push(path);
+        }
+    }, "Rasterize Smart Objects");
+    return JSON.stringify(fixed);
+}
+
 async function saveAs(imagePath, ext, asCopy) {
     asCopy = !!asCopy;
     const format = (ext || "").toLowerCase();
@@ -852,6 +917,8 @@ module.exports = {
     mergeAllLayerSets,
     importSmartObject,
     replaceSmartObjects,
+    getBrokenSmartObjectLinks,
+    rasterizeSmartObject,
     saveAs,
     createDocument,
     duplicateDocument,

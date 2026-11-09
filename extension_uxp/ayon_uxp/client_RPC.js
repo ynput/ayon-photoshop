@@ -177,6 +177,15 @@ async function setup_rpc(websocket_url) {
         }
     );
 
+    registerRoute('get_broken_smart_object_links', async () => {
+        const broken = await api.getBrokenSmartObjectLinks();
+        return JSON.stringify(broken.map(({path}) => path));
+    });
+
+    registerRoute('fix_broken_smart_object_links', async () =>
+        api.rasterizeSmartObject(await api.getBrokenSmartObjectLinks())
+    );
+
     RPC.addRoute('Photoshop.delete_layer', async (data) => {
             console.log('Server called client route "delete_layer":', data);
             const result = await api.deleteLayer(data.layer_id);
