@@ -35,6 +35,44 @@ function toFileUrl(path) {
 }
 
 /**
+ * Check if file was written after save.
+ */
+function fileWasWritten(before, after, existedBefore) {
+    if (!after) {
+        return false;
+    }
+
+    // A newly created file should have non-zero data.
+    if (!existedBefore) {
+        return Number(after.size) > 0;
+    }
+
+    const beforeTime = before?.modificationTime?.getTime?.();
+    const afterTime = after?.modificationTime?.getTime?.();
+
+    return (
+        beforeTime !== afterTime ||
+        Number(before?.size) !== Number(after?.size)
+    );
+}
+
+/**
+ * Remove a partial file only when it did not exist before the attempted save.
+ */
+async function removePartialSave(fileEntry, existedBefore) {
+    if (existedBefore || !fileEntry) {
+        return;
+    }
+
+    try {
+        await fileEntry.delete();
+    } catch (error) {
+        // Best effort only. The following PSB attempt is more important.
+        console.warn("Could not remove partial PSD:", error);
+    }
+}
+
+/**
  * Return an existing FileEntry, or null when it does not exist.
  */
 async function getExistingFileEntry(fileUrl) {
