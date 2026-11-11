@@ -3,7 +3,7 @@ from pathlib import Path
 from ayon_applications import PreLaunchHook, LaunchTypes
 
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
-from ayon_photoshop.plugin_type import PANEL_UXP, get_plugin_type
+from ayon_photoshop.plugin_type import PLUGIN_UXP, get_plugin_type
 from ayon_photoshop.uxp_installer import (
     Upia,
     find_upia,
@@ -35,8 +35,8 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
         settings = self.data["project_settings"]["photoshop"]
         if not settings.get("auto_install_extension", False):
             return
-
-        want_uxp = get_plugin_type(settings) == PANEL_UXP
+        
+        want_uxp = get_plugin_type(settings) == PLUGIN_UXP
         executable = find_upia()
         if executable is None:
             if want_uxp:

@@ -49,9 +49,8 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         This function is called automatically on calling
         `api.install(photoshop)`.
         """
-        log.info("Installing OpenPype Photoshop...")
+        log.info("Installing AYON Photoshop...")
         pyblish.api.register_host("photoshop")
-
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)

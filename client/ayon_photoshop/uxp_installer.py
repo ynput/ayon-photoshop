@@ -174,6 +174,9 @@ class Upia:
         self.executable = Path(executable)
         self.timeout = timeout
 
+        system = platform.system().lower()
+        self._arg_prefix = "/" if system == "windows" else "--"
+
     def _run(self, *args: str) -> str:
         """Run the tool and return its output."""
         completed = subprocess.run(
@@ -188,15 +191,15 @@ class Upia:
 
     def list_plugins(self) -> List[InstalledPlugin]:
         """Return the plugins installed for every Adobe product."""
-        return parse_list_output(self._run("--list", "all"))
+        return parse_list_output(self._run(f"{self._arg_prefix}list", "all"))
 
     def install(self, ccx_path) -> None:
         """Install a .ccx file."""
-        self._run("--install", str(ccx_path))
+        self._run(f"{self._arg_prefix}install", str(ccx_path))
 
     def remove(self, name: str) -> None:
         """Remove a plugin by display name."""
-        self._run("--remove", name)
+        self._run(f"{self._arg_prefix}remove", name)
 
     def _photoshop_versions(
         self, package: PluginPackage

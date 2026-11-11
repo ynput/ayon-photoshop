@@ -34,9 +34,9 @@ class PhotoshopSettings(BaseSettingsModel):
     )
     auto_install_extension: bool = SettingsField(
         False,
-        title="Install panel automatically",
+        title="Install plugin automatically",
         description=(
-            "Triggers pre-launch hook which installs the panel selected "
+            "Triggers pre-launch hook which installs the extension selected "
             "above and removes the other one."
         ),
     )

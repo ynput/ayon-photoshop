@@ -22,10 +22,10 @@ from typing import List
 #   holds the plugin type that session was started with.
 RUNNING_PLUGIN_TYPE_ENV = "AYON_PHOTOSHOP_RUNNING_PLUGIN_TYPE"
 
-PANEL_CEP = "cep"
-PANEL_UXP = "uxp"
-PLUGIN_TYPES = (PANEL_CEP, PANEL_UXP)
-DEFAULT_PLUGIN_TYPE = PANEL_CEP
+PLUGIN_CEP = "cep"
+PLUGIN_UXP = "uxp"
+PLUGIN_TYPES = (PLUGIN_CEP, PLUGIN_UXP)
+DEFAULT_PLUGIN_TYPE = PLUGIN_CEP
 
 # Port the server listens on for the CEP panel, used when the environment
 #   does not say otherwise.
@@ -35,8 +35,8 @@ CEP_WEBSOCKET_PORT = 8099
 UXP_WEBSOCKET_PORT = 8101
 
 _PORTS = {
-    PANEL_CEP: CEP_WEBSOCKET_PORT,
-    PANEL_UXP: UXP_WEBSOCKET_PORT,
+    PLUGIN_CEP: CEP_WEBSOCKET_PORT,
+    PLUGIN_UXP: UXP_WEBSOCKET_PORT,
 }
 
 

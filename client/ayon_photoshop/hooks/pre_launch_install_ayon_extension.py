@@ -6,7 +6,7 @@ from shutil import rmtree
 import platformdirs
 
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
-from ayon_photoshop.plugin_type import PANEL_CEP, get_plugin_type
+from ayon_photoshop.plugin_type import PLUGIN_CEP, get_plugin_type
 from ayon_applications import PreLaunchHook, LaunchTypes
 
 
@@ -32,7 +32,7 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
             settings = self.data["project_settings"]["photoshop"]
             if not settings["auto_install_extension"]:
                 return
-            if get_plugin_type(settings) != PANEL_CEP:
+            if get_plugin_type(settings) != PLUGIN_CEP:
                 self.remove_extension()
                 return
             self.inner_execute()
@@ -58,6 +58,9 @@ class InstallAyonExtensionToPhotoshop(PreLaunchHook):
         A running Photoshop keeps the panel it already loaded until it is
         restarted.
         """
+        # Note: This will fail if CEP plugin path is 
+        # in other extension locations like
+        # C:/Program Files (x86)/Common Files/Adobe/CEP/extensions
         target_path = self.get_target_path()
         if not target_path.is_dir():
             return

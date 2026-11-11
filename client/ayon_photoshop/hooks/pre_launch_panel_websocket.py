@@ -3,10 +3,10 @@ from ayon_applications import PreLaunchHook, LaunchTypes
 from ayon_photoshop.plugin_type import get_plugin_type, get_websocket_url
 
 
-class SetPhotoshopPanelWebsocket(PreLaunchHook):
-    """Make the websocket server listen where the selected panel connects.
+class SetPhotoshopPluginWebsocket(PreLaunchHook):
+    """Make the websocket server listen where the selected plugin connects.
 
-    The CEP panel reads its address from the 'WEBSOCKET_URL' environment
+    The CEP plugin reads its address from the 'WEBSOCKET_URL' environment
     variable, the UXP plugin can't read environment variables and always
     connects to its own port. The server (the 'launch_script.py' process
     started for Photoshop) reads the same variable to know the port to
@@ -15,7 +15,7 @@ class SetPhotoshopPanelWebsocket(PreLaunchHook):
     This is a hook and not 'PhotoshopAddon.add_implementation_envs' because
     the plugin type is a project setting, and that method has no access to it.
 
-    Runs before the hooks that install the panels.
+    Runs before the hooks that install the UXP/CEP plugins.
     """
 
     app_groups = {"photoshop"}
