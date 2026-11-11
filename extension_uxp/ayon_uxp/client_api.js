@@ -657,6 +657,10 @@ async function selectObject(id) {
  * Delete a layer set and move its child layers to the parent.
  */
 async function dissolveLayerSet(layerSetId) {
+    // ensure number
+    if (typeof layerSetId == "string")
+        layerSetId = parseInt(layerSetId);
+
     await execAsModal(async () => {
         await selectObject(layerSetId);
         const layerSet = app.activeDocument.activeLayers[0];
@@ -690,6 +694,8 @@ async function mergeAllLayerSets(parentSetId) {
         let layerSets;
 
         if (parentSetId !== undefined && parentSetId !== null && parentSetId !== "undefined") {
+            if (typeof parentSetId == "string")
+                parentSetId = parseInt(parentSetId);
             await selectObject(parentSetId);
             const parent = app.activeDocument.activeLayers[0];
             layerSets = parent.layers.filter(l => l.kind === constants.LayerKind.GROUP);
