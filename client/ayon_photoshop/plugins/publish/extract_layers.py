@@ -51,11 +51,24 @@ class ExtractLayers(
         # Duplicate the document to the staging directory
         filename = ps_stub.get_active_document_name()
         basename = os.path.splitext(filename)[0]
-        filename = f"{basename}.{self.extension}"
+        doc_size = ps_stub.get_document_size() or {}
+        # Check if the document is too large for a standard PSD and switch
+        # to PSB if necessary. The extension is kept local: plugin instances
+        # are reused for every instance of a publish, so mutating
+        # `self.extension` would turn all following instances into PSB too.
+        extension = self.extension
+        if extension == "psd" and photoshop.document_requires_psb(doc_size):
+            extension = "psb"
+            self.log.info(
+                "Document exceeds the PSD limits, extracting layers as PSB."
+            )
+
+        filename = f"{basename}.{extension}"
         filepath = Path(
             get_instance_staging_dir(instance),
             filename
         )
+
         self.log.info(f"Duplicating document to staging directory: {filepath}")
         with ps_stub.duplicate_document(filepath):
             # Delete all layers except the instance layerset
@@ -79,11 +92,28 @@ class ExtractLayers(
             self.log.info("Dissolving instance layerset...")
             ps_stub.dissolve_layerset(layer.id)
 
+        # Photoshop may have written PSB even though PSD was requested (the
+        # 2 GB limit can be hit at any resolution). Follow the file that
+        # actually exists, otherwise the representation points at nothing.
+        if not Path(filepath).is_file():
+            psb_filepath = Path(filepath).with_suffix(".psb")
+            if psb_filepath.is_file():
+                filepath = psb_filepath
+
+        extension = Path(filepath).suffix.lstrip(".")
+        if extension != self.extension:
+            self.log.warning(
+                "Document does not fit the PSD format, layers were extracted "
+                "as %s instead of %s.",
+                extension.upper(),
+                self.extension.upper(),
+            )
+
         instance.data["stagingDir"] = filepath.parent
         representations = instance.data.setdefault("representations", [])
         representation = {
-            "name": self.extension,
-            "ext": self.extension,
+            "name": extension,
+            "ext": extension,
             "files": filepath.name,
             "stagingDir": filepath.parent,
         }

@@ -15,6 +15,43 @@ from .launch_logic import ProcessLauncher, stub
 
 log = Logger.get_logger(__name__)
 
+# PSD stores documents with a side of up to 30000 px and a file size of up to
+# 2 GB. Anything above either limit has to be saved as PSB. Only the dimension
+# limit can be checked up front; the 2 GB limit depends on the compressed file
+# size and is only detected when Photoshop refuses the PSD save.
+PSD_MAX_DIMENSION = 30000
+
+
+def document_requires_psb(doc_size=None):
+    """Whether the document dimensions require the PSB format.
+
+    PSD stores documents with a side of up to 'PSD_MAX_DIMENSION' pixels, so
+    anything above that limit can only be PSB. Photoshop refuses such a save
+    instead of converting the document itself.
+
+    Args:
+        doc_size (Optional[dict]): Document size payload with 'width' and
+            'height' in pixels. When not provided, the size of the active
+            document is queried.
+
+    Returns:
+        bool: Whether the document must be saved as PSB.
+
+    """
+    if doc_size is None:
+        try:
+            doc_size = stub().get_document_size()
+        except Exception:
+            log.debug("Could not read the document size", exc_info=True)
+            return False
+
+    if not doc_size:
+        return False
+
+    width = doc_size.get("width") or 0
+    height = doc_size.get("height") or 0
+    return width > PSD_MAX_DIMENSION or height > PSD_MAX_DIMENSION
+
 
 def safe_excepthook(*args):
     traceback.print_exception(*args)

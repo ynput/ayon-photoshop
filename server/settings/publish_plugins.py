@@ -143,6 +143,15 @@ class ExtractSourceReviewPlugin(BaseSettingsModel):
         False,
         title="Make an image sequence instead of flatten image"
     )
+    max_dimension: int = SettingsField(
+        8192,
+        title="Max Review Source Dimension",
+        description=(
+            "Review source images are downscaled in Photoshop to this longest "
+            "side length. ffmpeg cannot decode images above roughly "
+            "268 megapixels."
+        ),
+    )
 
 
 class ExtractLayersPlugin(BaseSettingsModel):
@@ -262,6 +271,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractSourcesReview": {
         "make_image_sequence": False,
+        "max_dimension": 8192,
     },
     "ExtractLayers": {
         "enabled": False,
@@ -282,5 +292,5 @@ DEFAULT_PUBLISH_SETTINGS = {
         "expected_dpi": 72,
         "expected_mode": "RGB",
         "expected_bits": "8"
-    }
+    },
 }

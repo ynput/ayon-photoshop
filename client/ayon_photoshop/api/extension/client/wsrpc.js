@@ -100,7 +100,6 @@
 
     function createSocket() {
       var ws = new WebSocket(URL);
-
       var rejectQueue = function rejectQueue() {
         self.connectionNumber++; // rejects incoming calls
 
@@ -120,6 +119,7 @@
         for (var key in self.store) {
           if (!self.store.hasOwnProperty(key)) continue;
           deferred = self.store[key];
+          delete self.store[key];
 
           if (deferred && deferred.promise.isPending()) {
             deferred.reject('WebSocket error occurred');
@@ -127,44 +127,56 @@
         }
       };
 
+      var reconnectScheduled = false;
       function reconnect(callEvents) {
         setTimeout(function () {
           try {
             self.socket = createSocket();
-            self.id = 1;
+
           } catch (exc) {
             callEvents('onerror', exc);
-            delete self.socket;
+            self.socket = null;
             console.error(exc);
+            // try reconnecting after error occurs
+            reconnect(callEvents);
           }
         }, reconnectTimeout);
       }
 
+      function scheduleReconnect(callEvents) {
+        if (reconnectScheduled) return;
+        reconnectScheduled = true;
+        reconnect(callEvents);
+      }
+
       ws.onclose = function (err) {
+        if (ws !== self.socket) return;
         log('ONCLOSE CALLED', 'STATE', self.public.state());
         trace(err);
 
-        for (var serial in self.store) {
-          if (!self.store.hasOwnProperty(serial)) continue;
+        try{
+            rejectQueue();
+            callEvents('onclose', err);
+            callEvents('onchange', err);
+          } finally{
 
-          if (self.store[serial].hasOwnProperty('reject')) {
-            self.store[serial].reject('Connection closed');
-          }
+            scheduleReconnect(callEvents);
         }
-
-        rejectQueue();
-        callEvents('onclose', err);
-        callEvents('onchange', err);
-        reconnect(callEvents);
       };
 
       ws.onerror = function (err) {
+        if (ws !== self.socket) return;
         log('ONERROR CALLED', 'STATE', self.public.state());
         trace(err);
-        rejectQueue();
-        callEvents('onerror', err);
-        callEvents('onchange', err);
-        log('WebSocket has been closed by error: ', err);
+        try{
+          rejectQueue();
+          callEvents('onerror', err);
+          callEvents('onchange', err);
+
+        } finally {
+          log('WebSocket has been closed by error: ', err);
+          scheduleReconnect(callEvents);
+        }
       };
 
       function tryCallEvent(func, event) {
@@ -195,6 +207,7 @@
       }
 
       ws.onopen = function (ev) {
+        if (ws !== self.socket) return;
         log('ONOPEN CALLED', 'STATE', self.public.state());
         trace(ev);
 
@@ -266,6 +279,7 @@
       }
 
       ws.onmessage = function (message) {
+        if (ws !== self.socket) return;
         log('ONMESSAGE CALLED', 'STATE', self.public.state());
         trace(message);
         if (message.type !== 'message') return;
@@ -277,7 +291,7 @@
 
           if (data.hasOwnProperty('method')) {
             return handleCall(self, data);
-          } else if (data.hasOwnProperty('error') && data.error === null) {
+          } else if (data.hasOwnProperty('error') && data.error !== null) {
             return handleError(self, data);
           } else {
             return handleResult(self, data);

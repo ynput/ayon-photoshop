@@ -1,6 +1,6 @@
 import re
 
-from typing import Protocol
+from typing import Optional, Protocol
 import pyblish.api
 from dataclasses import dataclass
 from ayon_core.lib import BoolDef
@@ -35,6 +35,7 @@ class ImageGroupData:
     """Dataclass to hold information about the group created by the ImageCreator."""
     group: PhotoshopItem
     group_created_by_creator: bool = False
+    source_layer_name: Optional[str] = None
 
 
 class ImageCreator(Creator):
@@ -54,6 +55,8 @@ class ImageCreator(Creator):
     default_variants = ""
     mark_for_review = False
     active_on_create = True
+    use_layer_name = True
+    enforce_layer_name = False
 
     def create(self, product_name_from_ui, data, pre_create_data):
         groups_to_create: list[ImageGroupData] = []
@@ -113,13 +116,17 @@ class ImageCreator(Creator):
             groups_to_create.append(ImageGroupData(
                 group=group,
                 group_created_by_creator=True,
+                source_layer_name=layer.name,
             ))
 
         layer_name = ''
         # use artist chosen option OR force layer if more products are created
         # to differentiate them
-        use_layer_name = (pre_create_data.get("use_layer_name") or
-                          len(groups_to_create) > 1)
+        use_layer_name = (
+            self.enforce_layer_name
+            or pre_create_data.get("use_layer_name", self.use_layer_name)
+            or len(groups_to_create) > 1
+        )
 
         product_type = data.get("productType")
         if not product_type:
@@ -132,12 +139,20 @@ class ImageCreator(Creator):
             created_group_name = self._clean_highlights(stub, name)
 
             if use_layer_name:
+                layer_name_source = (
+                    created_group_data.source_layer_name
+                    if created_group_data.source_layer_name is not None
+                    else created_group_data.group.name
+                )
                 layer_name = re.sub(
                     "[^{}]+".format(PRODUCT_NAME_ALLOWED_SYMBOLS),
                     "",
-                    name
+                    layer_name_source
                 )
-                if "{layer}" not in product_name.lower():
+                if (
+                    layer_name_source != product_name_from_ui
+                    and "{layer}" not in product_name.lower()
+                ):
                     product_name += "{Layer}"
 
             layer_fill = prepare_template_data({"layer": layer_name})
@@ -220,8 +235,10 @@ class ImageCreator(Creator):
                     default=True,
                     label="Create separate instance for each selected"),
             BoolDef("use_layer_name",
-                    default=False,
-                    label="Use layer name in product"),
+                    default=self.use_layer_name or self.enforce_layer_name,
+                    label="Use layer name in product",
+                    visible=not self.enforce_layer_name
+            ),
             BoolDef(
                 "mark_for_review",
                 label="Create separate review",

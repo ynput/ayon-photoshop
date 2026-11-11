@@ -65,7 +65,10 @@ class ImageLoader(photoshop.PhotoshopLoader):
             )
 
         stub.imprint(
-            layer.id, {"representation": repre_entity["id"]}
+            layer.id, {
+                "representation": repre_entity["id"],
+                "project_name": context["project"]["name"],
+            }
         )
 
     def remove(self, container):
