@@ -47,12 +47,31 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
                 )
             return
 
-        package = read_package(self.CCX_PATH)
+        try:
+            package = read_package(self.CCX_PATH)
+        except BaseException as err:
+            self.log.warning(
+                "Error encountered during attempt at reading .ccx file: "
+                f"{err}"
+            )
+
         upia = Upia(executable)
 
         if not want_uxp:
-            self.remove_plugin(upia, package.name)
-            return
+            try:
+                removed = upia.ensure_plugin_removed(package.name)
+            
+                if removed:
+                    removed_list = f"({', '.join(removed)})."
+                    self.log.info(f"Removed UXP plugin {package.name}: {removed_list}")
+                return
+            except RuntimeError as err:
+                self.log.warning(
+                    "Error encountered removing UXP plugin: "
+                    f"{err}"
+                )
+                return
+
 
         if upia.ensure_plugin_installed(package):
             self.log.info(
@@ -62,18 +81,4 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
             self.log.warning(
                 f"UXP plugin {package.name} {package.version} failed to "
                 "install."
-            )
-
-    def remove_plugin(self, upia: Upia, name: str):
-        """Remove the UXP plugin.
-
-        A running Photoshop keeps the panel it already loaded until it is
-        restarted.
-        """
-        removed = upia.ensure_plugin_removed(name)
-
-        if removed:
-            self.log.info(
-                "Removed UXP plugin "
-                f"{name} ({', '.join(removed)})."
             )
