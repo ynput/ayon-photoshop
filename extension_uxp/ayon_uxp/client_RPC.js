@@ -44,7 +44,7 @@ async function setup_rpc(websocket_url) {
                 return await handler(data);
             } catch (err) {
                 console.error(err);
-                throw {type: String(err.name || "Error"), message: String(err.message)};
+                return {type: String(err.name || "Error"), message: String(err.message)};
             }
         });
     }
