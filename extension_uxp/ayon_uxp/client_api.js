@@ -2,6 +2,9 @@ const {app, action, core, constants} = require("photoshop")
 const uxp_storage = require("uxp").storage
 const batchPlay = action.batchPlay;
 
+// Photoshop's PSD maximum document dimension is 30,000 pixels.
+const PSD_MAX_DIMENSION = 30000;
+
 // Helper to execute "Modal", Blocking
 // Wrapper for functions that need to write.
 /**
@@ -12,6 +15,75 @@ async function execAsModal(func, commandName) {
     return await core.executeAsModal(async () => {
         return await func();
     }, {"commandName": commandName})
+}
+
+// File helpers
+
+/**
+ * Convert an absolute native path into a UXP file URL.
+ *
+ * Examples:
+ *   C:\project\image.psd -> file:C:/project/image.psd
+ *   /project/image.psd   -> file:/project/image.psd
+ */
+function toFileUrl(path) {
+    const normalized = String(path).replace(/\\/g, "/");
+
+    return normalized.startsWith("file:")
+        ? normalized
+        : `file:${normalized}`;
+}
+
+/**
+ * Return an existing FileEntry, or null when it does not exist.
+ */
+async function getExistingFileEntry(fileUrl) {
+    try {
+        const entry = await uxp_storage.localFileSystem.getEntryWithUrl(fileUrl);
+
+        if (!entry.isFile) {
+            throw new Error(`Output path is not a file: ${fileUrl}`);
+        }
+
+        return entry;
+    } catch (error) {
+        // getEntryWithUrl throws for a non-existent file. Treat that case as
+        // "not present"; the save operation will create the target.
+        return null;
+    }
+}
+
+/**
+ * Get an existing output FileEntry, or create a new one.
+ */
+async function getOutputFileEntry(outputPath) {
+    const fileUrl = toFileUrl(outputPath);
+    const existing = await getExistingFileEntry(fileUrl);
+
+    if (existing) {
+        return {
+            entry: existing,
+            existedBefore: true
+        };
+    }
+
+    const entry = await uxp_storage.localFileSystem.createEntryWithUrl(fileUrl);
+
+    return {
+        entry,
+        existedBefore: false
+    };
+}
+
+/**
+ * Read output-file metadata, returning null if metadata cannot be read.
+ */
+async function getFileMetadata(fileEntry) {
+    try {
+        return await fileEntry.getMetadata();
+    } catch (error) {
+        return null;
+    }
 }
 
 /**
@@ -27,7 +99,7 @@ async function fileOpen(path) {
 
 async function save() {
     return await execAsModal(async () => {
-        app.activeDocument.save();
+        await app.activeDocument.save();
     }, "Save Document");
 }
 
@@ -134,9 +206,18 @@ async function setDocumentSettings(resolution, mode, bits) {
         ["bit depth", async () => {await convertBitDepth(doc, bits)}],
     ];
 
+    // validate arguments
+    [resolution, mode, bits].forEach((arg, idx) => { 
+            steps[idx].push((arg !== null && arg !== undefined));
+        }
+    )
+
     const errors = [];
     await execAsModal(async () => {
-        for (const [setting, apply] of steps) {
+        for (const [setting, apply, valid] of steps) {
+            if (!valid)
+                continue;
+            
             try {
                 await apply();
             } catch (err) {
@@ -542,15 +623,15 @@ async function dissolveLayerSet(layerSetId) {
         await selectObject(layerSetId);
         const layerSet = app.activeDocument.activeLayers[0];
 
-        // Snapshot the children (the list mutates as we move them)
+        // Preserve parent
         const children = layerSet.layers.slice();
 
-        // Move each child out to the document root (end of stack)
+        // Move each child out to the document root
         for (const child of children) {
-            await child.move(app.activeDocument, constants.ElementPlacement.PLACEATEND);
+            await child.move(app.activeDocument, constants.ElementPlacement.PLACEBEFORE);
         }
 
-        // Delete the now-empty group
+        // Delete empty group
         await batchPlay(
             [{
                 _obj: "delete",
@@ -656,7 +737,7 @@ async function replaceSmartObjects(layer_id, path, name) {
     try {
         old_selected = JSON.parse(await getSelectedLayers()); // should be a list of ints
     } catch {
-        let old_selected = [layer_id]
+        old_selected = [layer_id];
     }
 
     await selectLayers([layer_id]);
@@ -715,7 +796,7 @@ async function getBrokenSmartObjectLinks() {
         { synchronousExecution: true }
     );
     return smartObjects.filter(
-        (_, index) => descriptors[index].smartObject?.linkMissing
+        (_, index) => descriptors[index]?.smartObject?.linkMissing
     );
 }
 
@@ -775,57 +856,198 @@ async function convertBitDepth(document, depth) {
 }
 
 /**
- * Save the active Photoshop document in a selected format.
+ * Save a document as OpenEXR.
+ *   As: EXRf
+ *     BtDp: 32
+ *     Cmpr: 1
+ *     AChn: 1
+ * Must be called inside executeAsModal().
  *
- * `imagePath` must be accessible under the manifest's localFileSystem
- * permissions, e.g. `fullAccess`.
- *
- * @param {string} imagePath Native absolute path.
- * @param {string} ext jpg, jpeg, png, psd, psb, tif, tiff, tga, or exr.
- * @param {boolean} asCopy Whether to save as a copy.
- * @returns {Promise<string>} The original imagePath.
+ * @param {Photoshop.Document} doc
+ * @param {string} outputPath Native absolute output path.
+ * @param {boolean} [asCopy=false]
+ * @returns {Promise<string>}
  */
-async function saveAs(imagePath, ext, asCopy) {
-    asCopy = !!asCopy;
+async function saveEXR(doc, outputPath, asCopy = false) {
+    const outputFile = await getOutputFileEntry(outputPath);
+    const sessionToken = localFileSystem.createSessionToken(outputFile);
 
-    // Supports ".png" as well as "png".
-    const format = (ext || "")
-        .toLowerCase()
-        .replace(/^\./, "");
+    await batchPlay([{
+        _obj: "save",
+        _target: [
+            { _ref: "document", _id: doc.id }
+        ],
+        as: {
+            _obj: "EXRf",
+            "$BtDp": 32,
+            "$Cmpr": 1,
+            "$AChn": 1
+        },
+        in: {
+            _path: sessionToken,
+            _kind: "local"
+        },
+        copy: !!asCopy,
+        lowerCase: true,
+        _options: {
+            dialogOptions: "dontDisplay"
+        }
+    }], {
+        synchronousExecution: true,
+        modalBehavior: "execute"
+    });
 
-    // `file:/C:/...` on Windows and `file:/...` on macOS.
-    const url = "file:" + imagePath.replace(/\\/g, "/");
+    return outputPath;
+}
 
-    await execAsModal(async () => {
-        let doc = app.activeDocument;
-        let isTempDocument = false;
+/**
+ * Save a document as PSB.
+ * Must be called inside executeAsModal().
+ *
+ * @param {Photoshop.Document} doc
+ * @param {string} outputPath Native absolute output path.
+ * @param {boolean} [asCopy=false]
+ * @returns {Promise<string>}
+ */
+async function savePSB(doc, outputPath, asCopy = false) {
+    const outputFile = await getOutputFileEntry(outputPath);
+
+    await doc.saveAs.psb(outputFile, {
+        embedColorProfile: true,
+        alphaChannels: true,
+        layers: true,
+        annotations: true,
+        spotColors: true,
+        maximizeCompatibility: true
+    }, !!asCopy);
+
+    return outputPath;
+}
+
+/**
+ * Save as PSD, with PSB fallback for documents too large for PSD.
+ *
+ * Must run inside executeAsModal().
+ *
+ * @returns {Promise<string>} The actual output path: PSD or PSB.
+ */
+async function saveSmart(outputPath, doc, asCopy = false) {
+    if (!/\.psd$/i.test(outputPath)) {
+        throw new Error(
+            `saveSmart requires a .psd output path, got: ${outputPath}`
+        );
+    }
+
+    const psbPath = outputPath.replace(/\.psd$/i, ".psb");
+
+    // UXP document dimensions are numbers in pixels.
+    if (
+        doc.width > PSD_MAX_DIMENSION ||
+        doc.height > PSD_MAX_DIMENSION
+    ) {
+        return savePSB(doc, psbPath, asCopy);
+    }
+
+    const {
+        entry: psdEntry,
+        existedBefore
+    } = await getOutputFileEntry(outputPath);
+
+    const metadataBefore = await getFileMetadata(psdEntry);
+
+    try {
+        await doc.saveAs.psd(psdEntry, {
+            embedColorProfile: true,
+            alphaChannels: true,
+            layers: true,
+            annotations: true,
+            spotColors: true,
+            maximizeCompatibility: true
+        }, !!asCopy);
+    } catch (psdError) {
+        // Do not turn an explicit user cancellation into a PSB save.
+        if (isSaveCancelled(psdError)) {
+            throw psdError;
+        }
+
+        await removePartialSave(psdEntry, existedBefore);
 
         try {
-            const bitDepth = doc.bitsPerChannel;
+            return await savePSB(doc, psbPath, asCopy);
+        } catch (psbError) {
+            console.error("PSD and PSB save both failed:", {
+                psdError,
+                psbError
+            });
 
-            const is8Bit = bitDepth === 8;
-            const is16Bit = bitDepth === 16;
-            const is32Bit = bitDepth === 32;
+            // Preserve the original PSD error
+            throw psdError;
+        }
+    }
 
+    /*
+     * Preserve "success but nothing changed" fallback behavior.
+     */
+    const metadataAfter = await getFileMetadata(psdEntry);
 
-            // JPEG, PNG, and TGA require 8-bit output
+    if (!fileWasWritten(metadataBefore, metadataAfter, existedBefore)) {
+        return savePSB(doc, psbPath, asCopy);
+    }
+
+    return outputPath;
+}
+
+/**
+ * Save/export the active document.
+ *
+ * Supported formats:
+ *   jpg, jpeg, png, tga, exr, psd, psb, tif, tiff
+ *
+ * @param {string} outputPath Absolute native output path.
+ * @param {string} ext Output extension, with or without leading dot.
+ * @param {boolean} asCopy Photoshop "save as copy" option.
+ * @returns {Promise<string>} Actual path written. PSD may return a .psb path.
+ */
+async function saveAs(outputPath, ext, asCopy = false) {
+    if (app.documents.length === 0) {
+        throw new Error("saveAs: no document is open");
+    }
+
+    const format = String(ext || "")
+        .trim()
+        .replace(/^\./, "")
+        .toLowerCase();
+
+    return execAsModal(async () => {
+        let doc = app.activeDocument;
+        let isTemporaryDocument = false;
+
+        try {
+            const is8Bit = doc.bitsPerChannel === constants.BitsPerChannelType.EIGHT;
+
+            const is16Bit = doc.bitsPerChannel === constants.BitsPerChannelType.SIXTEEN;
+
+            const is32Bit = doc.bitsPerChannel === constants.BitsPerChannelType.THIRTYTWO;
+            /*
+             * Preserve 16-bit PNG: only 32-bit source documents are converted
+             * for PNG. JPG and TGA are likewise made 8-bit from 32-bit input.
+             */
             if (
                 is32Bit &&
                 ["jpg", "jpeg", "png", "tga"].includes(format)
             ) {
                 doc = await doc.duplicate();
-                isTempDocument = true;
+                isTemporaryDocument = true;
 
                 await convertBitDepth(doc, 8);
             }
-
-            // OpenEXR requires a 32-bit document
+            // EXR requires a 32-bit source document. 
             if (
                 format === "exr" &&
                 (is8Bit || is16Bit)
             ) {
                 doc = await doc.duplicate();
-                isTempDocument = true;
+                isTemporaryDocument = true;
 
                 await convertBitDepth(doc, 32);
             }
@@ -833,11 +1055,7 @@ async function saveAs(imagePath, ext, asCopy) {
             switch (format) {
                 case "jpg":
                 case "jpeg": {
-                    const entry =
-                        await uxp_storage.localFileSystem.createEntryWithUrl(
-                            url,
-                            { overwrite: true }
-                        );
+                    const { entry } = await getOutputFileEntry(outputPath);
 
                     await doc.saveAs.jpg(entry, {
                         quality: 12,
@@ -845,78 +1063,41 @@ async function saveAs(imagePath, ext, asCopy) {
                         formatOptions: "progressive",
                         scans: 5,
                         matte: "noMatte"
-                    }, asCopy);
-                    break;
+                    }, !!asCopy);
+
+                    return outputPath;
                 }
 
                 case "png": {
-                    const entry =
-                        await uxp_storage.localFileSystem.createEntryWithUrl(
-                            url,
-                            { overwrite: true }
-                        );
+                    const { entry } = await getOutputFileEntry(outputPath);
 
                     await doc.saveAs.png(entry, {
                         compression: 6,
                         interlaced: true
-                    }, asCopy);
-                    break;
-                }
+                    }, !!asCopy);
 
-                case "psd": {
-                    const entry =
-                        await uxp_storage.localFileSystem.createEntryWithUrl(
-                            url,
-                            { overwrite: true }
-                        );
-
-                    await doc.saveAs.psd(entry, {
-                        embedColorProfile: true,
-                        alphaChannels: true,
-                        layers: true,
-                        annotations: true,
-                        spotColors: true,
-                        maximizeCompatibility: true
-                    }, asCopy);
-                    break;
-                }
-
-                case "psb": {
-                    const entry =
-                        await uxp_storage.localFileSystem.createEntryWithUrl(
-                            url,
-                            { overwrite: true }
-                        );
-
-                    await doc.saveAs.psb(entry, {
-                        embedColorProfile: true,
-                        alphaChannels: true,
-                        layers: true,
-                        annotations: true,
-                        spotColors: true,
-                        maximizeCompatibility: true
-                    }, asCopy);
-                    break;
+                    return outputPath;
                 }
 
                 case "tif":
                 case "tiff": {
-                    const entry =
-                        await uxp_storage.localFileSystem.createEntryWithUrl(
-                            url,
-                            { overwrite: true }
-                        );
+                    const { entry } = await getOutputFileEntry(outputPath);
 
                     await doc.saveAs.tiff(entry, {
                         alphaChannels: true,
                         transparency: true,
                         imageCompression: "TIFFLZW",
                         layers: false
-                    }, asCopy);
-                    break;
+                    }, !!asCopy);
+
+                    return outputPath;
                 }
 
-                case "tga":
+                case "tga": {
+                    const { entry } = await getOutputFileEntry(outputPath);
+                    const sessionToken =
+                        localFileSystem.createSessionToken(entry);
+
                     await batchPlay([{
                         _obj: "save",
                         _target: [
@@ -929,10 +1110,10 @@ async function saveAs(imagePath, ext, asCopy) {
                             rleCompression: true
                         },
                         in: {
-                            _path: imagePath,
+                            _path: sessionToken,
                             _kind: "local"
                         },
-                        copy: asCopy,
+                        copy: !!asCopy,
                         lowerCase: true,
                         _options: {
                             dialogOptions: "dontDisplay"
@@ -941,49 +1122,31 @@ async function saveAs(imagePath, ext, asCopy) {
                         synchronousExecution: true,
                         modalBehavior: "execute"
                     });
-                    break;
+
+                    return outputPath;
+                }
 
                 case "exr":
-                    /*
-                     * EXR is generally Action Manager-only in UXP.
-                     */
-                    await batchPlay([{
-                        _obj: "save",
-                        _target: [
-                            { _ref: "document", _id: doc.id }
-                        ],
-                        as: {
-                            _obj: "OpenEXR"
-                        },
-                        in: {
-                            _path: imagePath,
-                            _kind: "local"
-                        },
-                        copy: asCopy,
-                        lowerCase: true,
-                        _options: {
-                            dialogOptions: "dontDisplay"
-                        }
-                    }], {
-                        synchronousExecution: true,
-                        modalBehavior: "execute"
-                    });
-                    break;
+                    return saveEXR(doc, outputPath, asCopy);
+
+                case "psd":
+                    // preserve saveSmart from CEP
+                    return saveSmart(outputPath, doc, asCopy);
+
+                case "psb":
+                    return savePSB(doc, outputPath, asCopy);
 
                 default:
                     throw new Error(
-                        "saveAs: unsupported extension '" + ext + "'"
+                        `saveAs: unsupported extension '${ext}'`
                     );
             }
         } finally {
-            // Never leave conversion duplicates open, including on save errors.
-            if (isTempDocument) {
+            if (isTemporaryDocument) {
                 await doc.closeWithoutSaving();
             }
         }
-    }, "Save As");
-
-    return imagePath;
+    }, `Save As ${format.toUpperCase()}`);
 }
 
 /**

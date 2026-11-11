@@ -243,7 +243,8 @@ class Upia:
             present = self._photoshop_versions(package)
 
         self.install(package.path)
-        return False
+        present = self._photoshop_versions(package)
+        return bool(present) and {item.version for item in present} == {package.version}
 
     def ensure_plugin_removed(self, name: str) -> List[str]:
         """Make sure no version of a plugin is installed for Photoshop.
