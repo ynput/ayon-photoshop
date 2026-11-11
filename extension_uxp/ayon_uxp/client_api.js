@@ -651,7 +651,17 @@ async function importSmartObject(path, name, link) {
 async function replaceSmartObjects(layer_id, path, name) {
     let normalizedPath = path.replace(/\\/g, "/");
     name = name.replace("▼","")
-    return await execAsModal(async () => {
+
+    let old_selected;
+    try {
+        old_selected = JSON.parse(await getSelectedLayers()); // should be a list of ints
+    } catch {
+        let old_selected = [layer_id]
+    }
+
+    await selectLayers([layer_id]);
+
+    const result = await execAsModal(async () => {
         const fileEntry = await uxp_storage.localFileSystem.createEntryWithUrl(normalizedPath, { overwrite: true });
         let sessionToken = uxp_storage.localFileSystem.createSessionToken(fileEntry);
         await batchPlay(
@@ -670,6 +680,9 @@ async function replaceSmartObjects(layer_id, path, name) {
             layer.name = name;
         }
     }, "Replace Smart Object");
+
+    await selectLayers(old_selected);
+    return result;
 }
 
 /**
