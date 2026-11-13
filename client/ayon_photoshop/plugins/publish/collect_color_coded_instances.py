@@ -170,8 +170,8 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     def _get_existing_product_names(self, context):
         """Collect manually created instances from workfile.
 
-        Shouldn't be any as Webpublisher bypass publishing via Openpype, but
-        might be some if workfile published through OP is reused.
+        Shouldn't be any as Webpublisher bypass publishing via AYON, but
+        might be some if workfile published through AYON is reused.
         """
         existing_product_names = []
         for instance in context:

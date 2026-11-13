@@ -10,12 +10,12 @@ from ayon_core.pipeline import PublishError
 class CollectExtensionVersion(pyblish.api.ContextPlugin):
     """ Pulls and compares version of installed extension.
 
-        It is recommended to use same extension as in provided Openpype code.
+        It is recommended to use same extension as in provided AYON code.
 
-        Please use Anastasiy’s Extension Manager or ZXPInstaller to update
+        Please use Anastasiy's Extension Manager or ZXPInstaller to update
         extension in case of an error.
 
-        You can locate extension.zxp in your installed Openpype code in
+        You can locate extension.zxp in your installed AYON code in
         `repos/avalon-core/avalon/photoshop`
     """
     # This technically should be a validator, but other collectors might be
