@@ -2,11 +2,9 @@
 
 Migration of AYON CEP to UXP!
 
-It's a new way to do things.<br>
+It's the new way to do things.<br>
 Developed at Submarine, by Sas van Gulik, as commissioned by Thierry Paalman,<br>
 in order to let M-series Macs participate in projects without having to work off pipe due to CEP not being allowed on these platforms, and CEP being marked as deprecated.
-
-This fork is meant to open discussion on migrating or offering a CEP / UXP hybrid.
 
 This folder contains everything you need to start developing with the JS stubs provided by Adobe.
 
@@ -21,8 +19,8 @@ To use the plugin, you need to bundle it or "inject it" into photoshop while it'
 
 First of all, check which version ayon_photoshop expects to be in the manifest.
 This is the version that is found in `ayon_photoshop/api/extension/CSXS/manifest.xml`, <br>
-and you would be looking for ExtensionBundleVersion. As of writing this, 0.4.4+dev,
-the expected version is `1.1.11`. The bundled .ccx package has a baked in manifest version for 1.1.1 for example.
+and you would be looking for ExtensionBundleVersion. As of writing this, 0.4.9+dev,
+the expected version is `1.1.19`. The bundled .ccx package has a baked in manifest version for 1.1.19 for example.
 
 Then you can adjust the manifest.json in `extension_uxp/manifest.json` to reflect
 this same version.
@@ -95,8 +93,8 @@ rebuilding the `.ccx`:
 - `ayon_uxp/manifest.json`: `ws://localhost:8101` has to be listed explicitly
   in the network domains, `"all"` only covers http and https
 
-### Further setup documentation can be found in the NOTES: [Here!](./ayon_uxp/NOTES.MD)
+### Further setup documentation and general introduction to UXP can be found in the NOTES: [Here!](./ayon_uxp/NOTES.MD)
 
-(It's quite complicated and different so I would recommend it.)
+(It's quite complicated and different so I would recommend checking it out.)
 
 Much love, Sas

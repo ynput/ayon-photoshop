@@ -61,55 +61,18 @@ Therefore we can't go and read stuff from our filesystem, in other textfiles tha
 in the folder that is bundled.
 
 Yet another quirk: **UXP Plugins can NOT read environment variables.**
-This has led me to have to decide that this plugin will need to communicate over a fixed address.
+This has led us to have to decide that this plugin will need to communicate over a fixed address.
 
-The easiest way to get it to talk to the plugin for testing is to go to 
-`client/ayon_photoshop/api/webserver.py`, line 45.
+When developing, in the Studio settings for (hopefully your dev bundle) set: <br>
+"Install plugin automatically": Off
+"Plugin Type": UXP
 
-```py
-class WebServerTool:
-    """
-        Basic POC implementation of asychronic websocket RPC server.
-        Uses class in external_app_1.py to mimic implementation for single
-        external application.
-        'test_client' folder contains two test implementations of client
-    """
-    _instance = None
+Then, when photoshop starts, use the UXP Developer tools to start up your plugin in "Load and Watch" mode. This allows you to expose a "Debug" window that lets you see what gets logged to console!
 
-    def __init__(self):
-        WebServerTool._instance = self
+I hope you are ready to have lots of fun, as things can get quite confusing. There is a vast difference between plugin standards between CEP and UXP, and things that are trivial in one can be complicated in the other.
+Some attributes like the document dit depth are read/write in CEP, you can trivially set the bit depth by changing a value, when in UXP this requires a batchPlay function.
+Be really careful about this.
 
-        self.client = None
-        self.handlers = {}
-        self.on_stop_callbacks = []
+Enjoy, 
 
-        port = None
-        host_name = "localhost"
-        websocket_url = "ws://localhost:8101/ws/" # Line 45 original: os.getenv("WEBSOCKET_URL")
-```
-
-If you want to change the port, please change it in the modified<br>
-`client/ayon_photoshop/api/webserver.py` like above, <br>
-the `manifest.json` 'requiredPermissions' key ->
-```js
-"requiredPermissions": {
-    "network": {
-      "domains": [
-        "all", 
-        "ws://localhost:8101" // <- Modify 8101 here to allow port through.
-      ]
-    },
-    "localFileSystem": "fullAccess"
-  }
-```
-
-and in the plugin itself, in `ayon-photoshop/extension_uxp/main.js`
-
-```js
-const get_RPC = require("./client_RPC").get_RPC
-const setup_rpc = require("./client_RPC").setup_rpc
-
-const WS_URL = "ws://localhost:8101/ws/"; // <- Modify 8101 here to allow port through.
-
-let RPC = null;
-```
+Sas
