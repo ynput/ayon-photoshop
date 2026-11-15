@@ -43,8 +43,16 @@ async function setup_rpc(websocket_url) {
             try {
                 return await handler(data);
             } catch (err) {
-                console.error(err);
-                return {type: String(err.name || "Error"), message: String(err.message)};
+                // overly safe tip toe error serialisation
+                const error = {
+                    type: String(err?.name || "Error"),
+                    message: String(err?.message || err),
+                    number: err?.number ?? null,
+                    code: err?.code ?? null,
+                    stack: err?.stack ?? null
+                }
+                console.error(error);
+                throw error;
             }
         });
     }

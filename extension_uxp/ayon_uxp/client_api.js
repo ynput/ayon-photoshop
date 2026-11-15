@@ -250,12 +250,14 @@ async function setDocumentSettings(resolution, mode, bits) {
     }
     const steps = [
         ["resolution", () => doc.resizeImage(
-            undefined, undefined, resolution, constants.ResampleMethod.NONE
+            undefined,
+            undefined,
+            Number(resolution)
         )],
         ["color mode", () => doc.changeMode(
             constants.ChangeMode[String(mode).toUpperCase()]
         )],
-        ["bit depth", async () => {await convertBitDepth(doc, bits)}],
+        ["bit depth", () => convertBitDepth(doc, bits)],
     ];
 
     // validate arguments
@@ -679,23 +681,29 @@ async function dissolveLayerSet(layerSetId) {
         await selectObject(layerSetId);
         const layerSet = app.activeDocument.activeLayers[0];
 
-        // Preserve parent
-        const children = layerSet.layers.slice();
+        // preserve layers in array
+        const children = Array.from(layerSet.layers);
 
-        // Move each child out to the document root
+        // Move each child before the group
         for (const child of children) {
-            await child.move(app.activeDocument, constants.ElementPlacement.PLACEBEFORE);
+            await child.move(
+                layerSet,
+                constants.ElementPlacement.PLACEBEFORE
+            );
         }
 
-        // Delete empty group
-        await batchPlay(
-            [{
-                _obj: "delete",
-                _target: [{ _ref: "layer", _id: layerSetId }],
-                _options: { dialogOptions: "dontDisplay" }
-            }],
-            { synchronousExecution: true }
-        );
+        // The group should now be empty, and we can delete it.
+        await batchPlay([{
+            _obj: "delete",
+            _target: [
+                { _ref: "layer", _id: layerSetId }
+            ],
+            _options: {
+                dialogOptions: "dontDisplay"
+            }
+        }], {
+            synchronousExecution: true
+        });
     }, "Dissolve Layer Set");
 }
 
@@ -1386,7 +1394,18 @@ async function getExtensionVersion() {
 }
 
 async function closeApp() {
-    await app.terminate();
+    // may fail. This is the closest we can get to CEP's 'close' function.
+    await execAsModal(async () => {
+        await batchPlay([{
+            _obj: "quit",
+            _options: {
+                dialogOptions: "dontDisplay"
+            }
+        }], {
+            synchronousExecution: true,
+            modalBehavior: "execute"
+        });
+    }, "Quit Photoshop");
 }
 
 module.exports = {
