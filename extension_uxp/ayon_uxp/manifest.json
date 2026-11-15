@@ -35,17 +35,17 @@
         {
           "width": 23,
           "height": 23,
-          "path": "./icons/ayon_logo@1x.png",
+          "path": "icons/ayon_logo.png",
           "scale": [1, 2]
         }
       ]
     }
   ],
-  "icons": [
+"icons": [
     {
       "width": 23,
       "height": 23,
-      "path": "./icons/ayon_logo@1x.png",
+      "path": "icons/ayon_logo.png",
       "scale": [1, 2]
     }
   ],
