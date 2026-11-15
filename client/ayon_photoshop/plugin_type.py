@@ -27,6 +27,8 @@ PLUGIN_UXP = "uxp"
 PLUGIN_TYPES = (PLUGIN_CEP, PLUGIN_UXP)
 DEFAULT_PLUGIN_TYPE = PLUGIN_CEP
 
+AYON_UXP_PLUGIN_NAME = "AYON"
+
 # Port the server listens on for the CEP panel, used when the environment
 #   does not say otherwise.
 CEP_WEBSOCKET_PORT = 8099

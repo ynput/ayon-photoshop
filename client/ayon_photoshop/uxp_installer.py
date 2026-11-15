@@ -189,17 +189,28 @@ class Upia:
 
         return completed.stdout.decode("utf-8", errors="replace")
 
+    @staticmethod
+    def _raise_if_failed(output: str) -> None:
+        match = _FAILURE_RE.search(output)
+        if match:
+            raise RuntimeError(
+                f"UPIA failed to {match.group('action')} "
+                f"(status {match.group('status')}): {output.strip()}"
+            )
+
     def list_plugins(self) -> List[InstalledPlugin]:
         """Return the plugins installed for every Adobe product."""
         return parse_list_output(self._run(f"{self._arg_prefix}list", "all"))
 
     def install(self, ccx_path) -> None:
         """Install a .ccx file."""
-        self._run(f"{self._arg_prefix}install", str(ccx_path))
+        output = self._run(f"{self._arg_prefix}install", str(ccx_path))
+        self._raise_if_failed(output)
 
     def remove(self, name: str) -> None:
         """Remove a plugin by display name."""
-        self._run(f"{self._arg_prefix}remove", name)
+        output = self._run(f"{self._arg_prefix}remove", name)
+        self._raise_if_failed(output)
 
     def _photoshop_versions(
         self, package: PluginPackage

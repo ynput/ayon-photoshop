@@ -3,13 +3,17 @@ from pathlib import Path
 from ayon_applications import PreLaunchHook, LaunchTypes
 
 from ayon_photoshop import PHOTOSHOP_ADDON_ROOT
-from ayon_photoshop.plugin_type import PLUGIN_UXP, get_plugin_type
+from ayon_photoshop.plugin_type import (
+    PLUGIN_UXP, 
+    get_plugin_type, 
+    AYON_UXP_PLUGIN_NAME,
+)
 from ayon_photoshop.uxp_installer import (
     Upia,
     find_upia,
     read_package,
 )
-
+from subprocess import TimeoutExpired
 
 class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
     """Install the AYON UXP plugin into Photoshop before it starts.
@@ -35,50 +39,47 @@ class InstallAyonUxpPluginToPhotoshop(PreLaunchHook):
         settings = self.data["project_settings"]["photoshop"]
         if not settings.get("auto_install_extension", False):
             return
-        
+
         want_uxp = get_plugin_type(settings) == PLUGIN_UXP
         executable = find_upia()
+
         if executable is None:
             if want_uxp:
                 self.log.warning(
-                    "Adobe's plugin installer (UnifiedPluginInstallerAgent) "
-                    "was not found, is Creative Cloud installed? The AYON "
-                    f"UXP plugin can be installed by hand from {self.CCX_PATH}"
+                    "UnifiedPluginInstallerAgent was not found; AYON UXP plugin "
+                    f"can be installed manually from {self.CCX_PATH}"
                 )
             return
 
-        try:
-            package = read_package(self.CCX_PATH)
-        except BaseException as err:
-            self.log.warning(
-                "Error encountered during attempt at reading .ccx file: "
-                f"{err}"
-            )
-
         upia = Upia(executable)
 
-        if not want_uxp:
-            try:
-                removed = upia.ensure_plugin_removed(package.name)
-            
+        try:
+            if not want_uxp:
+                removed = upia.ensure_plugin_removed(AYON_UXP_PLUGIN_NAME)
                 if removed:
-                    removed_list = f"({', '.join(removed)})."
-                    self.log.info(f"Removed UXP plugin {package.name}: {removed_list}")
+                    self.log.info(
+                        f"Removed UXP plugin {AYON_UXP_PLUGIN_NAME}: "
+                        f"({', '.join(removed)})."
+                    )
                 return
-            except RuntimeError as err:
-                self.log.warning(
-                    "Error encountered removing UXP plugin: "
-                    f"{err}"
+
+            package = read_package(self.CCX_PATH)
+            if upia.ensure_plugin_installed(package):
+                self.log.info(
+                    f"UXP plugin {package.name} {package.version} is installed"
+                    " & up to date."
                 )
-                return
+            else:
+                self.log.warning(
+                    f"UXP plugin {package.name} {package.version} failed to install."
+                )
 
-
-        if upia.ensure_plugin_installed(package):
-            self.log.info(
-                f"UXP plugin {package.name} {package.version} is up to date."
-            )
-        else:
+        except TimeoutExpired:
             self.log.warning(
-                f"UXP plugin {package.name} {package.version} failed to "
-                "install."
+                "Adobe's plugin installer timed out; continuing Photoshop launch."
+            )
+        except Exception:
+            self.log.warning(
+                "Could not update AYON's UXP plugin; continuing Photoshop launch.",
+                exc_info=True,
             )
