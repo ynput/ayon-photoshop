@@ -35,6 +35,23 @@ function toFileUrl(path) {
 }
 
 /**
+ * ensure correctness in file metadata and extract Unix time
+ */
+function metadataTime(metadata) {
+    const value = metadata?.dateModified;
+
+    if (value instanceof Date) {
+        return value.getTime();
+    }
+
+    if (value !== undefined && value !== null) {
+        return Number(value);
+    }
+
+    return null;
+}
+
+/**
  * Check if file was written after save.
  */
 function fileWasWritten(before, after, existedBefore) {
@@ -42,16 +59,12 @@ function fileWasWritten(before, after, existedBefore) {
         return false;
     }
 
-    // A newly created file should have non-zero data.
     if (!existedBefore) {
         return Number(after.size) > 0;
     }
 
-    const beforeTime = before?.modificationTime?.getTime?.();
-    const afterTime = after?.modificationTime?.getTime?.();
-
     return (
-        beforeTime !== afterTime ||
+        metadataTime(before) !== metadataTime(after) ||
         Number(before?.size) !== Number(after?.size)
     );
 }
@@ -74,21 +87,22 @@ async function removePartialSave(fileEntry, existedBefore) {
 
 /**
  * Return an existing FileEntry, or null when it does not exist.
+ * Throws if entry is a directory (unlikely)
  */
 async function getExistingFileEntry(fileUrl) {
+    let entry;
+
     try {
-        const entry = await uxp_storage.localFileSystem.getEntryWithUrl(fileUrl);
-
-        if (!entry.isFile) {
-            throw new Error(`Output path is not a file: ${fileUrl}`);
-        }
-
-        return entry;
+        entry = await uxp_storage.localFileSystem.getEntryWithUrl(fileUrl);
     } catch (error) {
-        // getEntryWithUrl throws for a non-existent file. Treat that case as
-        // "not present"; the save operation will create the target.
         return null;
     }
+
+    if (!entry.isFile) {
+        throw new Error(`Output path is not a file: ${fileUrl}`);
+    }
+
+    return entry;
 }
 
 /**
@@ -471,7 +485,7 @@ async function setVisible(layer_id, visibility) {
     if (!layer) return false;
 
     await execAsModal(async () => {
-        layer.visible = !!visibility;
+        layer.visible = Boolean(visibility);
     }, "Set Layer Visibility");
 
     return true;
@@ -731,8 +745,6 @@ async function importSmartObject(path, name, link) {
     //}
 
     await execAsModal(async () => {
-        //const fileEntry = await uxp_storage.localFileSystem.createEntryWithUrl(normalizedPath, { overwrite: true });
-        //console.log(fileEntry, typeof fileEntry)
         console.log(normalizedPath)
         const fileEntry = await uxp_storage.localFileSystem.createEntryWithUrl(normalizedPath, { overwrite: true });
         let sessionToken = uxp_storage.localFileSystem.createSessionToken(fileEntry);
@@ -900,6 +912,17 @@ async function convertBitDepth(document, depth) {
 }
 
 /**
+ * Returns whether Photoshop reports that the user cancelled a save operation.
+ *
+ * CEP commonly exposed this as error.number === 8007. UXP error shapes can
+ * expose the value as `number` or `code`, depending on the host/API path.
+ */
+function isSaveCancelled(error) {
+    const code = Number(error?.number ?? error?.code);
+    return code === 8007;
+}
+
+/**
  * Save a document as OpenEXR.
  *   As: EXRf
  *     BtDp: 32
@@ -913,8 +936,8 @@ async function convertBitDepth(document, depth) {
  * @returns {Promise<string>}
  */
 async function saveEXR(doc, outputPath, asCopy = false) {
-    const outputFile = await getOutputFileEntry(outputPath);
-    const sessionToken = localFileSystem.createSessionToken(outputFile);
+    const { entry } = await getOutputFileEntry(outputPath);
+    const sessionToken = uxp_storage.localFileSystem.createSessionToken(entry);
 
     await batchPlay([{
         _obj: "save",
@@ -931,7 +954,7 @@ async function saveEXR(doc, outputPath, asCopy = false) {
             _path: sessionToken,
             _kind: "local"
         },
-        copy: !!asCopy,
+        copy: Boolean(asCopy),
         lowerCase: true,
         _options: {
             dialogOptions: "dontDisplay"
@@ -954,16 +977,16 @@ async function saveEXR(doc, outputPath, asCopy = false) {
  * @returns {Promise<string>}
  */
 async function savePSB(doc, outputPath, asCopy = false) {
-    const outputFile = await getOutputFileEntry(outputPath);
+    const { entry } = await getOutputFileEntry(outputPath);
 
-    await doc.saveAs.psb(outputFile, {
+    await doc.saveAs.psb(entry, {
         embedColorProfile: true,
         alphaChannels: true,
         layers: true,
         annotations: true,
         spotColors: true,
         maximizeCompatibility: true
-    }, !!asCopy);
+    }, Boolean(asCopy));
 
     return outputPath;
 }
@@ -1007,7 +1030,7 @@ async function saveSmart(outputPath, doc, asCopy = false) {
             annotations: true,
             spotColors: true,
             maximizeCompatibility: true
-        }, !!asCopy);
+        }, Boolean(asCopy));
     } catch (psdError) {
         // Do not turn an explicit user cancellation into a PSB save.
         if (isSaveCancelled(psdError)) {
@@ -1017,7 +1040,9 @@ async function saveSmart(outputPath, doc, asCopy = false) {
         await removePartialSave(psdEntry, existedBefore);
 
         try {
-            return await savePSB(doc, psbPath, asCopy);
+            // return await savePSB(doc, psbPath, asCopy);
+            // CEP always saves in-place, not as copy
+            return await savePSB(doc, psbPath, false);
         } catch (psbError) {
             console.error("PSD and PSB save both failed:", {
                 psdError,
@@ -1035,7 +1060,9 @@ async function saveSmart(outputPath, doc, asCopy = false) {
     const metadataAfter = await getFileMetadata(psdEntry);
 
     if (!fileWasWritten(metadataBefore, metadataAfter, existedBefore)) {
-        return savePSB(doc, psbPath, asCopy);
+        // return await savePSB(doc, psbPath, asCopy);
+        // CEP always saves in-place, not as copy
+        return savePSB(doc, psbPath, false);
     }
 
     return outputPath;
@@ -1107,7 +1134,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                         formatOptions: "progressive",
                         scans: 5,
                         matte: "noMatte"
-                    }, !!asCopy);
+                    }, Boolean(asCopy));
 
                     return outputPath;
                 }
@@ -1118,7 +1145,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                     await doc.saveAs.png(entry, {
                         compression: 6,
                         interlaced: true
-                    }, !!asCopy);
+                    }, Boolean(asCopy));
 
                     return outputPath;
                 }
@@ -1132,7 +1159,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                         transparency: true,
                         imageCompression: "TIFFLZW",
                         layers: false
-                    }, !!asCopy);
+                    }, Boolean(asCopy));
 
                     return outputPath;
                 }
@@ -1140,7 +1167,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                 case "tga": {
                     const { entry } = await getOutputFileEntry(outputPath);
                     const sessionToken =
-                        localFileSystem.createSessionToken(entry);
+                        uxp_storage.localFileSystem.createSessionToken(entry);
 
                     await batchPlay([{
                         _obj: "save",
@@ -1157,7 +1184,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                             _path: sessionToken,
                             _kind: "local"
                         },
-                        copy: !!asCopy,
+                        copy: Boolean(asCopy),
                         lowerCase: true,
                         _options: {
                             dialogOptions: "dontDisplay"
@@ -1178,7 +1205,9 @@ async function saveAs(outputPath, ext, asCopy = false) {
                     return saveSmart(outputPath, doc, asCopy);
 
                 case "psb":
-                    return savePSB(doc, outputPath, asCopy);
+                    // return savePSB(doc, psbPath, asCopy);
+                    // CEP always saves in-place, not as copy
+                    return savePSB(doc, outputPath, false);
 
                 default:
                     throw new Error(
