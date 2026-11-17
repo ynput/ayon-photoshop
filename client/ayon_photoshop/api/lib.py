@@ -234,3 +234,96 @@ def publish_in_test(log, close_plugin_name=None):
                 close_plugin().process(context)
             except Exception as exp:
                 print(exp)
+
+
+def update_content_on_context_change():
+    """Update all creator instances to the current folder and task.
+
+    Used when the workfile is saved into a different folder or task, so the
+    publish instances created in the previous context are moved to the
+    context the workfile is saved into.
+    """
+    from ayon_core.pipeline import registered_host
+    from ayon_core.pipeline.create import CreateContext
+
+    host = registered_host()
+    context = host.get_current_context()
+
+    folder_path = context["folder_path"]
+    task_name = context["task_name"]
+
+    # Initializing the create context collects the existing instances from
+    # the document and runs the auto creators, which update their own
+    # instances to the context that is now stored in the document. Publish
+    # plugins are not needed here.
+    create_context = CreateContext(host, discover_publish_plugins=False)
+
+    for instance in create_context.instances:
+        instance_folder_path = instance.get("folderPath")
+        if instance_folder_path and instance_folder_path != folder_path:
+            instance["folderPath"] = folder_path
+
+        instance_task = instance.get("task")
+        if instance_task and instance_task != task_name:
+            instance["task"] = task_name
+
+    # Auto creators only change the instances in memory, so always save the
+    # changes to the document.
+    create_context.save_changes()
+
+
+def prompt_reset_context():
+    """Prompt the user to update the instances to the new context.
+
+    This prompt is used on saving a workfile into a different folder or task
+    to allow the existing publish instances to be moved to the new context.
+    """
+    from ayon_core.lib import BoolDef, UILabelDef
+    from ayon_core.tools.attribute_defs.dialog import (
+        AttributeDefinitionsDialog,
+    )
+    from qtpy import QtCore
+
+    # There is no artist to answer the prompt in headless or test runs.
+    if is_in_tests() or env_value_to_bool("HEADLESS_PUBLISH"):
+        log.debug("Skipping context update prompt in headless mode.")
+        return None
+
+    definitions = [
+        UILabelDef(
+            label=(
+                "You are saving your workfile into a different folder or "
+                "task."
+                "\n\n"
+                "Would you like to update the publish instances to the new "
+                "context?\n"
+            )
+        ),
+        BoolDef(
+            "instances",
+            label="Publish instances",
+            tooltip="Update all publish instance's folder and task to match "
+                    "the new folder and task",
+            default=True,
+        ),
+    ]
+
+    dialog = AttributeDefinitionsDialog(
+        definitions, title="Saving to different context."
+    )
+    # Photoshop is not the Qt application that owns this dialog, so its main
+    # window cannot be used as a parent. Keep the dialog on top instead, so
+    # it cannot get hidden behind the Photoshop window.
+    dialog.setWindowFlags(
+        dialog.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+    )
+    try:
+        if not dialog.exec_():
+            return None
+
+        options = dialog.get_values()
+    finally:
+        dialog.deleteLater()
+
+    if options["instances"]:
+        update_content_on_context_change()
