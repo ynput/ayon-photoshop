@@ -5,11 +5,24 @@ import traceback
 import functools
 import pyblish
 
-from ayon_core.lib import env_value_to_bool, Logger, is_in_tests
+from qtpy import QtCore
+
+from ayon_core.lib import (
+    env_value_to_bool,
+    Logger,
+    is_in_tests,
+    BoolDef,
+    UILabelDef
+)
 from ayon_core.addon import AddonsManager
-from ayon_core.pipeline import install_host
+from ayon_core.pipeline import install_host, registered_host
+from ayon_core.pipeline.create import CreateContext
+
 from ayon_core.tools.utils import host_tools
 from ayon_core.tools.utils import get_ayon_qt_app
+from ayon_core.tools.attribute_defs.dialog import (
+    AttributeDefinitionsDialog,
+)
 
 from .launch_logic import ProcessLauncher, stub
 
@@ -243,9 +256,6 @@ def update_content_on_context_change():
     publish instances created in the previous context are moved to the
     context the workfile is saved into.
     """
-    from ayon_core.pipeline import registered_host
-    from ayon_core.pipeline.create import CreateContext
-
     host = registered_host()
     context = host.get_current_context()
 
@@ -278,12 +288,6 @@ def prompt_reset_context():
     This prompt is used on saving a workfile into a different folder or task
     to allow the existing publish instances to be moved to the new context.
     """
-    from ayon_core.lib import BoolDef, UILabelDef
-    from ayon_core.tools.attribute_defs.dialog import (
-        AttributeDefinitionsDialog,
-    )
-    from qtpy import QtCore
-
     # There is no artist to answer the prompt in headless or test runs.
     if is_in_tests() or env_value_to_bool("HEADLESS_PUBLISH"):
         log.debug("Skipping context update prompt in headless mode.")
