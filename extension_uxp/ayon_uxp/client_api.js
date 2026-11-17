@@ -1451,19 +1451,17 @@ async function getExtensionVersion() {
     }
 }
 
+// Menu command ID of File > Exit (Photoshop > Quit on macOS).
+const EXIT_COMMAND_ID = 36;
+
 async function closeApp() {
-    // may fail. This is the closest we can get to CEP's 'close' function.
-    await execAsModal(async () => {
-        await batchPlay([{
-            _obj: "quit",
-            _options: {
-                dialogOptions: "dontDisplay"
-            }
-        }], {
-            synchronousExecution: true,
-            modalBehavior: "execute"
-        });
-    }, "Quit Photoshop");
+    // Quit is not available inside a modal scope and a "quit" event is
+    // refused outside of one, the menu command works. It runs after this
+    // call returned, so the reply still reaches the server.
+    setTimeout(() => {
+        core.performMenuCommand({ commandID: EXIT_COMMAND_ID })
+            .catch((err) => console.error("Could not quit Photoshop:", err));
+    }, 100);
 }
 
 module.exports = {
