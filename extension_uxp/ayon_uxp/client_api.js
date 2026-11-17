@@ -268,11 +268,24 @@ async function setDocumentSettings(resolution, mode, bits) {
         bits = parseInt(bits)
     }
     const steps = [
-        ["resolution", () => doc.resizeImage(
-            undefined,
-            undefined,
-            Number(resolution)
-        )],
+        // Image Size without a new width, height or interpolation only
+        // changes the ppi; resizeImage() always resamples.
+        ["resolution", () => batchPlayOrThrow([{
+            _obj: "imageSize",
+            _target: [
+                { _ref: "document", _id: doc.id }
+            ],
+            resolution: {
+                _unit: "densityUnit",
+                _value: Number(resolution)
+            },
+            _options: {
+                dialogOptions: "silent"
+            }
+        }], {
+            synchronousExecution: true,
+            modalBehavior: "execute"
+        })],
         ["color mode", () => doc.changeMode(
             constants.ChangeMode[String(mode).toUpperCase()]
         )],
