@@ -177,7 +177,7 @@ class PhotoshopServerStub:
                            loop - value should be same)
         Returns: None
         """
-        if not items_meta:
+        if items_meta is None:
             items_meta = self.get_layers_metadata()
 
         # json.dumps writes integer values in a dictionary to string, so
