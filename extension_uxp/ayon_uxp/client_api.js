@@ -953,7 +953,7 @@ async function saveEXR(doc, outputPath, asCopy = false) {
             { _ref: "document", _id: doc.id }
         ],
         as: {
-            _obj: "EXRf",
+            _obj: "$EXRf",
             "$BtDp": 32,
             "$Cmpr": 1,
             "$AChn": 1
