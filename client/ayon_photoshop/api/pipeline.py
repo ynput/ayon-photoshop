@@ -43,6 +43,10 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "photoshop"
     workfile_extensions = [".psd", ".psb"]
 
+    # Track whether the workfiles tool is about to save the workfile, so a
+    # context change caused by that save can prompt to update the instances.
+    about_to_save = False
+
     def install(self):
         """Install Photoshop-specific functionality needed for integration.
 
@@ -282,9 +286,9 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         'publish_context'.
 
         Args:
-            only_if_unstamped (bool): When True, never overwrite an
-                existing stamp — only write one if the active document
-                has none yet.
+            project_name (str): Name of the project.
+            folder_path (str): Path of the folder.
+            task_name (str): Name of the task.
         """
         stub = _get_stub()
         if stub is None:
@@ -329,12 +333,77 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         )
 
     def _before_workfile_save(self, save_workfile_context):
-        """Stamp context onto the document before it is saved."""
+        """Handle the target context before the workfile is saved.
+
+        The active document stores its AYON context, so it is stamped with
+        the context the workfile is saved into. When the save changes the
+        context the stamping is intentionally left to '_set_current_context'
+        (called by ayon-core while saving) so that the change is detected and
+        '_after_context_change' can offer to update the publish instances.
+        For an unchanged context the document is stamped here, because
+        ayon-core does nothing for a context that did not change - the
+        document might not have any context stored yet (e.g. a blank
+        document created in Photoshop).
+
+        Args:
+            save_workfile_context (SaveWorkfileContext): Workfile path with
+                the target folder and task context.
+        """
+        self.about_to_save = True
+
+        current_context = self.get_current_context()
+        context_changed = (
+            current_context.get("folder_path")
+            != save_workfile_context.folder_entity["path"]
+            or current_context.get("task_name")
+            != save_workfile_context.task_entity["name"]
+        )
+        if context_changed:
+            return
+
         self.set_active_document_context(
             save_workfile_context.project_entity["name"],
             save_workfile_context.folder_entity["path"],
             save_workfile_context.task_entity["name"],
         )
+
+    def _after_workfile_save(self, save_workfile_context):
+        """Stop tracking the save once the workfile is saved.
+
+        Args:
+            save_workfile_context (SaveWorkfileContext): Workfile path with
+                the saved folder and task context.
+        """
+        super()._after_workfile_save(save_workfile_context)
+        self.about_to_save = False
+
+    def _after_context_change(self, context_change_data):
+        """Offer to update the instances when saving changed the context.
+
+        Called by ayon-core after the context changed in the host. Only a
+        context change caused by saving the workfile is handled here, the
+        artist is asked whether the existing publish instances should be
+        moved to the new folder and task.
+
+        Args:
+            context_change_data (ContextChangeData): Data about the context
+                change (project, folder, task and reason).
+        """
+        super()._after_context_change(context_change_data)
+        if not self.about_to_save:
+            return
+
+        if context_change_data.reason != ContextChangeReason.workfile_save:
+            return
+
+        try:
+            lib.prompt_reset_context()
+        except Exception:
+            # Updating the instances must never block saving the workfile.
+            log.warning(
+                "Failed to update the publish instances to the new context.",
+                exc_info=True,
+            )
 
     def store_global_context_to_active_document(self):
         """Stamp the current global (env-based) context onto the active
