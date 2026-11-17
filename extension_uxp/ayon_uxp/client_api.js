@@ -1179,14 +1179,40 @@ async function saveAs(outputPath, ext, asCopy = false) {
 
                 case "tif":
                 case "tiff": {
+                    // The UXP DOM has no saveAs.tiff().
                     const { entry } = await getOutputFileEntry(outputPath);
+                    const sessionToken =
+                        uxp_storage.localFileSystem.createSessionToken(entry);
 
-                    await doc.saveAs.tiff(entry, {
+                    await batchPlayOrThrow([{
+                        _obj: "save",
+                        _target: [
+                            { _ref: "document", _id: doc.id }
+                        ],
+                        as: {
+                            _obj: "TIFF",
+                            byteOrder: {
+                                _enum: "platform",
+                                _value: "IBMPC"
+                            },
+                            LZWCompression: true,
+                            saveTransparency: true
+                        },
+                        in: {
+                            _path: sessionToken,
+                            _kind: "local"
+                        },
                         alphaChannels: true,
-                        transparency: true,
-                        imageCompression: "TIFFLZW",
-                        layers: false
-                    }, Boolean(asCopy));
+                        layers: false,
+                        copy: Boolean(asCopy),
+                        lowerCase: true,
+                        _options: {
+                            dialogOptions: "silent"
+                        }
+                    }], {
+                        synchronousExecution: true,
+                        modalBehavior: "execute"
+                    });
 
                     return outputPath;
                 }
