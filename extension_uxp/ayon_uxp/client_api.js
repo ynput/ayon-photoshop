@@ -17,6 +17,25 @@ async function execAsModal(func, commandName) {
     }, {"commandName": commandName})
 }
 
+/**
+ * Run batchPlay commands and throw when Photoshop reports an error.
+ *
+ * batchPlay does not throw for a failed command, it returns an "error"
+ * descriptor in its place.
+ *
+ * @param {object[]} commands
+ * @param {object} [options] batchPlay options.
+ * @returns {Promise<object[]>} Result descriptors.
+ */
+async function batchPlayOrThrow(commands, options = {}) {
+    const results = await batchPlay(commands, options);
+    const error = results.find((result) => result?._obj === "error");
+    if (error) {
+        throw new Error(error.message || `Photoshop error ${error.result}`);
+    }
+    return results;
+}
+
 // File helpers
 
 /**
@@ -947,7 +966,7 @@ async function saveEXR(doc, outputPath, asCopy = false) {
     const { entry } = await getOutputFileEntry(outputPath);
     const sessionToken = uxp_storage.localFileSystem.createSessionToken(entry);
 
-    await batchPlay([{
+    await batchPlayOrThrow([{
         _obj: "save",
         _target: [
             { _ref: "document", _id: doc.id }
@@ -965,7 +984,7 @@ async function saveEXR(doc, outputPath, asCopy = false) {
         copy: Boolean(asCopy),
         lowerCase: true,
         _options: {
-            dialogOptions: "dontDisplay"
+            dialogOptions: "silent"
         }
     }], {
         synchronousExecution: true,
@@ -1177,7 +1196,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                     const sessionToken =
                         uxp_storage.localFileSystem.createSessionToken(entry);
 
-                    await batchPlay([{
+                    await batchPlayOrThrow([{
                         _obj: "save",
                         _target: [
                             { _ref: "document", _id: doc.id }
@@ -1195,7 +1214,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                         copy: Boolean(asCopy),
                         lowerCase: true,
                         _options: {
-                            dialogOptions: "dontDisplay"
+                            dialogOptions: "silent"
                         }
                     }], {
                         synchronousExecution: true,
