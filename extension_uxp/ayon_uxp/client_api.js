@@ -1264,7 +1264,9 @@ async function saveAs(outputPath, ext, asCopy = false) {
                 }
 
                 case "exr":
-                    return saveEXR(doc, outputPath, asCopy);
+                    // Awaited, so the finally below does not close the
+                    // temporary 32 bit copy before it is saved.
+                    return await saveEXR(doc, outputPath, asCopy);
 
                 case "psd":
                     // preserve saveSmart from CEP
