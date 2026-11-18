@@ -81,6 +81,7 @@ function getLayers() {
         return '[]';
     }
     var ref1 = new ActionReference();
+    ref1.putProperty(charIDToTypeID('Prpr'), charIDToTypeID('NmbL'));
     ref1.putEnumerated(charIDToTypeID('Dcmn'), charIDToTypeID('Ordn'),
                        charIDToTypeID('Trgt'));
     var count = executeActionGet(ref1).getInteger(charIDToTypeID('NmbL'));

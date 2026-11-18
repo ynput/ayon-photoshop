@@ -24,6 +24,32 @@ from ayon_core.pipeline import get_global_context
 log = logging.getLogger(__name__)
 
 
+class _WsrpcRequestLogFilter(logging.Filter):
+    """Log requests sent by 'wsrpc_aiohttp' as DEBUG instead of INFO.
+
+    'wsrpc_aiohttp' logs every call to the host as INFO, e.g.
+    'Sending request #168 "Photoshop.get_layers({})" to the client.',
+    which floods the console and the publish report.
+    """
+
+    def filter(self, record):
+        if (
+            record.levelno != logging.INFO
+            or not str(record.msg).startswith("Sending request")
+        ):
+            return True
+
+        record.levelno = logging.DEBUG
+        record.levelname = logging.getLevelName(logging.DEBUG)
+        # Drop the record if DEBUG is not enabled, like 'log.debug' would
+        return logging.getLogger(record.name).isEnabledFor(logging.DEBUG)
+
+
+logging.getLogger("wsrpc_aiohttp.websocket.common").addFilter(
+    _WsrpcRequestLogFilter()
+)
+
+
 class WebServerTool:
     """
         Basic POC implementation of asychronic websocket RPC server.
