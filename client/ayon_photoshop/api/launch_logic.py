@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import platform
 import subprocess
+import sys
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
@@ -26,6 +27,7 @@ from ayon_core.pipeline.workfile import (
 from ayon_core.pipeline.template_data import get_template_data_with_names
 from ayon_core.tools.utils import host_tools
 
+from .launch_utils import get_macos_launch_args
 from .webserver import WebServerTool
 from .ws_stub import PhotoshopServerStub
 
@@ -314,8 +316,19 @@ class ProcessLauncher(QtCore.QObject):
         try:
             args = list(self._subprocess_args)
             if platform.system().lower() == "darwin":
-                args.insert(0, "arch")
-                args.insert(1, "-x86_64")
+                executable_arches = self._macos_get_arches(args[0])
+                process_arches = set(
+                    self._macos_get_arches(sys.executable)
+                )
+                args, arch = get_macos_launch_args(
+                    args,
+                    executable_arches,
+                    process_arches,
+                )
+                if arch:
+                    self.log.info(
+                        f"Using arch '{arch}' to launch host process"
+                    )
 
             self._process = subprocess.Popen(
                 args,
@@ -325,6 +338,21 @@ class ProcessLauncher(QtCore.QObject):
         except Exception:
             self.log.info("exce", exc_info=True)
             self.exit()
+
+    def _macos_get_arches(self, executable_path: str) -> list[str]:
+        try:
+            output = subprocess.check_output(
+                ["lipo", "-archs", executable_path],
+                text=True
+            ).strip()
+        except Exception:
+            self.log.warning(
+                "Failed to get architectures of an executable:"
+                f" {executable_path}",
+                exc_info=True
+            )
+            return []
+        return output.split()
 
 
 def show_script_editor():
