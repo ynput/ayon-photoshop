@@ -17,6 +17,25 @@ async function execAsModal(func, commandName) {
     }, {"commandName": commandName})
 }
 
+/**
+ * Run batchPlay commands and throw when Photoshop reports an error.
+ *
+ * batchPlay does not throw for a failed command, it returns an "error"
+ * descriptor in its place.
+ *
+ * @param {object[]} commands
+ * @param {object} [options] batchPlay options.
+ * @returns {Promise<object[]>} Result descriptors.
+ */
+async function batchPlayOrThrow(commands, options = {}) {
+    const results = await batchPlay(commands, options);
+    const error = results.find((result) => result?._obj === "error");
+    if (error) {
+        throw new Error(error.message || `Photoshop error ${error.result}`);
+    }
+    return results;
+}
+
 // File helpers
 
 /**
@@ -249,11 +268,24 @@ async function setDocumentSettings(resolution, mode, bits) {
         bits = parseInt(bits)
     }
     const steps = [
-        ["resolution", () => doc.resizeImage(
-            undefined,
-            undefined,
-            Number(resolution)
-        )],
+        // Image Size without a new width, height or interpolation only
+        // changes the ppi; resizeImage() always resamples.
+        ["resolution", () => batchPlayOrThrow([{
+            _obj: "imageSize",
+            _target: [
+                { _ref: "document", _id: doc.id }
+            ],
+            resolution: {
+                _unit: "densityUnit",
+                _value: Number(resolution)
+            },
+            _options: {
+                dialogOptions: "silent"
+            }
+        }], {
+            synchronousExecution: true,
+            modalBehavior: "execute"
+        })],
         ["color mode", () => doc.changeMode(
             constants.ChangeMode[String(mode).toUpperCase()]
         )],
@@ -308,7 +340,7 @@ async function getLayers() {
     }
 
     // 1) Get the number of layers in the active document
-    const [docInfo] = await batchPlay(
+    const [docInfo] = await batchPlayOrThrow(
         [{
             _obj: "get",
             _target: [
@@ -329,7 +361,7 @@ async function getLayers() {
             _target: [{ _ref: "layer", _index: i }]
         });
     }
-    const descriptors = await batchPlay(getCommands, { synchronousExecution: true });
+    const descriptors = await batchPlayOrThrow(getCommands, { synchronousExecution: true });
 
     // 3) Walk the descriptors top-to-bottom (highest index first), tracking parents
     const layers = [];
@@ -392,7 +424,7 @@ async function getLayers() {
  * @returns {Promise<string>} Mode id such as "normal" or "multiply".
  */
 async function getLayerBlendMode(layer_id) {
-    const [descriptor] = await batchPlay(
+    const [descriptor] = await batchPlayOrThrow(
         [{
             _obj: "get",
             _target: [{ _ref: "layer", _id: layer_id }]
@@ -407,7 +439,7 @@ async function getLayerBlendMode(layer_id) {
  */
 async function deleteLayer(layer_id) {
     await execAsModal(async () => {
-        await batchPlay([{
+        await batchPlayOrThrow([{
             _obj: "delete",
             _target: [{ _ref: "layer", _id: layer_id }],
             _options: { dialogOptions: "dontDisplay" }
@@ -424,7 +456,7 @@ async function isSaved() {
  */
 async function revertToPrevious() {
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "revert",
                 _options: { dialogOptions: "dontDisplay" }
@@ -498,7 +530,7 @@ async function setVisible(layer_id, visibility) {
  */
 async function imprint(payload) {
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [
                 {
                     _obj: "set",
@@ -532,7 +564,7 @@ async function getHeadline() {
         return "";
     }
 
-    const result = await batchPlay(
+    const result = await batchPlayOrThrow(
         [{
             _obj: "get",
             _target: [
@@ -576,7 +608,7 @@ async function selectLayers(selectedLayers) {
     if (refs.length === 0) return;
 
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "select",
                 _target: refs,
@@ -621,7 +653,7 @@ async function groupSelectedLayers(doc, name) {
     let group;
 
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "make",
                 _target: [{ _ref: "layerSection" }],
@@ -635,7 +667,7 @@ async function groupSelectedLayers(doc, name) {
             group.name = name;
         }
         // mimick CEP behavior
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "select",
                 _target: [{ _ref: "layer", _id: group.id }],
@@ -659,7 +691,7 @@ async function groupSelectedLayers(doc, name) {
  * NOTE: must be called inside an executeAsModal scope.
  */
 async function selectObject(id) {
-    await batchPlay(
+    await batchPlayOrThrow(
         [{
             _obj: "select",
             _target: [{ _ref: "layer", _id: id }],
@@ -693,7 +725,7 @@ async function dissolveLayerSet(layerSetId) {
         }
 
         // The group should now be empty, and we can delete it.
-        await batchPlay([{
+        await batchPlayOrThrow([{
             _obj: "delete",
             _target: [
                 { _ref: "layer", _id: layerSetId }
@@ -775,7 +807,7 @@ async function importSmartObject(path, name, link) {
             command.linked = true;
         }
 
-        await batchPlay([command], { synchronousExecution: true });
+        await batchPlayOrThrow([command], { synchronousExecution: true });
 
         layer = app.activeDocument.activeLayers[0];
         if (name) {
@@ -809,7 +841,7 @@ async function replaceSmartObjects(layer_id, path, name) {
     const result = await execAsModal(async () => {
         const fileEntry = await uxp_storage.localFileSystem.createEntryWithUrl(normalizedPath, { overwrite: true });
         let sessionToken = uxp_storage.localFileSystem.createSessionToken(fileEntry);
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "placedLayerReplaceContents",
                 _target: [{ _ref: "layer", _id: layer_id }],
@@ -852,7 +884,7 @@ async function getBrokenSmartObjectLinks() {
     };
     walk(app.activeDocument.layers, []);
 
-    const descriptors = await batchPlay(
+    const descriptors = await batchPlayOrThrow(
         smartObjects.map(({layer}) => ({
             _obj: "get",
             _target: [{ _ref: "layer", _id: layer.id }]
@@ -875,7 +907,7 @@ async function rasterizeSmartObject(smartObjects) {
     const fixed = [];
     await execAsModal(async () => {
         for (const {layer, path} of smartObjects) {
-            await batchPlay([{
+            await batchPlayOrThrow([{
                 _obj: "select",
                 _target: [{ _ref: "layer", _id: layer.id }],
                 makeVisible: false,
@@ -884,7 +916,7 @@ async function rasterizeSmartObject(smartObjects) {
 
             await layer.rasterize(constants.RasterizeType.ENTIRELAYER);
 
-            await batchPlay([{
+            await batchPlayOrThrow([{
                 _obj: "newPlacedLayer",
                 _options: { dialogOptions: "dontDisplay" }
             }], { synchronousExecution: true });
@@ -902,7 +934,7 @@ async function rasterizeSmartObject(smartObjects) {
  * consistently available writable `bitsPerChannel` property.
  */
 async function convertBitDepth(document, depth) {
-    await batchPlay(
+    await batchPlayOrThrow(
         [{
             _obj: "convertMode",
             _target: [
@@ -947,13 +979,13 @@ async function saveEXR(doc, outputPath, asCopy = false) {
     const { entry } = await getOutputFileEntry(outputPath);
     const sessionToken = uxp_storage.localFileSystem.createSessionToken(entry);
 
-    await batchPlay([{
+    await batchPlayOrThrow([{
         _obj: "save",
         _target: [
             { _ref: "document", _id: doc.id }
         ],
         as: {
-            _obj: "EXRf",
+            _obj: "$EXRf",
             "$BtDp": 32,
             "$Cmpr": 1,
             "$AChn": 1
@@ -965,7 +997,7 @@ async function saveEXR(doc, outputPath, asCopy = false) {
         copy: Boolean(asCopy),
         lowerCase: true,
         _options: {
-            dialogOptions: "dontDisplay"
+            dialogOptions: "silent"
         }
     }], {
         synchronousExecution: true,
@@ -1160,14 +1192,40 @@ async function saveAs(outputPath, ext, asCopy = false) {
 
                 case "tif":
                 case "tiff": {
+                    // The UXP DOM has no saveAs.tiff().
                     const { entry } = await getOutputFileEntry(outputPath);
+                    const sessionToken =
+                        uxp_storage.localFileSystem.createSessionToken(entry);
 
-                    await doc.saveAs.tiff(entry, {
+                    await batchPlayOrThrow([{
+                        _obj: "save",
+                        _target: [
+                            { _ref: "document", _id: doc.id }
+                        ],
+                        as: {
+                            _obj: "TIFF",
+                            byteOrder: {
+                                _enum: "platform",
+                                _value: "IBMPC"
+                            },
+                            LZWCompression: true,
+                            saveTransparency: true
+                        },
+                        in: {
+                            _path: sessionToken,
+                            _kind: "local"
+                        },
                         alphaChannels: true,
-                        transparency: true,
-                        imageCompression: "TIFFLZW",
-                        layers: false
-                    }, Boolean(asCopy));
+                        layers: false,
+                        copy: Boolean(asCopy),
+                        lowerCase: true,
+                        _options: {
+                            dialogOptions: "silent"
+                        }
+                    }], {
+                        synchronousExecution: true,
+                        modalBehavior: "execute"
+                    });
 
                     return outputPath;
                 }
@@ -1177,7 +1235,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                     const sessionToken =
                         uxp_storage.localFileSystem.createSessionToken(entry);
 
-                    await batchPlay([{
+                    await batchPlayOrThrow([{
                         _obj: "save",
                         _target: [
                             { _ref: "document", _id: doc.id }
@@ -1195,7 +1253,7 @@ async function saveAs(outputPath, ext, asCopy = false) {
                         copy: Boolean(asCopy),
                         lowerCase: true,
                         _options: {
-                            dialogOptions: "dontDisplay"
+                            dialogOptions: "silent"
                         }
                     }], {
                         synchronousExecution: true,
@@ -1206,7 +1264,9 @@ async function saveAs(outputPath, ext, asCopy = false) {
                 }
 
                 case "exr":
-                    return saveEXR(doc, outputPath, asCopy);
+                    // Awaited, so the finally below does not close the
+                    // temporary 32 bit copy before it is saved.
+                    return await saveEXR(doc, outputPath, asCopy);
 
                 case "psd":
                     // preserve saveSmart from CEP
@@ -1393,19 +1453,26 @@ async function getExtensionVersion() {
     }
 }
 
+// Menu command ID of File > Exit (Photoshop > Quit on macOS).
+const EXIT_COMMAND_ID = 36;
+
 async function closeApp() {
-    // may fail. This is the closest we can get to CEP's 'close' function.
-    await execAsModal(async () => {
-        await batchPlay([{
-            _obj: "quit",
-            _options: {
-                dialogOptions: "dontDisplay"
-            }
-        }], {
-            synchronousExecution: true,
-            modalBehavior: "execute"
-        });
-    }, "Quit Photoshop");
+    const [enabled] = await core.getMenuCommandState({ commandID: EXIT_COMMAND_ID });
+    if (!enabled) {
+        throw new Error("Photoshop can't quit right now, File > Exit is not available");
+    }
+    // Quit is not available inside a modal scope and a "quit" event is
+    // refused outside of one, the menu command works. It runs after this
+    // call returned, so the reply still reaches the server.
+    setTimeout(() => {
+        core.performMenuCommand({ commandID: EXIT_COMMAND_ID })
+            .then(({ available, userCancelled }) => {
+                if (!available || userCancelled) {
+                    console.error("Photoshop did not quit:", { available, userCancelled });
+                }
+            })
+            .catch((err) => console.error("Could not quit Photoshop:", err));
+    }, 100);
 }
 
 module.exports = {
