@@ -1457,11 +1457,20 @@ async function getExtensionVersion() {
 const EXIT_COMMAND_ID = 36;
 
 async function closeApp() {
+    const [enabled] = await core.getMenuCommandState({ commandID: EXIT_COMMAND_ID });
+    if (!enabled) {
+        throw new Error("Photoshop can't quit right now, File > Exit is not available");
+    }
     // Quit is not available inside a modal scope and a "quit" event is
     // refused outside of one, the menu command works. It runs after this
     // call returned, so the reply still reaches the server.
     setTimeout(() => {
         core.performMenuCommand({ commandID: EXIT_COMMAND_ID })
+            .then(({ available, userCancelled }) => {
+                if (!available || userCancelled) {
+                    console.error("Photoshop did not quit:", { available, userCancelled });
+                }
+            })
             .catch((err) => console.error("Could not quit Photoshop:", err));
     }, 100);
 }
