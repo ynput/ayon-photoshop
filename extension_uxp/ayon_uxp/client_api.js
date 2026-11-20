@@ -340,7 +340,7 @@ async function getLayers() {
     }
 
     // 1) Get the number of layers in the active document
-    const [docInfo] = await batchPlay(
+    const [docInfo] = await batchPlayOrThrow(
         [{
             _obj: "get",
             _target: [
@@ -361,7 +361,7 @@ async function getLayers() {
             _target: [{ _ref: "layer", _index: i }]
         });
     }
-    const descriptors = await batchPlay(getCommands, { synchronousExecution: true });
+    const descriptors = await batchPlayOrThrow(getCommands, { synchronousExecution: true });
 
     // 3) Walk the descriptors top-to-bottom (highest index first), tracking parents
     const layers = [];
@@ -424,7 +424,7 @@ async function getLayers() {
  * @returns {Promise<string>} Mode id such as "normal" or "multiply".
  */
 async function getLayerBlendMode(layer_id) {
-    const [descriptor] = await batchPlay(
+    const [descriptor] = await batchPlayOrThrow(
         [{
             _obj: "get",
             _target: [{ _ref: "layer", _id: layer_id }]
@@ -439,7 +439,7 @@ async function getLayerBlendMode(layer_id) {
  */
 async function deleteLayer(layer_id) {
     await execAsModal(async () => {
-        await batchPlay([{
+        await batchPlayOrThrow([{
             _obj: "delete",
             _target: [{ _ref: "layer", _id: layer_id }],
             _options: { dialogOptions: "dontDisplay" }
@@ -456,7 +456,7 @@ async function isSaved() {
  */
 async function revertToPrevious() {
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "revert",
                 _options: { dialogOptions: "dontDisplay" }
@@ -530,7 +530,7 @@ async function setVisible(layer_id, visibility) {
  */
 async function imprint(payload) {
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [
                 {
                     _obj: "set",
@@ -564,7 +564,7 @@ async function getHeadline() {
         return "";
     }
 
-    const result = await batchPlay(
+    const result = await batchPlayOrThrow(
         [{
             _obj: "get",
             _target: [
@@ -608,7 +608,7 @@ async function selectLayers(selectedLayers) {
     if (refs.length === 0) return;
 
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "select",
                 _target: refs,
@@ -653,7 +653,7 @@ async function groupSelectedLayers(doc, name) {
     let group;
 
     await execAsModal(async () => {
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "make",
                 _target: [{ _ref: "layerSection" }],
@@ -667,7 +667,7 @@ async function groupSelectedLayers(doc, name) {
             group.name = name;
         }
         // mimick CEP behavior
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "select",
                 _target: [{ _ref: "layer", _id: group.id }],
@@ -691,7 +691,7 @@ async function groupSelectedLayers(doc, name) {
  * NOTE: must be called inside an executeAsModal scope.
  */
 async function selectObject(id) {
-    await batchPlay(
+    await batchPlayOrThrow(
         [{
             _obj: "select",
             _target: [{ _ref: "layer", _id: id }],
@@ -725,7 +725,7 @@ async function dissolveLayerSet(layerSetId) {
         }
 
         // The group should now be empty, and we can delete it.
-        await batchPlay([{
+        await batchPlayOrThrow([{
             _obj: "delete",
             _target: [
                 { _ref: "layer", _id: layerSetId }
@@ -807,7 +807,7 @@ async function importSmartObject(path, name, link) {
             command.linked = true;
         }
 
-        await batchPlay([command], { synchronousExecution: true });
+        await batchPlayOrThrow([command], { synchronousExecution: true });
 
         layer = app.activeDocument.activeLayers[0];
         if (name) {
@@ -841,7 +841,7 @@ async function replaceSmartObjects(layer_id, path, name) {
     const result = await execAsModal(async () => {
         const fileEntry = await uxp_storage.localFileSystem.createEntryWithUrl(normalizedPath, { overwrite: true });
         let sessionToken = uxp_storage.localFileSystem.createSessionToken(fileEntry);
-        await batchPlay(
+        await batchPlayOrThrow(
             [{
                 _obj: "placedLayerReplaceContents",
                 _target: [{ _ref: "layer", _id: layer_id }],
@@ -884,7 +884,7 @@ async function getBrokenSmartObjectLinks() {
     };
     walk(app.activeDocument.layers, []);
 
-    const descriptors = await batchPlay(
+    const descriptors = await batchPlayOrThrow(
         smartObjects.map(({layer}) => ({
             _obj: "get",
             _target: [{ _ref: "layer", _id: layer.id }]
@@ -907,7 +907,7 @@ async function rasterizeSmartObject(smartObjects) {
     const fixed = [];
     await execAsModal(async () => {
         for (const {layer, path} of smartObjects) {
-            await batchPlay([{
+            await batchPlayOrThrow([{
                 _obj: "select",
                 _target: [{ _ref: "layer", _id: layer.id }],
                 makeVisible: false,
@@ -916,7 +916,7 @@ async function rasterizeSmartObject(smartObjects) {
 
             await layer.rasterize(constants.RasterizeType.ENTIRELAYER);
 
-            await batchPlay([{
+            await batchPlayOrThrow([{
                 _obj: "newPlacedLayer",
                 _options: { dialogOptions: "dontDisplay" }
             }], { synchronousExecution: true });
@@ -934,7 +934,7 @@ async function rasterizeSmartObject(smartObjects) {
  * consistently available writable `bitsPerChannel` property.
  */
 async function convertBitDepth(document, depth) {
-    await batchPlay(
+    await batchPlayOrThrow(
         [{
             _obj: "convertMode",
             _target: [
