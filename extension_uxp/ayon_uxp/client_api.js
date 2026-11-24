@@ -1,5 +1,7 @@
 const {app, action, core, constants} = require("photoshop")
 const uxp_storage = require("uxp").storage
+const os = require("os")
+
 const batchPlay = action.batchPlay;
 
 // Photoshop's PSD maximum document dimension is 30,000 pixels.
@@ -42,11 +44,16 @@ async function batchPlayOrThrow(commands, options = {}) {
  * Convert an absolute native path into a UXP file URL.
  *
  * Examples:
- *   C:\project\image.psd -> file:C:/project/image.psd
- *   /project/image.psd   -> file:/project/image.psd
+ *   C:\project\image.psd            -> file:C:/project/image.psd
+ *   /project/image.psd              -> file:/project/image.psd
+ *   \\10.10.10.10\project\image.psd -> file:\\\\project/image.psd (NT only)
  */
 function toFileUrl(path) {
     const normalized = String(path).replace(/\\/g, "/");
+
+    if (normalized.startsWith("//") && os.platform() == "win32") {
+        return `file:\\\\${normalized.slice(2)}`;
+    }
 
     return normalized.startsWith("file:")
         ? normalized
@@ -1052,7 +1059,7 @@ async function saveSmart(outputPath, doc, asCopy = false) {
         doc.width > PSD_MAX_DIMENSION ||
         doc.height > PSD_MAX_DIMENSION
     ) {
-        return savePSB(doc, psbPath, asCopy);
+        return savePSB(doc, psbPath, false);
     }
 
     const {
@@ -1270,12 +1277,12 @@ async function saveAs(outputPath, ext, asCopy = false) {
 
                 case "psd":
                     // preserve saveSmart from CEP
-                    return saveSmart(outputPath, doc, asCopy);
+                    return await saveSmart(outputPath, doc, asCopy);
 
                 case "psb":
                     // return savePSB(doc, psbPath, asCopy);
                     // CEP always saves in-place, not as copy
-                    return savePSB(doc, outputPath, false);
+                    return await savePSB(doc, outputPath, false);
 
                 default:
                     throw new Error(
