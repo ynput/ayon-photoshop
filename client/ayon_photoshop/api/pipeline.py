@@ -43,10 +43,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "photoshop"
     workfile_extensions = [".psd", ".psb"]
 
-    # Track whether the workfiles tool is about to save the workfile, so a
-    # context change caused by that save can prompt to update the instances.
-    about_to_save = False
-
     def install(self):
         """Install Photoshop-specific functionality needed for integration.
 
@@ -349,8 +345,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             save_workfile_context (SaveWorkfileContext): Workfile path with
                 the target folder and task context.
         """
-        self.about_to_save = True
-
         current_context = self.get_current_context()
         context_changed = (
             current_context.get("folder_path")
@@ -367,16 +361,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             save_workfile_context.task_entity["name"],
         )
 
-    def _after_workfile_save(self, save_workfile_context):
-        """Stop tracking the save once the workfile is saved.
-
-        Args:
-            save_workfile_context (SaveWorkfileContext): Workfile path with
-                the saved folder and task context.
-        """
-        super()._after_workfile_save(save_workfile_context)
-        self.about_to_save = False
-
     def _after_context_change(self, context_change_data):
         """Offer to update the instances when saving changed the context.
 
@@ -390,9 +374,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 change (project, folder, task and reason).
         """
         super()._after_context_change(context_change_data)
-        if not self.about_to_save:
-            return
-
         if context_change_data.reason != ContextChangeReason.workfile_save:
             return
 
