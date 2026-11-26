@@ -1,0 +1,297 @@
+/*
+AYON panel styling, using the design tokens of ayon-core's ayon_core/ui
+(ayon_style.json), the same ones the Workfiles tool and the Launcher use.
+*/
+
+@font-face {
+    font-family: "Noto Sans";
+    src: url("fonts/NotoSans-Medium.ttf") format("truetype");
+}
+
+:root {
+    --ayon-bg: #272d35;
+    --ayon-button: #424a57;
+    --ayon-button-hover: #4d5560;
+    --ayon-button-active: #535965;
+    --ayon-font: #f4f5f5;
+    --ayon-font-variant: #c1c7ce;
+    --ayon-font-dim: #8b9198;
+    --ayon-border: #41474d;
+    --ayon-primary: #8fceff;
+    --ayon-primary-hover: #83c1f1;
+    --ayon-on-primary: #00344f;
+    --ayon-primary-container: #1c4154;
+    --ayon-on-primary-container: #ebf5ff;
+    --ayon-error-container: #93000a;
+    --ayon-on-error-container: #ffdad6;
+    --ayon-disabled-opacity: 0.5;
+    --ayon-radius: 4px;
+    --ayon-gap: 4px;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+    background: var(--ayon-bg);
+    color: var(--ayon-font);
+    font-family: "Noto Sans", sans-serif;
+    font-size: 12px;
+}
+
+#content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Transparent rail, 8px thumb in a 12px track like AYON's Qt scrollbars */
+#content::-webkit-scrollbar {
+    width: 12px;
+    background: transparent;
+}
+
+#content::-webkit-scrollbar-track,
+#content::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+#content::-webkit-scrollbar-thumb {
+    min-height: 32px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--ayon-button);
+    background-clip: padding-box;
+}
+
+#content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ayon-button-hover);
+}
+
+#content::-webkit-scrollbar-thumb:active {
+    background-color: var(--ayon-button-active);
+}
+
+/* ── Groups ──────────────────────────────────────────────────────────── */
+
+.group {
+    margin: 0 0 12px 0;
+}
+
+.group:last-of-type {
+    margin-bottom: 0;
+}
+
+/* The summary is the clickable header that folds its group */
+.group-title {
+    display: flex;
+    align-items: center;
+    margin: 0 0 6px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--ayon-border);
+    color: var(--ayon-font-variant);
+    font-size: 0.8em;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+}
+
+.group-title:hover {
+    color: var(--ayon-font);
+}
+
+/* Chrome 61 ignores list-style:none on summary, hence the pseudo */
+.group-title::-webkit-details-marker {
+    display: none;
+}
+
+.group-title:focus {
+    outline: 2px solid var(--ayon-primary);
+    outline-offset: 1px;
+    border-radius: var(--ayon-radius);
+}
+
+.group-title h2 {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+.group-chevron {
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    fill: currentColor;
+    transition: transform 0.1s ease;
+}
+
+.group:not([open]) > .group-title .group-chevron {
+    transform: rotate(-90deg);
+}
+
+/*
+auto-fit collapses empty tracks, so a narrow panel gets one column and a
+wide one fills with as many as fit. No media queries, no JS.
+*/
+.group-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    /* grid-gap, not gap: CEP 9 is Chrome 61 and `gap` landed in 66 */
+    grid-gap: var(--ayon-gap);
+}
+
+/*
+The 150px track minimum cannot shrink, so a tightly docked panel would
+overflow sideways. min() would fix it but is Chrome 79, so drop to a single
+free-sizing column instead. Still pure CSS, still no JS on resize.
+*/
+@media (max-width: 220px) {
+    .group-items {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+
+#content button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    /* grid items default to min-width:auto too, so the track cannot shrink */
+    min-width: 0;
+    padding: 6px 8px;
+    border: 0 solid transparent;
+    border-radius: var(--ayon-radius);
+    background: var(--ayon-button);
+    color: var(--ayon-font);
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+#content button:hover:not(:disabled) {
+    background: var(--ayon-button-hover);
+}
+
+#content button:active:not(:disabled) {
+    background: var(--ayon-button-active);
+}
+
+#content button:focus {
+    outline: 2px solid var(--ayon-primary);
+    outline-offset: -2px;
+}
+
+#content button:disabled {
+    opacity: var(--ayon-disabled-opacity);
+    cursor: default;
+}
+
+.btn-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    /* margin, not flex `gap`: that is Chrome 84 and CEP 9 is Chrome 61 */
+    margin-right: 6px;
+    fill: currentColor;
+}
+
+/*
+Labels elide rather than wrap, so a narrow column never grows a row.
+min-width:0 is required: a flex item defaults to min-width:auto and would
+otherwise refuse to shrink below its text, pushing the button out of track.
+*/
+.btn-label {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ── Connection banner ───────────────────────────────────────────────── */
+
+#connection {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    padding: 4px 5px;
+    border-radius: var(--ayon-radius);
+    background: var(--ayon-primary-container);
+    color: var(--ayon-on-primary-container);
+    font-size: 0.85em;
+}
+
+/* display:flex would otherwise beat the UA rule for the hidden attribute */
+#connection[hidden] {
+    display: none;
+}
+
+#connection-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#reconnect-button {
+    flex: 0 0 auto;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border: 0 solid transparent;
+    border-radius: var(--ayon-radius);
+    background: var(--ayon-primary);
+    color: var(--ayon-on-primary);
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+#reconnect-button:hover:not(:disabled) {
+    background: var(--ayon-primary-hover);
+}
+
+#reconnect-button:disabled {
+    opacity: var(--ayon-disabled-opacity);
+    cursor: default;
+}
+
+#reconnect-button:focus {
+    outline: 2px solid var(--ayon-primary);
+    outline-offset: 1px;
+}
+
+/* ── Status line ─────────────────────────────────────────────────────── */
+
+#status {
+    flex: 0 0 auto;
+    margin: 8px 0 0 0;
+    padding: 0;
+    color: var(--ayon-font-dim);
+    font-size: 0.85em;
+    word-wrap: break-word;
+}
+
+#status:empty {
+    display: none;
+}
+
+#status.is-error {
+    padding: 5px 6px;
+    border-radius: var(--ayon-radius);
+    background: var(--ayon-error-container);
+    color: var(--ayon-on-error-container);
+}
