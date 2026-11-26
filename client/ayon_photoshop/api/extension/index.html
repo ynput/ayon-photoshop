@@ -1,107 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <style type="text/css">
-      html, body, iframe {
-        width: 100%;
-        height: 100%;
-        border: 0px;
-        margin: 0px;
-        overflow: hidden;
-        background-color: #424242;
-      }
-      button {width: 100%;}
-    </style>
-    
-    <style>
-      button {width: 100%;}
-      body {margin:0; padding:0; height: 100%;}
-      html {height: 100%;}
-    </style>
-    <script src="./client/jquery-2.0.2.min.js">
-    </script>
-    
-    <script type=text/javascript>
-            $(function() {
-              $("a#workfiles-button").bind("click", function() {
-                RPC.call('Photoshop.workfiles_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
-    
-    <script type=text/javascript>
-            $(function() {
-              $("a#loader-button").bind("click", function() {
-                RPC.call('Photoshop.loader_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
-    
-    <script type=text/javascript>
-            $(function() {
-              $("a#publish-button").bind("click", function() {
-                RPC.call('Photoshop.publish_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
-    
-    <script type=text/javascript>
-            $(function() {
-              $("a#sceneinventory-button").bind("click", function() {
-                RPC.call('Photoshop.sceneinventory_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
-    
-    <script type=text/javascript>
-            $(function() {
-              $("a#experimental-button").bind("click", function() {
-                RPC.call('Photoshop.experimental_tools_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
 
-    <script type=text/javascript>
-            $(function() {
-              $("a#scripteditor-button").bind("click", function() {
-                RPC.call('Photoshop.scripteditor_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
+<head>
+    <meta charset="utf-8">
+    <title>AYON</title>
+
+    <link id="hostStyle" rel="stylesheet" href="css/styles.css" />
+
+    <script src="./client/jquery-2.0.2.min.js"></script>
 </head>
+
 <body>
-  <script type="text/javascript" src="./client/wsrpc.js"></script>
-  <script type="text/javascript" src="./client/CSInterface.js"></script>
-  <script type="text/javascript" src="./client/loglevel.min.js"></script>
-  
-  <!-- helper library for better debugging of .jsx check its license! -->
-  <script type="text/javascript" src="./host/JSX.js"></script>
-  
-  <script type="text/javascript" src="./client/client.js"></script>
-  
-    <a href=# id=workfiles-button><button>Workfiles...</button></a>
-    <a href=# id=loader-button><button>Load...</button></a>
-    <a href=# id=publish-button><button>Publish...</button></a>
-    <a href=# id=sceneinventory-button><button>Manage...</button></a>
-    <a href=# id=experimental-button><button>Experimental Tools...</button></a>
-    <a href=# id=scripteditor-button><button>Script Editor...</button></a>
+
+    <!-- icon sprite, Material Symbols Outlined (Apache 2.0), the icon
+         set AYON uses. Built from ayon-core's bundled font. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-folder" viewBox="0 -960 960 960">
+            <path transform="scale(1,-1)"
+                d="M160 160Q127 160 103.5 183.5Q80 207 80 240V720Q80 753 103.5 776.5Q127 800 160 800H400L480 720H800Q833 720 856.5 696.5Q880 673 880 640H447L367 720H160Q160 720 160 720Q160 720 160 720V240Q160 240 160 240Q160 240 160 240L256 560H940L837 217Q829 191 807.5 175.5Q786 160 760 160ZM244 240H760L832 480H316ZM244 240 316 480 244 240ZM160 640V720Q160 720 160 720Q160 720 160 720V640Z" />
+        </symbol>
+        <symbol id="i-load" viewBox="0 -960 960 960">
+            <path transform="scale(1,-1)"
+                d="M480 320 280 520 336 578 440 474V800H520V474L624 578L680 520ZM240 160Q207 160 183.5 183.5Q160 207 160 240V360H240V240Q240 240 240 240Q240 240 240 240H720Q720 240 720 240Q720 240 720 240V360H800V240Q800 207 776.5 183.5Q753 160 720 160Z" />
+        </symbol>
+        <symbol id="i-publish" viewBox="0 -960 960 960">
+            <path transform="scale(1,-1)"
+                d="M440 160V486L336 382L280 440L480 640L680 440L624 382L520 486V160ZM160 600V720Q160 753 183.5 776.5Q207 800 240 800H720Q753 800 776.5 776.5Q800 753 800 720V600H720V720Q720 720 720 720Q720 720 720 720H240Q240 720 240 720Q240 720 240 720V600Z" />
+        </symbol>
+        <symbol id="i-manage" viewBox="0 -960 960 960">
+            <path transform="scale(1,-1)"
+                d="M200 80Q167 80 143.5 103.5Q120 127 120 160V611Q102 622 91 639.5Q80 657 80 680V800Q80 833 103.5 856.5Q127 880 160 880H800Q833 880 856.5 856.5Q880 833 880 800V680Q880 657 869 639.5Q858 622 840 611V160Q840 127 816.5 103.5Q793 80 760 80ZM200 600V160Q200 160 200 160Q200 160 200 160H760Q760 160 760 160Q760 160 760 160V600ZM160 680H800Q800 680 800 680Q800 680 800 680V800Q800 800 800 800Q800 800 800 800H160Q160 800 160 800Q160 800 160 800V680Q160 680 160 680Q160 680 160 680ZM360 400H600V480H360ZM480 380Q480 380 480 380Q480 380 480 380Q480 380 480 380Q480 380 480 380Z" />
+        </symbol>
+        <symbol id="i-code" viewBox="0 -960 960 960">
+            <path transform="scale(1,-1)"
+                d="M320 240 80 480 320 720 377 663 193 479 376 296ZM640 240 583 297 767 481 584 664 640 720 880 480Z" />
+        </symbol>
+        <symbol id="i-experimental" viewBox="0 -960 960 960">
+            <path transform="scale(1,-1)"
+                d="M200 120Q149 120 127.5 165.5Q106 211 138 250L360 520V760H320Q303 760 291.5 771.5Q280 783 280 800Q280 817 291.5 828.5Q303 840 320 840H640Q657 840 668.5 828.5Q680 817 680 800Q680 783 668.5 771.5Q657 760 640 760H600V520L822 250Q854 211 832.5 165.5Q811 120 760 120ZM200 200H760L520 492V760H440V492ZM480 480Z" />
+        </symbol>
+        <symbol id="i-chevron" viewBox="0 -960 960 960">
+            <path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z" />
+        </symbol>
+    </svg>
+
+    <div id="content">
+
+        <details class="group" data-group="pipeline" open>
+            <summary class="group-title">
+                <svg class="group-chevron">
+                    <use href="#i-chevron" />
+                </svg><h2>Pipeline</h2>
+            </summary>
+            <div class="group-items">
+                <button type="button" id="workfiles-button" data-route="workfiles_route"
+                    data-busy="Opening...">
+                    <svg class="btn-icon">
+                        <use href="#i-folder" />
+                    </svg><span class="btn-label">Workfiles...</span></button>
+                <button type="button" id="loader-button" data-route="loader_route"
+                    data-busy="Opening...">
+                    <svg class="btn-icon">
+                        <use href="#i-load" />
+                    </svg><span class="btn-label">Load...</span></button>
+                <button type="button" id="publish-button" data-route="publish_route"
+                    data-busy="Opening...">
+                    <svg class="btn-icon">
+                        <use href="#i-publish" />
+                    </svg><span class="btn-label">Publish...</span></button>
+                <button type="button" id="sceneinventory-button" data-route="sceneinventory_route"
+                    data-busy="Opening...">
+                    <svg class="btn-icon">
+                        <use href="#i-manage" />
+                    </svg><span class="btn-label">Manage...</span></button>
+            </div>
+        </details>
+
+        <details class="group" data-group="scripts" open>
+            <summary class="group-title">
+                <svg class="group-chevron">
+                    <use href="#i-chevron" />
+                </svg><h2>Scripts</h2>
+            </summary>
+            <div class="group-items">
+                <button type="button" id="scripteditor-button" data-route="scripteditor_route"
+                    data-busy="Opening...">
+                    <svg class="btn-icon">
+                        <use href="#i-code" />
+                    </svg><span class="btn-label">Script Editor...</span></button>
+                <button type="button" id="experimental-button" data-route="experimental_tools_route"
+                    data-busy="Opening...">
+                    <svg class="btn-icon">
+                        <use href="#i-experimental" />
+                    </svg><span class="btn-label">Experimental Tools...</span></button>
+            </div>
+        </details>
+
+    </div>
+
+    <div id="connection" role="status" aria-live="polite" hidden>
+        <span id="connection-text"></span>
+        <button type="button" id="reconnect-button">Retry now</button>
+    </div>
+
+    <p id="status" role="status" aria-live="polite"></p>
+
+    <script type="text/javascript" src="./client/wsrpc.js"></script>
+    <script type="text/javascript" src="./client/CSInterface.js"></script>
+    <script type="text/javascript" src="./client/loglevel.min.js"></script>
+
+    <!-- helper library for better debugging of .jsx check its license! -->
+    <script type="text/javascript" src="./host/JSX.js"></script>
+
+    <script type="text/javascript" src="./client/client.js"></script>
+
+    <script type="text/javascript" src="./js/panel.js"></script>
+
 </body>
+
 </html>
