@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 """Package declaring AYON addon 'photoshop' version."""
-__version__ = "0.4.11"
+__version__ = "0.4.12-dev"
