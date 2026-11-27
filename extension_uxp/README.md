@@ -73,6 +73,21 @@ or you can `Load & Watch` it while you are running photoshop from Ayon or anywhe
 If you bundle a .ccx, you can usually double click it to add it to your bundles,
 and it will automatically load on startup.
 
+### Manual plugin control & debugging
+For development purposes, this plugin is best kept uninstalled and managed through "UXP Developer Tools".
+To efficiently debug only the plugin, and the plugin only,
+
+1. Make sure to remove the UXP plugin from photoshop through the Creative Cloud application
+2. Set AYON site photoshop plugin settings to not auto install, and plugin type to UXP
+3. Make sure to download and open "UXP Developer Tools" (available in Creative Cloud)
+4. Load the manifest for the ayon plugin [here](./ayon_uxp/manifest.json) in UXP developer Tools, and launch Photoshop from within AYON
+5. Press "Load and Watch" within the UXP Developer Tools menu, and when the plugin loads, press the "Debug" to open a console window
+
+If you can't find the plugin, make sure to check the "Plugins" menu at the top menu bar.
+The UXP Debug menu is a good place to test snippets of code.
+
+Of course, this is best done in a dev package in AYON.
+
 ### Websocket port
 
 The UXP plugin can NOT read environment variables, so its address is written
